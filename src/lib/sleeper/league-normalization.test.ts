@@ -100,9 +100,108 @@ describe("normalizeSleeperLeagueCollection", () => {
   })
 
   it("normalizes a complete valid collection", () => {
+    const normalized = normalizeSleeperLeagueCollection(
+      normalCollection,
+      2026,
+      fetchedAt
+    )
+
+    expect(normalized.map((league) => league.name)).toEqual([
+      "Fixture Best Ball",
+      "Fixture Dynasty Superflex",
+    ])
+    expect(normalized[0]).toMatchObject({
+      externalLeagueId: normalCollection[0]!.league_id,
+      settings: normalCollection[0]!.settings,
+      scoringSettings: normalCollection[0]!.scoring_settings,
+      rosterPositions: normalCollection[0]!.roster_positions,
+    })
+    expect(normalized[1]).toMatchObject({
+      externalLeagueId: normalCollection[1]!.league_id,
+      settings: normalCollection[1]!.settings,
+      scoringSettings: normalCollection[1]!.scoring_settings,
+      rosterPositions: normalCollection[1]!.roster_positions,
+    })
+  })
+
+  it("trims leading spaces from a league display name", () => {
     expect(
-      normalizeSleeperLeagueCollection(normalCollection, 2026, fetchedAt)
-    ).toHaveLength(2)
+      normalizeOne({ ...bestBallFixture, name: "  Fixture League" }).name
+    ).toBe("Fixture League")
+  })
+
+  it("trims trailing spaces from a league display name", () => {
+    expect(
+      normalizeOne({ ...bestBallFixture, name: "Fixture League  " }).name
+    ).toBe("Fixture League")
+  })
+
+  it("trims leading and trailing spaces from a league display name", () => {
+    expect(
+      normalizeOne({ ...bestBallFixture, name: "  Fixture League  " }).name
+    ).toBe("Fixture League")
+  })
+
+  it("preserves repeated internal spaces in a league display name", () => {
+    expect(
+      normalizeOne({ ...bestBallFixture, name: "  Best   Ball League  " }).name
+    ).toBe("Best   Ball League")
+  })
+
+  it("preserves league display-name case", () => {
+    expect(
+      normalizeOne({ ...bestBallFixture, name: "  MiXeD Case League  " }).name
+    ).toBe("MiXeD Case League")
+  })
+
+  it("rejects a whitespace-only league display name", () => {
+    expect(() => normalizeOne({ ...bestBallFixture, name: "   " })).toThrow()
+  })
+
+  it("rejects a non-string league display name", () => {
+    expect(() => normalizeOne({ ...bestBallFixture, name: 42 })).toThrow()
+  })
+
+  it.each(["\t", "\n", "\r", "\u0000", "\u007f"])(
+    "rejects ASCII control character %j in a league display name",
+    (controlCharacter) => {
+      expect(() =>
+        normalizeOne({
+          ...bestBallFixture,
+          name: `Fixture${controlCharacter}League`,
+        })
+      ).toThrow()
+    }
+  )
+
+  it("rejects a league display name longer than 255 characters after trimming", () => {
+    expect(() =>
+      normalizeOne({ ...bestBallFixture, name: `  ${"a".repeat(256)}  ` })
+    ).toThrow()
+  })
+
+  it("accepts a league display name exactly 255 characters after trimming", () => {
+    expect(
+      normalizeOne({ ...bestBallFixture, name: `  ${"a".repeat(255)}  ` }).name
+    ).toHaveLength(255)
+  })
+
+  it("keeps padded canonical league IDs invalid", () => {
+    expect(() =>
+      normalizeOne({ ...bestBallFixture, league_id: " fixture-league " })
+    ).toThrow()
+  })
+
+  it("keeps padded statuses invalid", () => {
+    expect(() =>
+      normalizeOne({ ...bestBallFixture, status: " in_season " })
+    ).toThrow()
+  })
+
+  it("keeps padded roster-position tokens invalid", () => {
+    expect(() =>
+      normalizeOne({ ...bestBallFixture, roster_positions: [" QB "] })
+    ).toThrow()
   })
 
   it("rejects a wrong top-level shape", () => {

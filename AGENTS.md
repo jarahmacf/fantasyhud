@@ -50,6 +50,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Keep authenticated app users and provider fantasy identities separate.
 - Never use a Sleeper username as canonical identity.
 - Never parse provider IDs as numbers.
+- Provider display labels may normalize insignificant outer whitespace; canonical provider identifiers and enum-like source values must remain exact.
 - Never call Sleeper from browser code.
 - Never accept canonical provider IDs from browser input.
 - Never use the admin client before validating the app user.

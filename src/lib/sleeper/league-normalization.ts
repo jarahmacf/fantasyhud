@@ -85,7 +85,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null
 }
 
-function parseBoundedString(value: unknown, maximumLength: number): string {
+function parseStrictBoundedString(
+  value: unknown,
+  maximumLength: number
+): string {
   if (typeof value !== "string") {
     return invalidResponse()
   }
@@ -101,14 +104,30 @@ function parseBoundedString(value: unknown, maximumLength: number): string {
   return value
 }
 
-function parseNullableBoundedString(
+function parseBoundedDisplayString(
+  value: unknown,
+  maximumLength: number
+): string {
+  if (typeof value !== "string" || /[\u0000-\u001f\u007f]/u.test(value)) {
+    return invalidResponse()
+  }
+
+  const normalized = value.trim()
+  if (normalized.length === 0 || normalized.length > maximumLength) {
+    return invalidResponse()
+  }
+
+  return normalized
+}
+
+function parseNullableStrictBoundedString(
   value: unknown,
   maximumLength: number
 ): string | null {
   if (value === null || value === undefined) {
     return null
   }
-  return parseBoundedString(value, maximumLength)
+  return parseStrictBoundedString(value, maximumLength)
 }
 
 function parseSeason(value: unknown): number {
@@ -182,7 +201,7 @@ function parseRosterPositions(value: unknown): string[] {
   }
 
   return value.map((position) => {
-    const parsed = parseBoundedString(position, 64)
+    const parsed = parseStrictBoundedString(position, 64)
     if (!/^[A-Z0-9_]+$/u.test(parsed)) {
       return invalidResponse()
     }
@@ -211,10 +230,10 @@ function normalizeLeague(
     return invalidResponse()
   }
 
-  const sport = parseBoundedString(value.sport, 32)
+  const sport = parseStrictBoundedString(value.sport, 32)
   const season = parseSeason(value.season)
-  const status = parseBoundedString(value.status, 32)
-  const seasonType = parseBoundedString(value.season_type, 32)
+  const status = parseStrictBoundedString(value.status, 32)
+  const seasonType = parseStrictBoundedString(value.season_type, 32)
   if (
     sport !== "nfl" ||
     season !== expectedSeason ||
@@ -238,17 +257,17 @@ function normalizeLeague(
   }
 
   const rosterPositions = parseRosterPositions(value.roster_positions)
-  const avatarId = parseNullableBoundedString(value.avatar, 255)
-  const previousExternalLeagueId = parseNullableBoundedString(
+  const avatarId = parseNullableStrictBoundedString(value.avatar, 255)
+  const previousExternalLeagueId = parseNullableStrictBoundedString(
     value.previous_league_id,
     255
   )
 
   return {
-    externalLeagueId: parseBoundedString(value.league_id, 255),
+    externalLeagueId: parseStrictBoundedString(value.league_id, 255),
     sport: "nfl",
     season,
-    name: parseBoundedString(value.name, 255),
+    name: parseBoundedDisplayString(value.name, 255),
     status,
     seasonType,
     teamCount: parsePositiveInteger(value.total_rosters),

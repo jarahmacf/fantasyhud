@@ -1,6 +1,6 @@
 # Task 006 Sleeper source verification
 
-Status: **DEFERRED TO CONTROLLED POST-MERGE CANARY**
+Status: **LIVE CANARY OBSERVED — DISPLAY-NAME NORMALIZATION HOTFIX**
 
 Checked on 2026-08-31. This document is deliberately sanitized.
 
@@ -19,18 +19,15 @@ Sleeper's documentation also states that the API is free for noncommercial use. 
 
 ## Live audit result
 
-The signed-in hosted preflight and database checks succeeded, but the Codex host could not retain a live source response. No uncontrolled read was used to manufacture evidence, and the unavailable live read is not treated as a code failure.
+The first signed-in Production canary resolved league season 2026 and received 30 league objects. Eight source `name` values contained leading and/or trailing whitespace. The pre-hotfix validator rejected the complete collection at the league-normalization boundary because it applied the canonical-string whitespace rule to the provider-controlled display name.
 
-Therefore the following live facts remain unverified:
+The failure produced one terminal failed sync run. It persisted no provider state, shared league, or account-league association, and `fantasy_accounts.last_synced_at` remained null. The source shape otherwise reached the league-normalization boundary.
 
-- actual state field population and nullability at the observation time
-- actual current-season collection shape for the connected identity
-- representative live setting, scoring, and roster-position shapes
-- actual empty-versus-nonempty collection status
+The hotfix normalizes insignificant outer whitespace only on the mutable league display name. Canonical identifiers, status, season type, avatar identifiers, previous league identifiers, and roster-position tokens remain strict. Exact settings, scoring settings, roster positions, and provider metadata remain unchanged.
 
-Implementation and CI fixtures are based on Sleeper's official documented contract only. They contain fabricated IDs and names. Changed or malformed source shapes fail closed during full application validation and again inside the atomic persistence RPC.
+The complete live classification and exact-settings comparison remains pending the repeated post-hotfix canary. That canary must import the complete collection, compare normalized visible names with the source after ignoring only outer whitespace, compare representative exact configuration fields and classifications, and repeat discovery to prove stable counts and uniqueness.
 
-The first Production import after merge is the controlled live verification. Sign in, import the connected account's current-season leagues once, confirm the run succeeds, and immediately compare real Sleeper settings, scoring settings, and roster positions with the stored exact fields and derived management, best-ball, superflex, IDP, and scoring classifications. Confirm the resolved provider season, current-season count, canonical league uniqueness, account associations, and bounded sync result counts. Record only sanitized field names and aggregate findings; do not commit identifiers or payloads.
+No real username, user ID, league ID, league name, or raw provider payload is committed.
 
 ## Data-exposure boundary
 
