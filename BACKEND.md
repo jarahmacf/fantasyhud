@@ -39,7 +39,9 @@ The `app_private` schema contains internal trigger functions with fixed search p
 
 Task 004 adds one narrowly scoped server-only Supabase client using `SUPABASE_SECRET_KEY`. It is constructed only inside the authenticated Sleeper connection Server Action after signed claims are validated. It calls only the atomic `public.connect_sleeper_account` RPC. The RPC is `SECURITY DEFINER`, has a fixed search path, and is executable only by `service_role` and `postgres`.
 
-Task 003 adds profiles, shared fantasy accounts, and user-to-account associations. Task 004 reuses that model for one validated identity connection. Task 005 extends the indexed RLS path through account-to-league discovery and shared leagues, and adds shared provider season state plus sync-run observability. Authenticated sessions receive only exact read grants; all provider-data mutation remains server-only.
+Task 003 adds profiles, shared fantasy accounts, and user-to-account associations. Task 004 reuses that model for one validated identity connection. Task 005 extends the indexed RLS path through account-to-league discovery and shared leagues, and adds shared provider season state plus sync-run observability. Authenticated sessions receive only exact read grants.
+
+Task 005.1 revokes direct `service_role` access to the four provider-data tables. Provider-data writes are RPC-only: a validated Server Action may construct the service-role client only after verifying the app user and tracked-account reachability, then call a narrowly scoped `SECURITY DEFINER` function. `service_role` receives `EXECUTE` on each reviewed function, never direct table CRUD. Task 006 must add its own service-only persistence function and transactional provider-consistency validation before any league discovery can be stored.
 
 The implemented fantasy-data parent tables are:
 

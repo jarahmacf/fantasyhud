@@ -1,6 +1,6 @@
 begin;
 
-select plan(79);
+select plan(87);
 
 select has_table('public', 'provider_season_states', 'provider season states exist');
 select has_table('public', 'leagues', 'shared leagues exist');
@@ -197,6 +197,7 @@ select is(
       and table_name in (
         'league_users',
         'rosters',
+        'roster_players',
         'fantasy_account_rosters',
         'players',
         'player_external_ids',
@@ -209,6 +210,7 @@ select is(
         'transaction_players',
         'transaction_draft_picks',
         'playoff_bracket_entries',
+        'league_standing_snapshots',
         'player_stat_snapshots',
         'player_ranking_snapshots',
         'market_adp_snapshots',
@@ -736,6 +738,50 @@ select throws_ok(
 );
 select throws_ok(
   $$
+    update public.fantasy_account_leagues
+    set removed_at = '2026-08-30 23:00:00+00'
+    where id = '54000000-0000-0000-0000-000000000001'
+  $$,
+  '23514',
+  null,
+  'removal cannot precede first observation'
+);
+select throws_ok(
+  $$
+    update public.fantasy_account_leagues
+    set removed_at = '2026-08-31 00:30:00+00'
+    where id = '54000000-0000-0000-0000-000000000001'
+  $$,
+  '23514',
+  null,
+  'removal cannot fall between first and last observations'
+);
+select lives_ok(
+  $$
+    update public.fantasy_account_leagues
+    set removed_at = last_seen_at
+    where id = '54000000-0000-0000-0000-000000000001'
+  $$,
+  'removal may equal the last observation'
+);
+select lives_ok(
+  $$
+    update public.fantasy_account_leagues
+    set removed_at = '2026-08-31 02:00:00+00'
+    where id = '54000000-0000-0000-0000-000000000001'
+  $$,
+  'removal may follow the last observation'
+);
+select lives_ok(
+  $$
+    update public.fantasy_account_leagues
+    set removed_at = null
+    where id = '54000000-0000-0000-0000-000000000001'
+  $$,
+  'an active discovery association may have no removal time'
+);
+select throws_ok(
+  $$
     insert into public.sync_runs (
       fantasy_account_id, provider, sport, scope, status, started_at
     ) values (
@@ -932,14 +978,54 @@ select ok(
         'public.sync_runs'
       ]
     ) as new_table(name)
-    where not (
-      has_table_privilege('service_role', new_table.name, 'SELECT')
-      and has_table_privilege('service_role', new_table.name, 'INSERT')
-      and has_table_privilege('service_role', new_table.name, 'UPDATE')
-      and has_table_privilege('service_role', new_table.name, 'DELETE')
-    )
+    where has_table_privilege('service_role', new_table.name, 'SELECT')
   ),
-  'service_role has required CRUD privileges on new tables'
+  'service_role has no direct SELECT on provider-data tables'
+);
+select ok(
+  not exists (
+    select 1
+    from unnest(
+      array[
+        'public.provider_season_states',
+        'public.leagues',
+        'public.fantasy_account_leagues',
+        'public.sync_runs'
+      ]
+    ) as new_table(name)
+    where has_table_privilege('service_role', new_table.name, 'INSERT')
+  ),
+  'service_role has no direct INSERT on provider-data tables'
+);
+select ok(
+  not exists (
+    select 1
+    from unnest(
+      array[
+        'public.provider_season_states',
+        'public.leagues',
+        'public.fantasy_account_leagues',
+        'public.sync_runs'
+      ]
+    ) as new_table(name)
+    where has_table_privilege('service_role', new_table.name, 'UPDATE')
+  ),
+  'service_role has no direct UPDATE on provider-data tables'
+);
+select ok(
+  not exists (
+    select 1
+    from unnest(
+      array[
+        'public.provider_season_states',
+        'public.leagues',
+        'public.fantasy_account_leagues',
+        'public.sync_runs'
+      ]
+    ) as new_table(name)
+    where has_table_privilege('service_role', new_table.name, 'DELETE')
+  ),
+  'service_role has no direct DELETE on provider-data tables'
 );
 
 set local role authenticated;

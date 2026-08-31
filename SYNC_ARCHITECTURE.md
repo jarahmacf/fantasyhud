@@ -31,6 +31,18 @@ status = running
 
 for each fantasy account. Terminal history remains unlimited. Later scopes need their own reviewed concurrency contract rather than being silently folded into this index.
 
+## Stale-run recovery
+
+Every uniqueness-protected running operation requires a documented stale-run recovery path. Task 006 league discovery must:
+
+1. Lock the fantasy-account/run boundary transactionally.
+2. Reuse an existing running league-discovery run when its `updated_at` activity timestamp is no more than five minutes old.
+3. Treat an older running league-discovery run as stale.
+4. Atomically mark the stale run `failed` with `finished_at`, bounded code `stale_run_timeout`, a bounded safe message, retryability, and the `league_discovery` stage.
+5. Start the replacement run only after the stale row is terminal.
+
+League discovery is a single-step operation, so `updated_at` is its activity timestamp. Multi-resource imports must use item leases or explicit heartbeats instead of extending this simple timeout rule.
+
 ## Lifecycle
 
 Allowed statuses:
@@ -81,4 +93,6 @@ A source error is not an empty collection. Failed, partial, unavailable, and con
 
 Authenticated browser sessions may read only sync runs whose `fantasy_account_id` is linked to `auth.uid()` through `user_fantasy_accounts`. Browser roles receive no insert, update, or delete grants.
 
-Future writes must occur in validated server-side operations. Those operations must validate the app user before constructing an admin client, confirm the tracked-account authorization path, sanitize errors, and preserve terminal run history. Task 005 adds no import RPC or Server Action.
+Direct `service_role` privileges on provider-data tables are revoked. Future writes must occur through a narrowly scoped, reviewed `SECURITY DEFINER` RPC invoked by a validated server-side operation; `service_role` receives only `EXECUTE` on that function. The Server Action must validate the app user before constructing an admin client, confirm the tracked-account authorization path, sanitize errors, and preserve terminal run history.
+
+League-discovery persistence must also validate transactionally that `fantasy_accounts.provider = leagues.provider = sync_runs.provider`. Cross-provider associations are invalid. Task 005.1 adds no import RPC or Server Action; Task 006 must introduce and test its own service-only function before performing any provider-data write.
