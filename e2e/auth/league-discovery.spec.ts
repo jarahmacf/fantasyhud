@@ -111,6 +111,19 @@ test("imports, refreshes, reconciles, and persists current-season leagues", asyn
     .eq("fantasy_account_id", linkResult.data!.fantasy_account_id)
   expect(associationResult.error).toBeNull()
   expect(associationResult.data).toHaveLength(2)
+  const storedLeagueResult = await supabase
+    .from("leagues")
+    .select("name")
+    .in("external_league_id", [
+      "fixture-league-best-ball",
+      "fixture-league-dynasty",
+    ])
+    .order("name")
+  expect(storedLeagueResult.error).toBeNull()
+  expect(storedLeagueResult.data!.map((league) => league.name)).toEqual([
+    "Fixture Best Ball",
+    "Fixture Dynasty Superflex",
+  ])
   expect(
     associationResult.data!.filter((association) => !association.removed_at)
   ).toHaveLength(1)

@@ -29,6 +29,12 @@ The entire league array is parsed before any persistence call. Every row must be
 
 An empty array that passed these checks is a successful observed collection. It reconciles that account to zero active leagues for the exact Sleeper/NFL/season scope.
 
+## Display-name normalization
+
+Provider display labels may normalize insignificant outer whitespace. Sleeper league names are trimmed at the normalization boundary, while internal whitespace and case are preserved. Blank normalized names, overlong normalized names, non-string names, and source names containing ASCII control characters remain invalid.
+
+Canonical provider identifiers and enum-like source values must remain exact. League IDs, sport, status, season type, avatar IDs, previous league IDs, and roster-position tokens continue to reject leading or trailing whitespace.
+
 ## Exact source state and classifications
 
 `settings`, `scoring_settings`, and `roster_positions` are preserved exactly. Derived columns are filter and presentation aids only:

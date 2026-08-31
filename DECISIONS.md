@@ -63,3 +63,4 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-31 | Current-season reads use provider season scope       | Historical associations and attempts must not be presented as the resolved current season                | Accepted |
 | 2026-08-31 | Shared current state is monotonic by fetch time      | A slower older response cannot regress a newer provider or league representation                         | Accepted |
 | 2026-08-31 | Shared creation and locking are concurrency-safe     | Conflict-safe insert-or-load and canonical key order prevent identity races and inconsistent lock order  | Accepted |
+| 2026-08-31 | Provider display labels may trim outer whitespace    | Human-readable labels may contain insignificant padding; canonical IDs and enum-like values remain exact | Accepted |
