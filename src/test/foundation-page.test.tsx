@@ -1,32 +1,44 @@
-import { render, screen, within } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import Home from "@/app/page"
 
 describe("foundation page", () => {
-  it("renders the FANTASY HUD shell and backend heading", () => {
+  it("renders the canonical shell and repository heading", () => {
     render(<Home />)
 
     expect(screen.getByText("FANTASY HUD")).toBeInTheDocument()
+    expect(screen.getByText("Portfolio Command Center")).toBeInTheDocument()
     expect(
-      screen.getByRole("heading", { level: 1, name: "Backend foundation" })
+      screen.getByRole("heading", { level: 1, name: "Repository foundation" })
     ).toBeInTheDocument()
+    expect(screen.getByText("Local workspace")).toBeInTheDocument()
+    expect(screen.getByText("No signed-in user")).toBeInTheDocument()
   })
 
-  it("renders four compact status cards", () => {
-    render(<Home />)
+  it("renders four cards with the canonical composition", () => {
+    const { container } = render(<Home />)
+    const summary = screen.getByRole("region", { name: "Foundation summary" })
+    const cards = summary.querySelectorAll('[data-slot="card"]')
 
-    const cards = screen.getAllByTestId("status-card")
     expect(cards).toHaveLength(4)
+    expect(
+      container.querySelectorAll('[data-slot="card-header"]')
+    ).toHaveLength(4)
+    expect(
+      container.querySelectorAll('[data-slot="card-action"]')
+    ).toHaveLength(4)
+    expect(
+      container.querySelectorAll('[data-slot="card-footer"]')
+    ).toHaveLength(4)
+
     for (const label of [
       "Application",
       "TypeScript",
-      "Unit tests",
-      "Browser tests",
+      "Test suite",
+      "Delivery",
     ]) {
-      expect(
-        cards.some((card) => within(card).queryByText(label) !== null)
-      ).toBe(true)
+      expect(within(summary).getByText(label)).toBeInTheDocument()
     }
   })
 
@@ -35,14 +47,11 @@ describe("foundation page", () => {
 
     const table = screen.getByRole("table", { name: "Foundation status" })
     expect(within(table).getAllByRole("row")).toHaveLength(11)
-
-    const hostedDevelopmentRow = within(table).getByRole("row", {
-      name: /Hosted development Configured Supabase GitHub integration/i,
-    })
     expect(
-      within(hostedDevelopmentRow).getByText("Configured")
+      within(table).getByRole("row", {
+        name: /Hosted development Configured Supabase GitHub integration/i,
+      })
     ).toBeInTheDocument()
-
     expect(
       within(table).getByRole("row", {
         name: /Product database Not modeled Deferred to Task 003/i,
@@ -50,17 +59,60 @@ describe("foundation page", () => {
     ).toBeInTheDocument()
   })
 
-  it("does not expose removed template controls", () => {
+  it("filters every foundation field and clearing restores all rows", () => {
     render(<Home />)
 
+    const search = screen.getByRole("searchbox", {
+      name: "Search foundation status",
+    })
+    const table = screen.getByRole("table", { name: "Foundation status" })
+
+    fireEvent.change(search, { target: { value: "pgTAP" } })
+    expect(within(table).getAllByRole("row")).toHaveLength(2)
     expect(
-      screen.queryByRole("button", { name: /theme customizer/i })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: /customize columns/i })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: /add section/i })
-    ).not.toBeInTheDocument()
+      within(table).getByRole("row", { name: /Database tests Ready pgTAP/i })
+    ).toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 of 10 systems matching “pgTAP”"
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear search" }))
+    expect(search).toHaveValue("")
+    expect(within(table).getAllByRole("row")).toHaveLength(11)
+  })
+
+  it("focuses search with the platform keyboard shortcut", () => {
+    render(<Home />)
+
+    const search = screen.getByRole("searchbox", {
+      name: "Search foundation status",
+    })
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true })
+    expect(search).toHaveFocus()
+  })
+
+  it("exposes no fake navigation or excluded template controls", () => {
+    render(<Home />)
+
+    expect(screen.getAllByRole("link")).toHaveLength(2)
+    expect(screen.getByRole("link", { name: /Foundation/i })).toHaveAttribute(
+      "href",
+      "/"
+    )
+
+    for (const excluded of [
+      /theme customizer/i,
+      /customize columns/i,
+      /add section/i,
+      /blocks/i,
+      /landing page/i,
+    ]) {
+      expect(
+        screen.queryByRole("button", { name: excluded })
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole("link", { name: excluded })
+      ).not.toBeInTheDocument()
+    }
   })
 })

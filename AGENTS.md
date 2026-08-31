@@ -26,8 +26,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Do not create abstractions for hypothetical future needs.
 - Do not silently reinterpret product terminology.
 - Preserve uncertainty instead of inventing values.
-- Do not import new packages merely because the reference template used them.
-- Reference-template code must be selectively adapted, not wholesale copied.
+- Treat the supplied ShadcnStore dashboard as the canonical visual base under its preserved MIT license.
+- When changing shell, card, sidebar, header, heading, page spacing, or table styling, inspect the corresponding canonical reference files first.
+- Prefer direct adaptation of the reference tokens, structure, dimensions, spacing, and component composition where product requirements allow.
+- Do not recreate the reference from memory or introduce a generic AI-dashboard aesthetic.
+- Do not replace the neutral reference styling with arbitrary brand colors.
+- Do not claim visual fidelity without desktop and mobile screenshots.
+- Preserve visual-regression tests unless intentionally updating the documented visual system and its baselines.
+- New product screens must use the canonical card, table, heading, and page-spacing patterns documented in `VISUAL_SYSTEM.md`.
 - Vercel and Supabase deploy through their GitHub integrations.
 - GitHub Actions verifies code and migrations but never deploys them.
 - Represent every schema change with a version-controlled migration.

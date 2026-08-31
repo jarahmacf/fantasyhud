@@ -1,60 +1,33 @@
-# ShadcnStore reference record
+# ShadcnStore canonical reference
 
 ## Source and license
 
-- ZIP: `shadcn-dashboard-landing-template-main.zip`
+- Source archive: `shadcn-dashboard-landing-template-main.zip`
+- Canonical screenshot: `nextjs-version/public/dashboard-dark.png`
 - License: MIT License, copyright 2025 ShadcnStore
 - Preserved license: `THIRD_PARTY_LICENSES/ShadcnStore-MIT.txt`
 
-## Reference files inspected
+The supplied ShadcnStore Next.js dashboard is FANTASY HUD's canonical visual implementation reference. Direct adaptation of its MIT-licensed DOM structure, Tailwind classes, tokens, dimensions, and component composition is intentionally permitted and preferred. Recreating these patterns from memory is discouraged because it causes spacing and hierarchy drift.
 
-- `nextjs-version/src/app/(dashboard)/layout.tsx`
-- `nextjs-version/src/app/(dashboard)/dashboard/page.tsx`
-- `nextjs-version/src/app/(dashboard)/dashboard/components/data-table.tsx`
-- `nextjs-version/src/app/(dashboard)/dashboard/components/section-cards.tsx`
-- `nextjs-version/src/components/app-sidebar.tsx`
-- `nextjs-version/src/components/site-header.tsx`
-- `nextjs-version/src/components/ui/sidebar.tsx`
-- `nextjs-version/src/app/globals.css`
-- `nextjs-version/components.json`
-- `nextjs-version/public/dashboard-dark.png`
+Preserve exact reference values where product requirements allow. Before changing the application shell, sidebar, header, cards, table, heading, or page spacing, inspect the corresponding reference source listed in `VISUAL_SYSTEM.md`.
 
-## Patterns adopted
+## Deliberate product adaptations
 
-- Fixed desktop sidebar with a mobile off-canvas counterpart
-- Compact bordered top header
-- Responsive content inset and tight dashboard spacing
-- Near-black application background with a slightly lighter sidebar
-- Charcoal cards and panels with thin neutral borders
-- Four-column compact status-card proportions
-- Low-radius controls and surfaces
-- Muted sticky table header, dense rows, and responsive table overflow
-- Small outline status badges
-- `new-york` shadcn component feel, neutral CSS variables, and Lucide icons
-- Restrained blue interaction color and semantic green status color
-- Tabular, monospaced status and identifier styling
+- Geist Sans and Geist Mono replace Inter; this is the deliberate font deviation.
+- FANTASY HUD identity and repository-foundation facts replace ShadcnStore branding and demo analytics.
+- Navigation exposes only the real Foundation route.
+- The header search filters the local foundation table instead of opening a demo command palette.
+- The footer describes a local workspace and explicitly states that no user is signed in.
+- Semantic green is limited to truthful ready/configured statuses.
 
-## Features intentionally excluded
+## Excluded reference features
 
 - Theme, appearance, sidebar-layout, side, variant, and collapse customizers
-- Upgrade promotion, ShadcnStore branding, template logo, and promotional footer
+- Upgrade promotion, template branding, promotional notifications, and promotional footer
 - Landing, authentication, error, mail, chat, calendar, task, FAQ, pricing, and settings pages
-- Search command palette, external links, theme toggle, and user menu
-- Charts, tabs, drag-and-drop, inline editing, row selection, pagination, and actions menus
-- Column customization, “Customize Columns,” and “Add Section” controls
-- Fake analytics, fake fantasy-football data, authentication, and backend behavior
+- External marketing links, theme toggle, and fake user menu
+- Charts, demo analytics, tabs, drag-and-drop, row selection, inline editing, pagination, and actions menus
+- Column customization, `Customize Columns`, and `Add Section` controls
+- Fake fantasy data, future-product navigation, authentication, and backend behavior
 
-## Dependencies intentionally excluded
-
-- Recharts and chart helpers
-- dnd-kit
-- Zustand
-- Sonner
-- Form libraries
-- React Query
-- TanStack Table
-- Dependencies used only by removed demos and customizers
-
-## Adaptation record
-
-No reference source file was copied wholesale or substantially ported. The application shell, card proportions, and table surface treatment were selectively reimplemented in the new repository. Current shadcn/ui primitives were generated through the shadcn CLI, not copied from the ZIP.
+These exclusions remove demo scope. They do not authorize alternate shell, spacing, card, or table styling.

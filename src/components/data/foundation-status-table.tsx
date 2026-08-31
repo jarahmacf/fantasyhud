@@ -1,8 +1,13 @@
 "use client"
 
+import type { ColumnDef } from "@tanstack/react-table"
 import { CircleCheck, Minus } from "lucide-react"
 
-import { DataTable, type DataTableColumn } from "@/components/data/data-table"
+import { useFoundationSearch } from "@/components/app/foundation-search"
+import {
+  DataTable,
+  type DataTableColumnMeta,
+} from "@/components/data/data-table"
 import { Badge } from "@/components/ui/badge"
 
 type FoundationStatus = "Ready" | "Configured" | "Not modeled"
@@ -13,7 +18,7 @@ type FoundationRow = {
   detail: string
 }
 
-const rows: readonly FoundationRow[] = [
+const rows: FoundationRow[] = [
   { system: "Application", status: "Ready", detail: "Next.js App Router" },
   { system: "TypeScript", status: "Ready", detail: "Strict mode" },
   {
@@ -32,11 +37,7 @@ const rows: readonly FoundationRow[] = [
     status: "Ready",
     detail: "Supabase CLI + local stack",
   },
-  {
-    system: "Database tests",
-    status: "Ready",
-    detail: "pgTAP",
-  },
+  { system: "Database tests", status: "Ready", detail: "pgTAP" },
   {
     system: "Hosted development",
     status: "Configured",
@@ -62,8 +63,8 @@ function StatusBadge({ status }: { status: FoundationStatus }) {
       variant="outline"
       className={
         isPositive
-          ? "rounded-[0.3rem] border-emerald-500/20 bg-emerald-500/5 px-1.5 font-mono text-[10px] font-medium text-emerald-400"
-          : "rounded-[0.3rem] border-zinc-700 bg-zinc-900 px-1.5 font-mono text-[10px] font-medium text-zinc-400"
+          ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"
+          : "text-muted-foreground"
       }
     >
       {isPositive ? (
@@ -76,52 +77,49 @@ function StatusBadge({ status }: { status: FoundationStatus }) {
   )
 }
 
-const columns: readonly DataTableColumn<FoundationRow>[] = [
+const leftMeta: DataTableColumnMeta = { align: "left" }
+
+const columns: ColumnDef<FoundationRow>[] = [
   {
-    id: "system",
+    accessorKey: "system",
     header: "System",
-    accessor: "system",
-    sortable: true,
-    cell: (row) => <span className="font-medium text-white">{row.system}</span>,
+    sortingFn: "alphanumeric",
+    meta: leftMeta,
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.system}</span>
+    ),
   },
   {
-    id: "status",
+    accessorKey: "status",
     header: "Status",
-    accessor: "status",
-    cell: (row) => <StatusBadge status={row.status} />,
+    sortingFn: "alphanumeric",
+    meta: leftMeta,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
-    id: "detail",
+    accessorKey: "detail",
     header: "Detail",
-    accessor: "detail",
-    cell: (row) => (
-      <span className="font-mono text-[12px] text-muted-foreground">
-        {row.detail}
-      </span>
+    sortingFn: "alphanumeric",
+    meta: leftMeta,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.detail}</span>
     ),
   },
 ]
 
 export function FoundationStatusTable() {
+  const { searchText } = useFoundationSearch()
+
   return (
-    <section aria-labelledby="foundation-status-heading" className="min-w-0">
-      <div className="mb-3 flex flex-col gap-0.5">
-        <h2
-          id="foundation-status-heading"
-          className="text-sm font-semibold text-white"
-        >
-          Foundation status
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Quality gates represented in this repository.
-        </p>
-      </div>
-      <DataTable
-        ariaLabel="Foundation status"
-        columns={columns}
-        rows={rows}
-        getRowKey={(row) => row.system}
-      />
-    </section>
+    <DataTable
+      ariaLabel="Foundation status"
+      columns={columns}
+      data={rows}
+      description="Quality gates represented in this repository."
+      emptyMessage="No foundation systems match this search."
+      getRowId={(row) => row.system}
+      searchText={searchText}
+      title="Foundation status"
+    />
   )
 }

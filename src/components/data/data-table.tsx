@@ -1,11 +1,22 @@
 "use client"
 
 import * as React from "react"
+import {
+  type ColumnDef,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -13,170 +24,196 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
-type Alignment = "left" | "center" | "right"
-type SortDirection = "ascending" | "descending"
-
-export type DataTableColumn<Row> = {
-  id: string
-  header: string
-  accessor?: keyof Row
-  align?: Alignment
-  sortable?: boolean
-  cell?: (row: Row) => React.ReactNode
+export type DataTableColumnMeta = {
+  align?: "left" | "center" | "right"
+  numeric?: boolean
 }
 
 type DataTableProps<Row> = {
   ariaLabel: string
-  columns: readonly DataTableColumn<Row>[]
-  rows: readonly Row[]
-  getRowKey: (row: Row) => React.Key
+  caption?: string
+  columns: ColumnDef<Row>[]
+  data: Row[]
+  description?: string
   emptyMessage?: string
+  getRowId: (row: Row) => string
+  searchText: string
+  title: string
 }
 
-type SortState<Row> = {
-  accessor: keyof Row
-  direction: SortDirection
-}
-
-const alignmentClassNames: Record<Alignment, string> = {
+const alignmentClassNames = {
   left: "text-left",
   center: "text-center",
   right: "text-right",
-}
+} as const
 
-function compareValues(left: unknown, right: unknown) {
-  return String(left ?? "").localeCompare(String(right ?? ""), undefined, {
-    numeric: true,
-    sensitivity: "base",
-  })
+function SortIcon({ direction }: { direction: false | "asc" | "desc" }) {
+  if (direction === "asc") {
+    return <ArrowUp aria-hidden="true" className="size-3.5" />
+  }
+
+  if (direction === "desc") {
+    return <ArrowDown aria-hidden="true" className="size-3.5" />
+  }
+
+  return <ArrowUpDown aria-hidden="true" className="size-3.5" />
 }
 
 export function DataTable<Row>({
   ariaLabel,
+  caption,
   columns,
-  rows,
-  getRowKey,
+  data,
+  description,
   emptyMessage = "No results.",
+  getRowId,
+  searchText,
+  title,
 }: DataTableProps<Row>) {
-  const [sort, setSort] = React.useState<SortState<Row> | null>(null)
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  // TanStack Table returns stable stateful helpers that React Compiler intentionally skips.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    columns,
+    data,
+    getRowId,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: "includesString",
+    onSortingChange: setSorting,
+    state: {
+      globalFilter: searchText,
+      sorting,
+    },
+  })
 
-  const sortedRows = React.useMemo(() => {
-    if (!sort) {
-      return rows
-    }
-
-    return [...rows].sort((left, right) => {
-      const result = compareValues(left[sort.accessor], right[sort.accessor])
-      return sort.direction === "ascending" ? result : -result
-    })
-  }, [rows, sort])
-
-  function toggleSort(accessor: keyof Row) {
-    setSort((current) => {
-      if (current?.accessor !== accessor) {
-        return { accessor, direction: "ascending" }
-      }
-
-      return {
-        accessor,
-        direction:
-          current.direction === "ascending" ? "descending" : "ascending",
-      }
-    })
-  }
-
-  function sortIcon(column: DataTableColumn<Row>) {
-    if (!column.accessor || sort?.accessor !== column.accessor) {
-      return <ArrowUpDown aria-hidden="true" className="size-3" />
-    }
-
-    return sort.direction === "ascending" ? (
-      <ArrowUp aria-hidden="true" className="size-3" />
-    ) : (
-      <ArrowDown aria-hidden="true" className="size-3" />
-    )
-  }
+  const filteredCount = table.getFilteredRowModel().rows.length
+  const countLabel = searchText
+    ? `${filteredCount} of ${data.length} systems matching “${searchText}”`
+    : `${data.length} systems`
 
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
-      <Table aria-label={ariaLabel} className="min-w-[620px]">
-        <TableHeader className="sticky top-0 z-10 bg-muted">
-          <TableRow className="hover:bg-muted">
-            {columns.map((column) => {
-              const align = column.align ?? "left"
-              const sortableAccessor = column.sortable
-                ? column.accessor
-                : undefined
-              const isSorted =
-                column.accessor !== undefined &&
-                sort?.accessor === column.accessor
+    <section aria-labelledby="foundation-status-heading" className="min-w-0">
+      <div className="mb-3 flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <h2 id="foundation-status-heading" className="text-sm font-semibold">
+            {title}
+          </h2>
+          {description ? (
+            <p className="text-xs text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+        <p
+          role="status"
+          aria-live="polite"
+          className="shrink-0 text-xs text-muted-foreground"
+        >
+          {countLabel}
+        </p>
+      </div>
 
-              return (
-                <TableHead
-                  key={column.id}
-                  aria-sort={isSorted ? sort.direction : undefined}
-                  className={cn(
-                    "h-9 px-4 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground",
-                    alignmentClassNames[align]
-                  )}
-                >
-                  {sortableAccessor ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleSort(sortableAccessor)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-sm outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                        align === "right" && "ml-auto",
-                        align === "center" && "mx-auto"
-                      )}
-                    >
-                      {column.header}
-                      {sortIcon(column)}
-                    </button>
-                  ) : (
-                    column.header
-                  )}
-                </TableHead>
-              )
-            })}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedRows.length > 0 ? (
-            sortedRows.map((row) => (
-              <TableRow key={getRowKey(row)} className="hover:bg-white/[0.025]">
-                {columns.map((column) => {
-                  const align = column.align ?? "left"
-                  const value = column.accessor
-                    ? String(row[column.accessor] ?? "")
-                    : null
+      <div className="overflow-hidden rounded-lg border bg-card">
+        <Table aria-label={ariaLabel} className="min-w-[640px]">
+          {caption ? <TableCaption>{caption}</TableCaption> : null}
+          <TableHeader className="sticky top-0 z-10 bg-muted">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="hover:bg-muted">
+                {headerGroup.headers.map((header) => {
+                  const meta = header.column.columnDef.meta as
+                    DataTableColumnMeta | undefined
+                  const alignment = meta?.align ?? "left"
+                  const direction = header.column.getIsSorted()
 
                   return (
-                    <TableCell
-                      key={column.id}
+                    <TableHead
+                      key={header.id}
+                      aria-sort={
+                        direction === "asc"
+                          ? "ascending"
+                          : direction === "desc"
+                            ? "descending"
+                            : header.column.getCanSort()
+                              ? "none"
+                              : undefined
+                      }
                       className={cn(
-                        "h-11 px-4 py-2.5 text-[13px]",
-                        alignmentClassNames[align]
+                        "h-10 px-2",
+                        alignmentClassNames[alignment],
+                        meta?.numeric && "tabular-nums"
                       )}
                     >
-                      {column.cell ? column.cell(row) : value}
-                    </TableCell>
+                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={header.column.getToggleSortingHandler()}
+                          aria-label={`Sort by ${String(header.column.columnDef.header)}`}
+                          className={cn(
+                            "-ml-3 h-8",
+                            alignment === "right" && "ml-auto -mr-3",
+                            alignment === "center" && "mx-auto"
+                          )}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          <SortIcon direction={direction} />
+                        </Button>
+                      ) : (
+                        flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )
+                      )}
+                    </TableHead>
                   )
                 })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center text-sm text-muted-foreground"
-              >
-                {emptyMessage}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {filteredCount ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => {
+                    const meta = cell.column.columnDef.meta as
+                      DataTableColumnMeta | undefined
+                    const alignment = meta?.align ?? "left"
+
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "h-11 p-2",
+                          alignmentClassNames[alignment],
+                          meta?.numeric && "tabular-nums"
+                        )}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-sm text-muted-foreground"
+                >
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
   )
 }
