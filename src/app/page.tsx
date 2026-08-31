@@ -31,8 +31,8 @@ export default function Home() {
     <AppShell>
       <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-5 sm:px-6 md:gap-6 md:py-7 lg:px-8">
         <PageHeading
-          title="Repository foundation"
-          description="Application, quality gates, and backend status."
+          title="Backend foundation"
+          description="Application, quality gates, and backend infrastructure status."
         />
 
         <section

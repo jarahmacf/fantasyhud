@@ -1,0 +1,2 @@
+-- Product seed data is intentionally deferred until the product schema is modeled.
+-- Keep local resets deterministic and empty during the backend-foundation task.

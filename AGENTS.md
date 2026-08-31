@@ -28,3 +28,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Preserve uncertainty instead of inventing values.
 - Do not import new packages merely because the reference template used them.
 - Reference-template code must be selectively adapted, not wholesale copied.
+- Vercel and Supabase deploy through their GitHub integrations.
+- GitHub Actions verifies code and migrations but never deploys them.
+- Represent every schema change with a version-controlled migration.
+- Do not make dashboard-only schema changes.
+- Never claim a remote migration deployed before verifying it.
+- Never commit secrets or expose service-role keys.
+- Never use a production database for development tests.
