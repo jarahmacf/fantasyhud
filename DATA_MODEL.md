@@ -28,6 +28,8 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - `fantasy_account_leagues`: one discovery association per fantasy account and shared league.
 - `sync_runs`: one tracked fantasy account, scope, and attempt.
 
+Task 006 populates these grains for the first time through one validated current-season Sleeper collection. `leagues.fetched_at` is the required observation time. Shared provider state and league representations are monotonic by this time, while account associations remain independent observations. `leagues.provider_updated_at` remains nullable, is never replaced with request time, and is not erased by a null incoming value.
+
 The browser authorization path is `auth user → user_fantasy_accounts → fantasy account → fantasy_account_leagues → league`. Browser roles receive read-only, RLS-scoped access. Provider data is written only through reviewed service-only RPCs; `service_role` has no direct provider-table CRUD.
 
 ## Planned fantasy-data grains
@@ -38,6 +40,9 @@ The browser authorization path is `auth user → user_fantasy_accounts → fanta
 ## Invariants
 
 - Shared Sleeper resources are stored once.
+- Concurrent first creation of a shared resource reuses one canonical row.
+- Shared-resource locks are acquired in deterministic canonical-key order.
+- Older provider observations never overwrite newer shared current representations.
 - Auth users and provider identities remain separate concepts.
 - Provider plus external user ID is canonical; usernames are mutable.
 - A user may have at most one primary fantasy-account link.
@@ -54,6 +59,9 @@ The browser authorization path is `auth user → user_fantasy_accounts → fanta
 - Provider IDs remain strings.
 - Sleeper usernames are mutable; Sleeper `user_id` is the canonical account key.
 - Resolving an identity creates no league, roster, player, draft, or synchronization data.
+- A valid empty current-season league collection is a successful observed zero; a source failure is not.
+- Current-season league rows and success are scoped to the provider-resolved league season; historical associations remain stored.
+- League discovery never updates `fantasy_accounts.last_synced_at`.
 - Best-ball starter and bench labels do not affect exposure.
 - Best-ball exposure counts every current `roster_players` membership while preserving source starter, reserve, and taxi facts.
 - Drafted exposure comes from immutable `draft_picks`; weekly lineup history comes from `matchup_player_points`; acquisitions, drops, and trades come from transaction facts.

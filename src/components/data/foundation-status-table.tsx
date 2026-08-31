@@ -133,6 +133,7 @@ export function FoundationStatusTable() {
       description="Quality gates represented in this repository."
       emptyMessage="No foundation systems match this search."
       getRowId={(row) => row.system}
+      headingId="foundation-status-heading"
       searchText={searchText}
       title="Foundation status"
     />

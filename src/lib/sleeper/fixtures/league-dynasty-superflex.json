@@ -1,0 +1,15 @@
+{
+  "league_id": "fixture-league-dynasty",
+  "sport": "nfl",
+  "season": "2026",
+  "name": "Fixture Dynasty Superflex",
+  "status": "drafting",
+  "season_type": "regular",
+  "total_rosters": 12,
+  "settings": { "type": 2 },
+  "scoring_settings": { "rec": 0, "pass_yd": 0.04, "pass_td": 4 },
+  "roster_positions": ["QB", "RB", "WR", "TE", "SUPER_FLEX", "BN", "TAXI"],
+  "avatar": null,
+  "previous_league_id": null,
+  "draft_id": "fixture-draft-dynasty"
+}

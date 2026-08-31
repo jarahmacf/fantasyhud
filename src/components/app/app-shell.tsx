@@ -17,13 +17,26 @@ const shellStyle: ShellStyle = {
   "--header-height": "calc(var(--spacing) * 14)",
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export type AppShellIdentity = {
+  email: string | null
+  accountLabel: string
+}
+
+export function AppShell({
+  children,
+  identity,
+  showFoundationSearch = false,
+}: {
+  children: ReactNode
+  identity?: AppShellIdentity
+  showFoundationSearch?: boolean
+}) {
   return (
     <FoundationSearchProvider>
       <SidebarProvider style={shellStyle}>
-        <AppSidebar />
+        <AppSidebar identity={identity} />
         <SidebarInset>
-          <SiteHeader />
+          <SiteHeader showFoundationSearch={showFoundationSearch} />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

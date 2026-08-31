@@ -1,0 +1,15 @@
+{
+  "league_id": "fixture-league-best-ball",
+  "sport": "nfl",
+  "season": "2026",
+  "name": "Fixture Best Ball",
+  "status": "in_season",
+  "season_type": "regular",
+  "total_rosters": 12,
+  "settings": { "type": 0, "best_ball": 1, "waiver_budget": 100 },
+  "scoring_settings": { "rec": 0.5, "rec_yd": 0.1, "rec_td": 6 },
+  "roster_positions": ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "BN"],
+  "avatar": "fixture-best-ball-avatar",
+  "previous_league_id": null,
+  "draft_id": "fixture-draft-best-ball"
+}

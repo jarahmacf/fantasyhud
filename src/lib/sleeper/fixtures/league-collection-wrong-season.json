@@ -1,0 +1,14 @@
+[
+  {
+    "league_id": "fixture-wrong-season",
+    "sport": "nfl",
+    "season": "2025",
+    "name": "Fixture Wrong Season",
+    "status": "complete",
+    "season_type": "regular",
+    "total_rosters": 12,
+    "settings": { "type": 0 },
+    "scoring_settings": { "rec": 1 },
+    "roster_positions": ["QB", "RB", "WR"]
+  }
+]

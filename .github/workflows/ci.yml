@@ -87,6 +87,9 @@ jobs:
       - name: Run authenticated browser tests
         run: npm run e2e:auth
 
+      - name: Run league discovery concurrency test
+        run: npm run db:test:league-concurrency
+
       - name: Upload authenticated browser failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4

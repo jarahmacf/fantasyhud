@@ -23,6 +23,7 @@
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
+    "db:test:league-concurrency": "node scripts/test-league-discovery-concurrency.mjs",
     "db:types": "node scripts/generate-database-types.mjs",
     "db:types:check": "node scripts/check-database-types.mjs",
     "db:check": "npm run db:reset && npm run db:test && npm run db:types:check",

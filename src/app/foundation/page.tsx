@@ -5,7 +5,7 @@ import { FoundationSummaryCards } from "@/components/data/foundation-summary-car
 
 export default function FoundationPage() {
   return (
-    <AppShell>
+    <AppShell showFoundationSearch>
       <div className="px-4 lg:px-6">
         <PageHeading
           title="Repository foundation"

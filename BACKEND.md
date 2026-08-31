@@ -8,7 +8,7 @@ Database migrations in `supabase/migrations/` are the schema source of truth. Ev
 
 The Supabase GitHub integration connects `jarahmacf/fantasyhud` with working directory `.` and deployment branch `main`. Reviewed migrations deploy to the hosted development project after they reach `main`. GitHub Actions verifies migrations locally and never deploys them.
 
-The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase. Task 004 is deployed and its hosted connection canary passed. Task 005 adds only reviewed parent-schema migrations; it makes no provider request or import.
+The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Task 004 and Task 005.1 are deployed and their hosted gates passed. Task 006 remains branch-only until audit and merge.
 
 ## Local workflow
 
@@ -41,7 +41,7 @@ Task 004 adds one narrowly scoped server-only Supabase client using `SUPABASE_SE
 
 Task 003 adds profiles, shared fantasy accounts, and user-to-account associations. Task 004 reuses that model for one validated identity connection. Task 005 extends the indexed RLS path through account-to-league discovery and shared leagues, and adds shared provider season state plus sync-run observability. Authenticated sessions receive only exact read grants.
 
-Task 005.1 revokes direct `service_role` access to the four provider-data tables. Provider-data writes are RPC-only: a validated Server Action may construct the service-role client only after verifying the app user and tracked-account reachability, then call a narrowly scoped `SECURITY DEFINER` function. `service_role` receives `EXECUTE` on each reviewed function, never direct table CRUD. Task 006 must add its own service-only persistence function and transactional provider-consistency validation before any league discovery can be stored.
+Task 005.1 revokes direct `service_role` access to the four provider-data tables. Task 006 implements that RPC-only boundary with fixed-search-path start, complete, and fail functions. The validated Server Action loads the primary tracked account through RLS before constructing the service-role client. `service_role` receives execute only; the completion function revalidates provider, account, run, normalized state, and the full league collection before one atomic write.
 
 The implemented fantasy-data parent tables are:
 
@@ -50,6 +50,6 @@ The implemented fantasy-data parent tables are:
 - `fantasy_account_leagues`: discovery association, not roster ownership
 - `sync_runs`: one tracked account, scope, and attempt
 
-See `FANTASY_DATA_ARCHITECTURE.md` for future grains and history rules and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 005 adds no import function, queue, cache, scheduler, child fact table, or production Supabase project.
+See `LEAGUE_DISCOVERY.md` for the import boundary, `FANTASY_DATA_ARCHITECTURE.md` for future grains and history rules, and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 006 adds no queue, cache, scheduler, child fact table, or production Supabase project.
 
 Authentication uses `@supabase/ssr`, cookie sessions, Next.js `proxy.ts` refresh, and signed claims for protection. `getSession()` is never an authorization source. See `AUTH.md`, `ACCOUNT_IDENTITY.md`, and `SLEEPER_CONNECTION.md`.
