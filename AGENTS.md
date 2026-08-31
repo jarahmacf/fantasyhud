@@ -55,3 +55,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never import the admin client into Client Components.
 - Never label a connected identity as synchronized.
 - Never call the real Sleeper API in CI.
+- Never infer roster ownership from league discovery.
+- Never infer one draft per league.
+- Never discard exact scoring settings.
+- Never combine best ball and dynasty into one value.
+- Never delete shared resources because one account stops reporting them.
+- Never overwrite immutable historical facts.
+- Never treat a source error as an empty collection.
+- Never add a materialized analytics table without measured need.
+- Never add a ranking without source and scoring context.
