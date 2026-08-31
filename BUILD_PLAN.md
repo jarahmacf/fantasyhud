@@ -3,7 +3,7 @@
 Every milestone is implemented and audited separately.
 
 1. 001 Repository foundation
-2. 002 Supabase foundation
+2. 002 Supabase and Vercel Git-connected foundation
 3. 003 Authentication and fantasy-account model
 4. 004 Resolve Sleeper username
 5. 005 Import leagues
@@ -19,3 +19,5 @@ Every milestone is implemented and audited separately.
 15. 015 Player detail
 16. 016 Market ADP as an independently verified data project
 17. 017 In-season matchup command center
+
+Task 002 establishes local Supabase migrations, pgTAP, generated types, typed client factories, GitHub Actions database checks, and Git-connected Supabase development and Vercel hosting. Product tables and authentication begin in Task 003.

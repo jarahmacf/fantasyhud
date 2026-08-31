@@ -5,7 +5,7 @@ import { CircleCheck, Minus } from "lucide-react"
 import { DataTable, type DataTableColumn } from "@/components/data/data-table"
 import { Badge } from "@/components/ui/badge"
 
-type FoundationStatus = "Ready" | "Not connected"
+type FoundationStatus = "Ready" | "Configured" | "Not modeled"
 
 type FoundationRow = {
   system: string
@@ -28,25 +28,45 @@ const rows: readonly FoundationRow[] = [
   },
   { system: "CI", status: "Ready", detail: "GitHub Actions" },
   {
-    system: "Backend",
-    status: "Not connected",
-    detail: "Deferred to Task 002",
+    system: "Backend tooling",
+    status: "Ready",
+    detail: "Supabase CLI + local stack",
+  },
+  {
+    system: "Database tests",
+    status: "Ready",
+    detail: "pgTAP",
+  },
+  {
+    system: "Hosted development",
+    status: "Configured",
+    detail: "Supabase GitHub integration",
+  },
+  {
+    system: "Hosting",
+    status: "Configured",
+    detail: "Vercel Git integration",
+  },
+  {
+    system: "Product database",
+    status: "Not modeled",
+    detail: "Deferred to Task 003",
   },
 ]
 
 function StatusBadge({ status }: { status: FoundationStatus }) {
-  const isReady = status === "Ready"
+  const isPositive = status === "Ready" || status === "Configured"
 
   return (
     <Badge
       variant="outline"
       className={
-        isReady
+        isPositive
           ? "rounded-[0.3rem] border-emerald-500/20 bg-emerald-500/5 px-1.5 font-mono text-[10px] font-medium text-emerald-400"
           : "rounded-[0.3rem] border-zinc-700 bg-zinc-900 px-1.5 font-mono text-[10px] font-medium text-zinc-400"
       }
     >
-      {isReady ? (
+      {isPositive ? (
         <CircleCheck aria-hidden="true" />
       ) : (
         <Minus aria-hidden="true" />

@@ -10,13 +10,15 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-1 hidden data-[orientation=vertical]:h-4 sm:block md:hidden"
         />
-        <span className="text-sm font-medium text-foreground">Foundation</span>
+        <span className="text-sm font-medium text-foreground">
+          Backend foundation
+        </span>
         <span className="ml-auto inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
           <span
             aria-hidden="true"
             className="size-1.5 rounded-full bg-zinc-500"
           />
-          No backend
+          Git-connected
         </span>
       </div>
     </header>

@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest"
 import Home from "@/app/page"
 
 describe("foundation page", () => {
-  it("renders the FANTASY HUD shell and repository heading", () => {
+  it("renders the FANTASY HUD shell and backend heading", () => {
     render(<Home />)
 
     expect(screen.getByText("FANTASY HUD")).toBeInTheDocument()
     expect(
-      screen.getByRole("heading", { level: 1, name: "Repository foundation" })
+      screen.getByRole("heading", { level: 1, name: "Backend foundation" })
     ).toBeInTheDocument()
   })
 
@@ -30,16 +30,24 @@ describe("foundation page", () => {
     }
   })
 
-  it("renders six foundation rows and the deferred backend state", () => {
+  it("renders ten truthful foundation rows", () => {
     render(<Home />)
 
     const table = screen.getByRole("table", { name: "Foundation status" })
-    expect(within(table).getAllByRole("row")).toHaveLength(7)
+    expect(within(table).getAllByRole("row")).toHaveLength(11)
 
-    const backendRow = within(table).getByRole("row", {
-      name: /Backend Not connected Deferred to Task 002/i,
+    const hostedDevelopmentRow = within(table).getByRole("row", {
+      name: /Hosted development Configured Supabase GitHub integration/i,
     })
-    expect(within(backendRow).getByText("Not connected")).toBeInTheDocument()
+    expect(
+      within(hostedDevelopmentRow).getByText("Configured")
+    ).toBeInTheDocument()
+
+    expect(
+      within(table).getByRole("row", {
+        name: /Product database Not modeled Deferred to Task 003/i,
+      })
+    ).toBeInTheDocument()
   })
 
   it("does not expose removed template controls", () => {
