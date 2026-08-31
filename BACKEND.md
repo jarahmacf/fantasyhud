@@ -8,7 +8,7 @@ Database migrations in `supabase/migrations/` are the schema source of truth. Ev
 
 The Supabase GitHub integration connects `jarahmacf/fantasyhud` with working directory `.` and deployment branch `main`. Reviewed migrations deploy to the hosted development project after they reach `main`. GitHub Actions verifies migrations locally and never deploys them.
 
-The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase. Task 003 hosted migration deployment remains pending until its pull request is audited and merged.
+The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase. Task 003 is deployed; the Task 004 RPC reaches hosted Supabase only after its pull request is audited and merged.
 
 ## Local workflow
 
@@ -35,8 +35,10 @@ npm run db:stop
 
 ## Security boundary
 
-The `app_private` schema contains internal trigger functions with fixed search paths. `anon` and `authenticated` cannot use or execute them. Browser code uses only the project URL and publishable key; no service-role client exists or belongs in application code.
+The `app_private` schema contains internal trigger functions with fixed search paths. `anon` and `authenticated` cannot use or execute them. Browser code uses only the project URL, publishable key, authenticated session, and RLS.
 
-Task 003 adds only profiles, shared fantasy accounts, and user-to-account associations. RLS exposes each user's profile and tracked identities for reads while prohibiting browser creation or mutation of fantasy accounts and links. There is no fantasy data import or production Supabase project.
+Task 004 adds one narrowly scoped server-only Supabase client using `SUPABASE_SECRET_KEY`. It is constructed only inside the authenticated Sleeper connection Server Action after signed claims are validated. It calls only the atomic `public.connect_sleeper_account` RPC. The RPC is `SECURITY DEFINER`, has a fixed search path, and is executable only by `service_role` and `postgres`.
 
-Authentication uses `@supabase/ssr`, cookie sessions, Next.js `proxy.ts` refresh, and signed claims for protection. `getSession()` is never an authorization source. See `AUTH.md` and `ACCOUNT_IDENTITY.md`.
+Task 003 adds only profiles, shared fantasy accounts, and user-to-account associations. RLS exposes each user's profile and tracked identities for reads while prohibiting browser creation or mutation of fantasy accounts and links. Task 004 reuses that model without adding fantasy-data tables. There is no league import or production Supabase project.
+
+Authentication uses `@supabase/ssr`, cookie sessions, Next.js `proxy.ts` refresh, and signed claims for protection. `getSession()` is never an authorization source. See `AUTH.md`, `ACCOUNT_IDENTITY.md`, and `SLEEPER_CONNECTION.md`.

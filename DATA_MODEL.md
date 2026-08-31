@@ -30,4 +30,6 @@ This document names future domain entities and invariants only. It does not defi
 - Pick ownership is derived, not stored as a universal boolean.
 - One league may have multiple drafts.
 - Provider IDs remain strings.
+- Sleeper usernames are mutable; Sleeper `user_id` is the canonical account key.
+- Resolving an identity creates no league, roster, player, draft, or synchronization data.
 - Best-ball starter and bench labels do not affect exposure.

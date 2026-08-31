@@ -47,3 +47,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never expose auth codes, token hashes, passwords, access tokens, or refresh tokens.
 - Never put service secrets in public environment variables.
 - Keep authenticated app users and provider fantasy identities separate.
+- Never use a Sleeper username as canonical identity.
+- Never parse provider IDs as numbers.
+- Never call Sleeper from browser code.
+- Never accept canonical provider IDs from browser input.
+- Never use the admin client before validating the app user.
+- Never import the admin client into Client Components.
+- Never label a connected identity as synchronized.
+- Never call the real Sleeper API in CI.

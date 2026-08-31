@@ -28,13 +28,13 @@ test("creates an account, profile, and protected cookie session", async ({
 
   await expect(page).toHaveURL(/\/onboarding$/)
   await expect(
-    page.getByRole("heading", { name: "No Sleeper account connected" })
+    page.getByRole("heading", { name: "Connect a Sleeper account" })
   ).toBeVisible()
   await expect(page.getByText("Task 003 Test User")).toBeVisible()
   await expect(page.getByText(email)).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Connect Sleeper account" })
-  ).toBeDisabled()
+  ).toBeEnabled()
 
   await disableMotion(page)
   await expect(page).toHaveScreenshot("onboarding-desktop.png", {
