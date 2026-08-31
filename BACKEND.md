@@ -8,7 +8,7 @@ Database migrations in `supabase/migrations/` are the schema source of truth. Ev
 
 The Supabase GitHub integration connects `jarahmacf/fantasyhud` with working directory `.` and deployment branch `main`. Reviewed migrations deploy to the hosted development project after they reach `main`. GitHub Actions verifies migrations locally and never deploys them.
 
-The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase. Task 003 is deployed; the Task 004 RPC reaches hosted Supabase only after its pull request is audited and merged.
+The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase. Task 004 is deployed and its hosted connection canary passed. Task 005 adds only reviewed parent-schema migrations; it makes no provider request or import.
 
 ## Local workflow
 
@@ -39,6 +39,15 @@ The `app_private` schema contains internal trigger functions with fixed search p
 
 Task 004 adds one narrowly scoped server-only Supabase client using `SUPABASE_SECRET_KEY`. It is constructed only inside the authenticated Sleeper connection Server Action after signed claims are validated. It calls only the atomic `public.connect_sleeper_account` RPC. The RPC is `SECURITY DEFINER`, has a fixed search path, and is executable only by `service_role` and `postgres`.
 
-Task 003 adds only profiles, shared fantasy accounts, and user-to-account associations. RLS exposes each user's profile and tracked identities for reads while prohibiting browser creation or mutation of fantasy accounts and links. Task 004 reuses that model without adding fantasy-data tables. There is no league import or production Supabase project.
+Task 003 adds profiles, shared fantasy accounts, and user-to-account associations. Task 004 reuses that model for one validated identity connection. Task 005 extends the indexed RLS path through account-to-league discovery and shared leagues, and adds shared provider season state plus sync-run observability. Authenticated sessions receive only exact read grants; all provider-data mutation remains server-only.
+
+The implemented fantasy-data parent tables are:
+
+- `provider_season_states`: latest shared provider/sport state
+- `leagues`: one canonical shared provider league
+- `fantasy_account_leagues`: discovery association, not roster ownership
+- `sync_runs`: one tracked account, scope, and attempt
+
+See `FANTASY_DATA_ARCHITECTURE.md` for future grains and history rules and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 005 adds no import function, queue, cache, scheduler, child fact table, or production Supabase project.
 
 Authentication uses `@supabase/ssr`, cookie sessions, Next.js `proxy.ts` refresh, and signed claims for protection. `getSession()` is never an authorization source. See `AUTH.md`, `ACCOUNT_IDENTITY.md`, and `SLEEPER_CONNECTION.md`.

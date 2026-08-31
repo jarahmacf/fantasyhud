@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      fantasy_account_leagues: {
+        Row: {
+          created_at: string
+          fantasy_account_id: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          league_id: string
+          removed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fantasy_account_id: string
+          first_seen_at: string
+          id?: string
+          last_seen_at: string
+          league_id: string
+          removed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fantasy_account_id?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          league_id?: string
+          removed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_account_leagues_fantasy_account_id_fkey"
+            columns: ["fantasy_account_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_account_leagues_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fantasy_accounts: {
         Row: {
           avatar_url: string | null
@@ -54,6 +102,90 @@ export type Database = {
         }
         Relationships: []
       }
+      leagues: {
+        Row: {
+          avatar_id: string | null
+          avatar_url: string | null
+          created_at: string
+          external_league_id: string
+          has_idp: boolean
+          has_superflex: boolean
+          id: string
+          is_best_ball: boolean
+          name: string
+          previous_external_league_id: string | null
+          provider: string
+          provider_metadata: Json
+          provider_updated_at: string
+          roster_management_type: string
+          roster_positions: Json
+          roster_size: number
+          scoring_format: string
+          scoring_settings: Json
+          season: number
+          season_type: string
+          settings: Json
+          sport: string
+          status: string
+          team_count: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          external_league_id: string
+          has_idp: boolean
+          has_superflex: boolean
+          id?: string
+          is_best_ball: boolean
+          name: string
+          previous_external_league_id?: string | null
+          provider: string
+          provider_metadata?: Json
+          provider_updated_at: string
+          roster_management_type: string
+          roster_positions: Json
+          roster_size: number
+          scoring_format: string
+          scoring_settings: Json
+          season: number
+          season_type: string
+          settings: Json
+          sport: string
+          status: string
+          team_count: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          external_league_id?: string
+          has_idp?: boolean
+          has_superflex?: boolean
+          id?: string
+          is_best_ball?: boolean
+          name?: string
+          previous_external_league_id?: string | null
+          provider?: string
+          provider_metadata?: Json
+          provider_updated_at?: string
+          roster_management_type?: string
+          roster_positions?: Json
+          roster_size?: number
+          scoring_format?: string
+          scoring_settings?: Json
+          season?: number
+          season_type?: string
+          settings?: Json
+          sport?: string
+          status?: string
+          team_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -77,6 +209,128 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      provider_season_states: {
+        Row: {
+          created_at: string
+          display_week: number | null
+          fetched_at: string
+          id: string
+          league_create_season: number | null
+          league_season: number
+          leg: number | null
+          previous_season: number | null
+          provider: string
+          provider_metadata: Json
+          season: number
+          season_start_date: string | null
+          season_type: string
+          sport: string
+          updated_at: string
+          week: number | null
+        }
+        Insert: {
+          created_at?: string
+          display_week?: number | null
+          fetched_at: string
+          id?: string
+          league_create_season?: number | null
+          league_season: number
+          leg?: number | null
+          previous_season?: number | null
+          provider: string
+          provider_metadata?: Json
+          season: number
+          season_start_date?: string | null
+          season_type: string
+          sport: string
+          updated_at?: string
+          week?: number | null
+        }
+        Update: {
+          created_at?: string
+          display_week?: number | null
+          fetched_at?: string
+          id?: string
+          league_create_season?: number | null
+          league_season?: number
+          leg?: number | null
+          previous_season?: number | null
+          provider?: string
+          provider_metadata?: Json
+          season?: number
+          season_start_date?: string | null
+          season_type?: string
+          sport?: string
+          updated_at?: string
+          week?: number | null
+        }
+        Relationships: []
+      }
+      sync_runs: {
+        Row: {
+          created_at: string
+          error_summary: Json
+          fantasy_account_id: string
+          finished_at: string | null
+          id: string
+          progress_current: number
+          progress_total: number
+          provider: string
+          result_counts: Json
+          scope: string
+          season: number | null
+          sport: string
+          started_at: string
+          status: string
+          triggered_by_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_summary?: Json
+          fantasy_account_id: string
+          finished_at?: string | null
+          id?: string
+          progress_current?: number
+          progress_total?: number
+          provider: string
+          result_counts?: Json
+          scope: string
+          season?: number | null
+          sport: string
+          started_at: string
+          status: string
+          triggered_by_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_summary?: Json
+          fantasy_account_id?: string
+          finished_at?: string | null
+          id?: string
+          progress_current?: number
+          progress_total?: number
+          provider?: string
+          result_counts?: Json
+          scope?: string
+          season?: number | null
+          sport?: string
+          started_at?: string
+          status?: string
+          triggered_by_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_runs_fantasy_account_id_fkey"
+            columns: ["fantasy_account_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_fantasy_accounts: {
         Row: {
