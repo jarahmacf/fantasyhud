@@ -26,7 +26,9 @@ Provider metadata must be a JSON object. No placeholder, `unverified:`, demo, or
 
 Each app user can link a given fantasy account once. Two app users may link the same shared fantasy account. A partial unique index allows at most one `is_primary = true` association per app user.
 
-Association labels are optional presentation data. Browser sessions cannot create, update, or delete associations, including preference fields. A later validated server-only connection boundary will resolve the provider identity before creating a shared account or link.
+Association labels are optional presentation data. Browser sessions cannot create, update, or delete associations, including preference fields. The Task 004 authenticated Server Action resolves a submitted Sleeper username server-side, derives the canonical Sleeper user ID from the provider response, and invokes one service-only atomic RPC to create or reuse the account and link.
+
+The connection records a user's choice to track a public identity. Sleeper does not authenticate account ownership through this API, so the product does not describe the connection as verified or authenticated. Resolving identity does not set `last_synced_at` and does not imply portfolio synchronization.
 
 ## Browser and RLS boundary
 
@@ -36,7 +38,7 @@ Association labels are optional presentation data. Browser sessions cannot creat
 - `anon` receives no table privileges.
 - `authenticated` receives only the required select privileges and profile presentation-column updates.
 - Browser roles cannot insert, update, or delete fantasy accounts or associations.
-- `service_role` receives backend table privileges, but this task creates no application client that uses them.
+- One server-only admin client uses a hosted Supabase secret key only after signed app-user claims are validated. Its application use is limited to the Sleeper connection RPC.
 
 RLS is authorization; UUID obscurity and public provider data are not.
 

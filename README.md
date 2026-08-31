@@ -1,10 +1,10 @@
 # FANTASY HUD
 
-FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, and minimum account-identity model.
+FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, and canonical Sleeper account-identity connection.
 
 ## Repository status
 
-Task 003 adds Supabase email/password authentication, cookie-based SSR sessions, protected onboarding, profiles, shared fantasy-account identities, strict RLS, and local authenticated browser coverage. Sleeper connection, provider imports, analytics, and fantasy-football data remain deferred.
+Task 004 adds a server-only Sleeper username lookup, canonical shared identity persistence, authenticated connection form, and truthful connected-identity screen. League import, synchronization, analytics, and fantasy-football data remain deferred.
 
 ## Local setup
 
@@ -50,7 +50,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 For a first local browser-test run, install Chromium with `npx playwright install chromium`. The browser-test command builds and serves the production application automatically.
 
-See `BACKEND.md` for the database workflow and `HOSTING.md` for the Git-connected deployment model.
+See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the provider boundary, and `HOSTING.md` for the Git-connected deployment model.
 
 ## Visual reference
 

@@ -121,7 +121,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      connect_sleeper_account: {
+        Args: {
+          p_avatar_url: string
+          p_display_name: string
+          p_external_user_id: string
+          p_provider_metadata: Json
+          p_user_id: string
+          p_username: string
+        }
+        Returns: {
+          created_link: boolean
+          fantasy_account_id: string
+          is_primary: boolean
+          user_fantasy_account_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

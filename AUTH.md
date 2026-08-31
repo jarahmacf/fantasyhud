@@ -20,7 +20,7 @@ Auth forms use React 19 Server Actions and `useActionState`. They expose pending
 
 Proxy refresh is not authorization. Protected Server Components and Server Actions validate signed claims again through `getCurrentAuthIdentity()` or `requireAuthIdentity()`. Server code never trusts `getSession()` for authorization and never returns access or refresh tokens.
 
-There is no service-role or secret-key application client. Browser and SSR reads use the public project URL, publishable key, current user session, and RLS.
+Browser and SSR reads use the public project URL, publishable key, current user session, and RLS. Task 004 adds a separate `server-only` admin-client factory for one authenticated Sleeper connection action. The action validates signed claims before constructing it and never exposes its secret or client to a Client Component.
 
 ## Site and redirect URLs
 
@@ -47,7 +47,7 @@ http://127.0.0.1:3000/**
 https://*-jdm17.vercel.app/**
 ```
 
-Vercel environments use public values only:
+Vercel browser and SSR clients use these public values:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -56,6 +56,14 @@ NEXT_PUBLIC_SITE_URL
 ```
 
 Production sets `NEXT_PUBLIC_SITE_URL=https://fantasyhud.vercel.app`. No database password, service-role key, secret key, CLI token, or direct Postgres URL belongs in Vercel public environment.
+
+The server runtime separately uses:
+
+```text
+SUPABASE_SECRET_KEY
+```
+
+Hosted environments use a named Supabase `sb_secret_...` key. Local authenticated tests pass the local service-role equivalent without printing it. The hosted value is configured for Vercel Development, Preview, and Production, and is never a `NEXT_PUBLIC_` variable or GitHub Actions secret.
 
 Hosted email confirmation remains enabled. On 2026-08-30 the hosted Confirm sign up and Reset password templates were verified to use Supabase's active default `{{ .ConfirmationURL }}` links. The Free-plan dashboard requires custom SMTP before those templates can be edited, so no SMTP credentials or template secrets were added for this task.
 
@@ -74,11 +82,11 @@ npm run e2e:auth
 npm run db:stop
 ```
 
-The auth runner reads local public values from `supabase status -o json`; it does not hardcode or print secrets. Mailpit captures local email if a manual confirmation flow is enabled.
+The auth runner reads local public values and the local service-role equivalent from `supabase status -o json`; it does not hardcode or print them. It also starts a deterministic local Sleeper server so CI makes no real provider request. Mailpit captures local email if a manual confirmation flow is enabled.
 
 ## Post-merge hosted verification
 
-Task 003 cannot be fully verified against hosted Auth until its migration reaches `main`. After merge:
+Task 003 is deployed, but hosted sign-up and recovery still require the following manual smoke test before external use:
 
 1. Confirm migration `20260831030756_auth_account_identity.sql` appears in the `fantasyhud-development` migration history.
 2. Confirm `profiles`, `fantasy_accounts`, and `user_fantasy_accounts` exist and RLS is enabled.

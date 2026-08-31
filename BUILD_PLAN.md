@@ -5,7 +5,7 @@ Every milestone is implemented and audited separately.
 1. 001 Repository foundation
 2. 002 Supabase and Vercel Git-connected foundation
 3. 003 Authentication and account identity foundation
-4. 004 Resolve Sleeper username
+4. 004 Connect canonical Sleeper account identity
 5. 005 Import leagues
 6. 006 Import owned rosters and roster players
 7. 007 Import drafts and complete boards
@@ -22,4 +22,6 @@ Every milestone is implemented and audited separately.
 
 Task 002 establishes local Supabase migrations, pgTAP, generated types, typed client factories, GitHub Actions database checks, and Git-connected Supabase development and Vercel hosting. Product tables and authentication begin in Task 003.
 
-Task 003 adds email/password SSR authentication, profiles, shared fantasy-account identity, and read-only browser access. Provider username resolution and validated link creation remain in Task 004.
+Task 003 adds email/password SSR authentication, profiles, shared fantasy-account identity, and read-only browser access.
+
+Task 004 resolves a submitted Sleeper username server-side, stores or reuses the canonical Sleeper user ID, atomically creates or reuses the app-user connection, and displays the connected identity. It imports no league or portfolio data. Task 005 remains the first league-import milestone.
