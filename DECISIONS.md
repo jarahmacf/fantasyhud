@@ -27,3 +27,12 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-30 | Direct MIT-licensed adaptation is preferred         | Preserve exact structure and spacing instead of approximating them     | Accepted |
 | 2026-08-30 | Neutral dark tokens replace custom blue theme       | Match the reference and reserve chromatic color for semantic meaning   | Accepted |
 | 2026-08-30 | Visual regression screenshots are required          | Make fidelity changes reviewable and detect unintentional layout drift | Accepted |
+| 2026-08-30 | Email/password authentication first                 | Establish the smallest production-shaped authentication boundary       | Accepted |
+| 2026-08-30 | Google OAuth deferred                               | Keep provider setup outside the initial authentication foundation      | Accepted |
+| 2026-08-30 | SSR cookie sessions with Next.js Proxy              | Keep Supabase identity available and refreshed on client and server    | Accepted |
+| 2026-08-30 | Claims protect server routes                        | Validate signed identity rather than trusting cookie session payloads  | Accepted |
+| 2026-08-30 | Hosted email confirmation enabled                   | Require ownership of email addresses in the internal-alpha environment | Accepted |
+| 2026-08-30 | Development Supabase serves internal-alpha hosting  | Avoid premature production infrastructure before external users        | Accepted |
+| 2026-08-30 | Fantasy accounts are shared external identities     | Store each provider identity once across app users                     | Accepted |
+| 2026-08-30 | Browser cannot create account links                 | Reserve identity mutation for a later validated server-only operation  | Accepted |
+| 2026-08-30 | No placeholder fantasy-account records              | Persist only provider identities that have actually been resolved      | Accepted |

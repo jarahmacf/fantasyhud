@@ -1,10 +1,10 @@
 # FANTASY HUD
 
-FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository currently contains the styled application shell plus its backend and hosting foundation.
+FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, and minimum account-identity model.
 
 ## Repository status
 
-Task 002 adds local Supabase development, version-controlled migrations, pgTAP tests, generated database types, typed browser and server client factories, and Git-connected hosted development and Vercel projects. No product tables or authentication flow exist yet. Provider integrations, analytics, and fantasy-football data remain deferred.
+Task 003 adds Supabase email/password authentication, cookie-based SSR sessions, protected onboarding, profiles, shared fantasy-account identities, strict RLS, and local authenticated browser coverage. Sleeper connection, provider imports, analytics, and fantasy-football data remain deferred.
 
 ## Local setup
 
@@ -38,6 +38,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run test`           | Run Vitest unit tests once                             |
 | `npm run test:watch`     | Run Vitest in watch mode                               |
 | `npm run e2e`            | Run the Playwright Chromium test                       |
+| `npm run e2e:auth`       | Run authenticated Playwright against local Supabase    |
 | `npm run check`          | Run typecheck, lint, formatting, unit tests, and build |
 | `npm run db:start`       | Start the local Supabase stack                         |
 | `npm run db:stop`        | Stop the local Supabase stack                          |

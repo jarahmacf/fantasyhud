@@ -13,11 +13,14 @@ Vercel's Git integration owns deployment. GitHub Actions runs quality and local 
 
 ## Public Supabase environment
 
-Vercel Development and Preview environments receive only:
+Vercel Development, Preview, and Production environments receive only:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_SITE_URL
 ```
 
-The production environment intentionally has no backend variables during this foundation task. Database passwords, service-role keys, direct Postgres URLs, CLI access tokens, and Vercel tokens must never be added to Vercel's public environment or committed to the repository.
+`NEXT_PUBLIC_SITE_URL` is `https://fantasyhud.vercel.app` in Production; Preview may use the validated Vercel hostname fallback. The directly owned `fantasyhud-development` Supabase project temporarily serves all three environments for internal alpha. A separate production project is required before external users.
+
+Database passwords, service-role or secret keys, direct Postgres URLs, CLI access tokens, and Vercel tokens must never be added to Vercel's public environment or committed to the repository.

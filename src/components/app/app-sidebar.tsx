@@ -29,7 +29,7 @@ function PlaceholderMark() {
 const navigation = [
   {
     label: "Workspace",
-    items: [{ title: "Foundation", url: "/", icon: PanelsTopLeft }],
+    items: [{ title: "Foundation", url: "/foundation", icon: PanelsTopLeft }],
   },
 ]
 
@@ -40,7 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href="/foundation">
                 {/* Temporary neutral mark: replace when a canonical brand asset exists. */}
                 <PlaceholderMark />
                 <div className="grid flex-1 text-left text-sm leading-tight">

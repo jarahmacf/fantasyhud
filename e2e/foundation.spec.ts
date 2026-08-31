@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 async function prepareVisualPage(page: Page) {
-  await page.goto("/")
+  await page.goto("/foundation")
   await page.evaluate(async () => {
     document.documentElement.classList.add("dark")
     await document.fonts.ready
@@ -29,7 +29,7 @@ test.afterAll(async () => {
 })
 
 test("loads the truthful repository foundation dashboard", async () => {
-  await page.goto("/")
+  await page.goto("/foundation")
 
   await expect(page.getByText("FANTASY HUD", { exact: true })).toBeVisible()
   await expect(
@@ -45,7 +45,7 @@ test("loads the truthful repository foundation dashboard", async () => {
   ).toBeVisible()
   await expect(
     table.getByRole("row", {
-      name: /Product database Not modeled Deferred to Task 003/i,
+      name: /Account identity model Ready Shared provider identity/i,
     })
   ).toBeVisible()
 
@@ -59,7 +59,7 @@ test("loads the truthful repository foundation dashboard", async () => {
 })
 
 test("search filters all table fields and clearing restores rows", async () => {
-  await page.goto("/")
+  await page.goto("/foundation")
 
   const search = page.getByRole("searchbox", {
     name: "Search foundation status",
@@ -71,15 +71,15 @@ test("search filters all table fields and clearing restores rows", async () => {
   await expect(
     table.getByRole("row", { name: /Database tests Ready pgTAP/i })
   ).toBeVisible()
-  await expect(page.getByRole("status")).toContainText("1 of 10 systems")
+  await expect(page.getByRole("status")).toContainText("1 of 13 systems")
 
   await page.getByRole("button", { name: "Clear search" }).click()
   await expect(search).toHaveValue("")
-  await expect(table.getByRole("row")).toHaveCount(11)
+  await expect(table.getByRole("row")).toHaveCount(14)
 })
 
 test("keyboard shortcut focuses search and columns sort accessibly", async () => {
-  await page.goto("/")
+  await page.goto("/foundation")
   const search = page.getByRole("searchbox", {
     name: "Search foundation status",
   })

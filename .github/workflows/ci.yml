@@ -13,6 +13,10 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: local-ci-placeholder
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
 
     steps:
       - name: Check out repository
@@ -74,8 +78,14 @@ jobs:
       - name: Run pgTAP tests
         run: npm run db:test
 
-      - name: Verify generated database types
+      - name: Verify committed generated database types
         run: npm run db:types:check
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run authenticated browser tests
+        run: npm run e2e:auth
 
       - name: Stop local Supabase
         if: always()

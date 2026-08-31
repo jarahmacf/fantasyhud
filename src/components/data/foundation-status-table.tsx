@@ -10,7 +10,7 @@ import {
 } from "@/components/data/data-table"
 import { Badge } from "@/components/ui/badge"
 
-type FoundationStatus = "Ready" | "Configured" | "Not modeled"
+type FoundationStatus = "Ready" | "Configured" | "Not implemented"
 
 type FoundationRow = {
   system: string
@@ -49,9 +49,24 @@ const rows: FoundationRow[] = [
     detail: "Vercel Git integration",
   },
   {
-    system: "Product database",
-    status: "Not modeled",
-    detail: "Deferred to Task 003",
+    system: "Authentication model",
+    status: "Ready",
+    detail: "Email/password + SSR cookies",
+  },
+  {
+    system: "Auth browser tests",
+    status: "Ready",
+    detail: "Local Supabase + Playwright",
+  },
+  {
+    system: "Account identity model",
+    status: "Ready",
+    detail: "Shared provider identity + strict RLS",
+  },
+  {
+    system: "Sleeper connection",
+    status: "Not implemented",
+    detail: "Connection is intentionally unavailable",
   },
 ]
 

@@ -41,3 +41,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never claim a remote migration deployed before verifying it.
 - Never commit secrets or expose service-role keys.
 - Never use a production database for development tests.
+- Use `getClaims()` or the current verified equivalent to protect server routes and data.
+- Never trust `getSession()` for authorization.
+- Never create fantasy-account connections or link rows directly from browser input.
+- Never expose auth codes, token hashes, passwords, access tokens, or refresh tokens.
+- Never put service secrets in public environment variables.
+- Keep authenticated app users and provider fantasy identities separate.

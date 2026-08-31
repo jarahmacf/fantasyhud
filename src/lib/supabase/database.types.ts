@@ -9,7 +9,113 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      fantasy_accounts: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          external_user_id: string
+          id: string
+          last_synced_at: string | null
+          normalized_username: string
+          provider: string
+          provider_metadata: Json
+          provider_updated_at: string | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          external_user_id: string
+          id?: string
+          last_synced_at?: string | null
+          normalized_username: string
+          provider: string
+          provider_metadata?: Json
+          provider_updated_at?: string | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          external_user_id?: string
+          id?: string
+          last_synced_at?: string | null
+          normalized_username?: string
+          provider?: string
+          provider_metadata?: Json
+          provider_updated_at?: string | null
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_fantasy_accounts: {
+        Row: {
+          created_at: string
+          fantasy_account_id: string
+          id: string
+          is_primary: boolean
+          label: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fantasy_account_id: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fantasy_account_id?: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_fantasy_accounts_fantasy_account_id_fkey"
+            columns: ["fantasy_account_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

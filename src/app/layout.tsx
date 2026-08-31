@@ -15,9 +15,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "FANTASY HUD — Repository foundation",
-  description:
-    "Application, quality gates, and backend status for FANTASY HUD.",
+  title: "FANTASY HUD — Portfolio Command Center",
+  description: "Portfolio management and account foundation for FANTASY HUD.",
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
