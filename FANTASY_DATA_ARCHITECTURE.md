@@ -12,6 +12,8 @@ This contract defines the durable data boundaries for FANTASY HUD. It governs fu
 6. Derive analytics from source facts and associations. Do not persist universal ownership, stack, value, or user-pick flags.
 7. Scope every portfolio query through at least one tracked fantasy account.
 8. Add tables at a documented grain, not through a generic entity, object, document, or record store.
+9. Keep league discovery provider-consistent: `fantasy_accounts.provider`, `leagues.provider`, and `sync_runs.provider` must match.
+10. Mutate provider data only through reviewed, narrowly scoped service-only RPCs; service credentials receive no direct provider-table CRUD.
 
 ## Layered model
 
@@ -30,10 +32,14 @@ erDiagram
   FANTASY_ACCOUNTS ||--o{ FANTASY_ACCOUNT_ROSTERS : plans
   ROSTERS ||--o{ FANTASY_ACCOUNT_ROSTERS : plans
   PLAYERS ||--o{ PLAYER_EXTERNAL_IDS : plans
+  ROSTERS ||--o{ ROSTER_PLAYERS : current_membership
+  PLAYERS ||--o{ ROSTER_PLAYERS : held_player
   LEAGUES ||--o{ DRAFTS : plans
   DRAFTS ||--o{ DRAFT_PICKS : complete_board
   LEAGUES ||--o{ MATCHUP_ENTRIES : weekly_scoreboard
   MATCHUP_ENTRIES ||--o{ MATCHUP_PLAYER_POINTS : score_lines
+  LEAGUES ||--o{ LEAGUE_STANDING_SNAPSHOTS : standing_history
+  ROSTERS ||--o{ LEAGUE_STANDING_SNAPSHOTS : ranked_roster
 ```
 
 Solid relationships through `SYNC_RUNS` are implemented by Task 005. Relationships below that boundary describe reviewed future grains only; their tables do not exist yet.
@@ -86,7 +92,9 @@ A league may be dynasty and best ball simultaneously. Broad scoring never replac
 
 Grain: one observation that provider user-league discovery reported one league for one tracked fantasy account.
 
-`first_seen_at`, `last_seen_at`, and `removed_at` describe discovery history. Removing or marking one association does not delete the shared league. This row does not prove roster ownership.
+`first_seen_at`, `last_seen_at`, and `removed_at` describe discovery history. `last_seen_at` cannot precede `first_seen_at`, and `removed_at` is null or at least `last_seen_at`; a removal cannot precede the last positive observation. Removing or marking one association does not delete the shared league. This row does not prove roster ownership.
+
+League-discovery persistence must validate transactionally that the tracked fantasy account, discovered league, and sync run have the same provider. The association does not repeat the provider column.
 
 ### Planned dimensions
 
@@ -119,6 +127,14 @@ The entity may represent an offensive player, defensive player, team defense, or
 Grain: one provider or source external ID for one canonical player.
 
 This mapping must support Sleeper IDs, ESPN IDs, Yahoo IDs, statistics-provider IDs, team-defense identities, free agents, and future source-specific timestamps. Its canonical key includes source plus exact text external ID; a player may have several source mappings.
+
+#### `roster_players`
+
+Grain: one current roster + canonical player membership.
+
+This mutable current-membership table must support `roster_id`, `player_id`, `is_starter`, `is_reserve`, `is_taxi`, source status or roster-position metadata, `first_seen_at`, and `last_seen_at`. Starter, reserve, taxi, and other source-grounded states remain facts even when they do not change an exposure calculation.
+
+Best-ball player exposure counts every current roster membership regardless of starter or bench labels. Drafted exposure comes from immutable `draft_picks`, weekly lineup history comes from `matchup_player_points`, and historical acquisitions, drops, and trades come from transaction facts. A membership-period or roster-snapshot table may be added only when source completeness or measured product requirements prove those facts insufficient.
 
 ## Layer 3 — Historical and period facts
 
@@ -182,6 +198,14 @@ Grain: one provider playoff-bracket entry or pairing at one bracket position.
 
 Current standings may update during a season. Completed weekly results and completed bracket facts remain historical.
 
+#### `league_standing_snapshots`
+
+Grain: one league + season + scoring period or snapshot time + roster.
+
+A source or versioned snapshot may preserve wins, losses, ties, rank, points for, points against, potential points, median or all-play results, waiver position, division, playoff qualification state, source, calculation version, and snapshot timestamp.
+
+Current standings may be computed from roster state and completed matchup facts. Historical standings shown to users must either be reproducibly computed from immutable facts or stored as source/versioned snapshots. Commissioner adjustments and provider-only ranking rules must not be silently lost. League-standing snapshots remain separate from player fantasy rankings, portfolio internal rankings, and market rankings.
+
 ### Player statistics and rankings
 
 #### `player_stat_snapshots`
@@ -224,6 +248,8 @@ These domains may be compared analytically but must not share an ambiguous unive
 Grain: one attempt for one tracked fantasy account and one synchronization scope.
 
 Task 005 permits only `league_discovery`. Status is `running`, `succeeded`, `failed`, or `partial`. Progress and sanitized result/error summaries support operations without storing raw provider responses. Only one running league-discovery attempt may exist per fantasy account.
+
+Task 006 league discovery must lock the fantasy-account/run boundary, reuse a running run whose `updated_at` activity is no more than five minutes old, and recover an older run atomically. Recovery marks the stale run `failed` with terminal time and bounded `stale_run_timeout` metadata before starting a new run. Later multi-resource imports require item leases or explicit heartbeats rather than this single-step timeout rule.
 
 ### Deferred synchronization tables
 
@@ -271,6 +297,7 @@ Every portfolio query is scoped through a tracked fantasy account. The intended 
 | Matchup entries and per-player weekly points | Append-only historical facts per league, season, and week after source finalization.                                         |
 | Transactions and their player/pick movements | Append-only historical facts.                                                                                                |
 | Completed playoff bracket entries            | Immutable after source completion.                                                                                           |
+| League standing snapshots                    | Append-only source/versioned snapshots when immutable facts cannot reproduce the standing.                                   |
 | Player stat snapshots                        | Append-only source snapshots.                                                                                                |
 | Player ranking snapshots                     | Append-only source-and-context snapshots.                                                                                    |
 | Market ADP snapshots and values              | Immutable source snapshots.                                                                                                  |
@@ -278,6 +305,12 @@ Every portfolio query is scoped through a tracked fantasy account. The intended 
 | Derived analytics                            | Recomputable functions or views; stored materialization requires measured need and explicit refresh rules.                   |
 
 Source errors are never translated into empty collections. Unknown, unavailable, not yet fetched, and confirmed empty remain distinct states. Immutable historical facts are not overwritten by current player, roster, league, or team state.
+
+## Historical player-context rule
+
+Immutable and period facts preserve the player context used when the fact occurred. Depending on the grain, that includes position at draft, NFL team at draft, NFL team during the scoring week, the source player ID used for the fact, and the scoring context used for a rank or score. A future implementation may use fact-level snapshot columns or reviewed effective-dated player/team relationships.
+
+This rule applies explicitly to `draft_picks`, `matchup_player_points`, `transactions` and their player movements, `player_stat_snapshots`, and `player_ranking_snapshots`. Historical analytics never silently join only to a player's present-day team or position.
 
 ## Authorization contract
 
@@ -291,7 +324,7 @@ auth.uid()
 → leagues.id
 ```
 
-Future roster, draft, matchup, and analytic reads extend this path through explicit associations. Browser roles never write provider data. Validated server-side operations will write later imports with service credentials only after app-user claims and tracked-account reachability are validated.
+Future roster, draft, matchup, and analytic reads extend this path through explicit associations. Browser roles never write provider data. Direct `service_role` CRUD on provider-data tables is revoked. Validated server-side operations may write later imports only through reviewed `SECURITY DEFINER` RPCs after app-user claims, tracked-account reachability, and provider consistency are validated; `service_role` receives only `EXECUTE` on those functions.
 
 ## Task 005 boundary
 
@@ -303,3 +336,5 @@ Task 005 creates only:
 - `sync_runs`
 
 It makes no Sleeper request, discovers no league, starts no synchronization, and creates none of the planned child, fact, ranking, cache, queue, scheduler, or analytics tables described above.
+
+Task 005.1 adds one corrective constraint replacement and revokes direct provider-table privileges from `service_role`. It creates no table, function, provider request, provider import, or product behavior.

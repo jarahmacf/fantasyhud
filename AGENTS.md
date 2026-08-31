@@ -46,6 +46,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never create fantasy-account connections or link rows directly from browser input.
 - Never expose auth codes, token hashes, passwords, access tokens, or refresh tokens.
 - Never put service secrets in public environment variables.
+- Never grant `service_role` direct table privileges on provider-data tables; grant only `EXECUTE` on reviewed, narrowly scoped functions.
 - Keep authenticated app users and provider fantasy identities separate.
 - Never use a Sleeper username as canonical identity.
 - Never parse provider IDs as numbers.
@@ -64,3 +65,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never treat a source error as an empty collection.
 - Never add a materialized analytics table without measured need.
 - Never add a ranking without source and scoring context.
+- Every uniqueness-protected running operation requires a documented stale-run recovery path.
+- Never persist a cross-provider association; fantasy-account, league, and sync-run providers must match.

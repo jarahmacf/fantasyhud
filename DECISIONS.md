@@ -49,3 +49,10 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-30 | Player rankings require source and scoring context   | A rank without source, period, type, and scoring context is ambiguous                                    | Accepted |
 | 2026-08-30 | Scoreboards use roster-week and player-week grains   | Detailed historical scoreboards require both entry totals and per-player score lines                     | Accepted |
 | 2026-08-30 | No generic entity or document store                  | Reviewed relational grains preserve keys, authorization, and history semantics                           | Accepted |
+| 2026-08-31 | Provider-data mutation uses reviewed RPCs            | Service credentials should execute narrow validated operations rather than receive direct table CRUD     | Accepted |
+| 2026-08-31 | Discovery removal follows last observation           | A removal timestamp before the final positive observation is internally inconsistent                     | Accepted |
+| 2026-08-31 | Roster membership has an explicit future grain       | Current holdings require a relational membership distinct from drafts, lineups, and transactions         | Accepted |
+| 2026-08-31 | Historical standings have an explicit future grain   | Provider rules and commissioner adjustments may not be reproducible from current state alone             | Accepted |
+| 2026-08-31 | Historical player context is period-specific         | Present-day team and position cannot rewrite draft, scoring, transaction, statistic, or rank facts       | Accepted |
+| 2026-08-31 | Protected running operations require stale recovery  | A uniqueness guard without bounded recovery can permanently block later work                             | Accepted |
+| 2026-08-31 | Cross-provider associations are invalid              | Account, league, and synchronization identity must remain within one provider boundary                   | Accepted |

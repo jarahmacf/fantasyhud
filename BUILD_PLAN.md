@@ -28,3 +28,5 @@ Task 003 adds email/password SSR authentication, profiles, shared fantasy-accoun
 Task 004 resolves a submitted Sleeper username server-side, stores or reuses the canonical Sleeper user ID, atomically creates or reuses the app-user connection, and displays the connected identity. It imports no league or portfolio data.
 
 Task 005 establishes shared provider-season state, canonical leagues, account-to-league discovery associations, sync-run observability, indexed RLS, and the long-term architecture contract. It imports no leagues. Task 006 is the first provider-data discovery milestone and remains incomplete.
+
+Task 005.1 corrects the deployed discovery-removal timestamp invariant, removes direct service-role CRUD from provider-data tables, and hardens the future architecture contracts. Task 006 remains blocked until the hotfix is audited, merged, deployed, and verified.
