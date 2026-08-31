@@ -1,10 +1,10 @@
 # FANTASY HUD
 
-FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, canonical Sleeper account identity, and the first shared fantasy-data parent schema.
+FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, canonical Sleeper account identity, shared fantasy-data parent schema, and current-season Sleeper league discovery.
 
 ## Repository status
 
-Task 005 adds the reviewed long-term fantasy-data contract plus shared provider-season state, canonical leagues, account-to-league discovery associations, sync-run observability, and indexed read-only browser authorization. It makes no provider request and imports no league, roster, player, draft, matchup, transaction, ranking, market, or analytics data.
+Task 006 is in review. It resolves the active NFL league season from Sleeper state, validates one complete current-season collection, atomically reconciles shared leagues and account discovery associations through service-only RPCs, records sync-run history, and renders the first connected dashboard. It imports no roster, player, draft, matchup, transaction, ranking, market, or analytics rows.
 
 ## Local setup
 
@@ -50,7 +50,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 For a first local browser-test run, install Chromium with `npx playwright install chromium`. The browser-test command builds and serves the production application automatically.
 
-See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the provider boundary, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, `SYNC_ARCHITECTURE.md` for run lifecycle, and `HOSTING.md` for the Git-connected deployment model.
+See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the identity boundary, `LEAGUE_DISCOVERY.md` for the first provider import, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, `SYNC_ARCHITECTURE.md` for run lifecycle, and `HOSTING.md` for the Git-connected deployment model.
 
 ## Visual reference
 

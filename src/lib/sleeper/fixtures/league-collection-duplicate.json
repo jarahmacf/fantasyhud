@@ -1,0 +1,26 @@
+[
+  {
+    "league_id": "fixture-duplicate",
+    "sport": "nfl",
+    "season": "2026",
+    "name": "Fixture Duplicate A",
+    "status": "in_season",
+    "season_type": "regular",
+    "total_rosters": 12,
+    "settings": { "type": 0 },
+    "scoring_settings": { "rec": 1 },
+    "roster_positions": ["QB", "RB", "WR"]
+  },
+  {
+    "league_id": "fixture-duplicate",
+    "sport": "nfl",
+    "season": "2026",
+    "name": "Fixture Duplicate B",
+    "status": "complete",
+    "season_type": "regular",
+    "total_rosters": 10,
+    "settings": { "type": 1 },
+    "scoring_settings": { "rec": 0.5 },
+    "roster_positions": ["QB", "RB", "WR"]
+  }
+]

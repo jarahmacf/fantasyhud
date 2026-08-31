@@ -34,3 +34,14 @@ export interface SleeperConnectionActionState {
 
 export const initialSleeperConnectionActionState: SleeperConnectionActionState =
   { status: "idle" }
+
+export interface LeagueDiscoveryActionState {
+  status: "idle" | "running" | "success" | "error"
+  message?: string
+  activeLeagues?: number
+  leagueSeason?: number
+}
+
+export const initialLeagueDiscoveryActionState: LeagueDiscoveryActionState = {
+  status: "idle",
+}

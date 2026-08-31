@@ -398,6 +398,7 @@ insert into public.leagues (
   roster_positions,
   provider_metadata,
   provider_updated_at,
+  fetched_at,
   updated_at
 )
 values
@@ -422,6 +423,7 @@ values
     '["QB","RB","WR","SUPER_FLEX","BN"]'::jsonb,
     '{"source":"league"}'::jsonb,
     now(),
+    now(),
     '2000-01-01 00:00:00+00'
   ),
   (
@@ -444,6 +446,7 @@ values
     '{}'::jsonb,
     '["QB","RB","WR","BN"]'::jsonb,
     '{}'::jsonb,
+    now(),
     now(),
     '2000-01-01 00:00:00+00'
   );
@@ -574,11 +577,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', '900719925474099399991', 'nfl', 2026, 'Duplicate',
       'pre_draft', 'regular', 12, 18, 'dynasty', false, false, false,
-      'ppr', '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, now()
+      'ppr', '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, now(), now()
     )
   $$,
   '23505',
@@ -625,11 +628,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', 'bad-settings', 'nfl', 2026, 'Bad settings', 'pre_draft',
       'regular', 12, 18, 'dynasty', false, false, false, 'ppr', '[]'::jsonb,
-      '{}'::jsonb, '[]'::jsonb, now()
+      '{}'::jsonb, '[]'::jsonb, now(), now()
     )
   $$,
   '23514',
@@ -642,11 +645,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', 'bad-roster-positions', 'nfl', 2026, 'Bad positions',
       'pre_draft', 'regular', 12, 18, 'dynasty', false, false, false, 'ppr',
-      '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, now()
+      '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, now(), now()
     )
   $$,
   '23514',
@@ -659,11 +662,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', 'zero-teams', 'nfl', 2026, 'Zero teams', 'pre_draft',
       'regular', 0, 18, 'dynasty', false, false, false, 'ppr', '{}'::jsonb,
-      '{}'::jsonb, '[]'::jsonb, now()
+      '{}'::jsonb, '[]'::jsonb, now(), now()
     )
   $$,
   '23514',
@@ -676,11 +679,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', 'negative-roster', 'nfl', 2026, 'Negative roster',
       'pre_draft', 'regular', 12, -1, 'dynasty', false, false, false, 'ppr',
-      '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, now()
+      '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, now(), now()
     )
   $$,
   '23514',
@@ -693,11 +696,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', 'bad-management', 'nfl', 2026, 'Bad management',
       'pre_draft', 'regular', 12, 18, 'best_ball', true, false, false, 'ppr',
-      '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, now()
+      '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, now(), now()
     )
   $$,
   '23514',
@@ -710,11 +713,11 @@ select throws_ok(
       provider, external_league_id, sport, season, name, status, season_type,
       team_count, roster_size, roster_management_type, is_best_ball,
       has_superflex, has_idp, scoring_format, settings, scoring_settings,
-      roster_positions, provider_updated_at
+      roster_positions, provider_updated_at, fetched_at
     ) values (
       'sleeper', 'bad-scoring', 'nfl', 2026, 'Bad scoring', 'pre_draft',
       'regular', 12, 18, 'dynasty', false, false, false, 'points', '{}'::jsonb,
-      '{}'::jsonb, '[]'::jsonb, now()
+      '{}'::jsonb, '[]'::jsonb, now(), now()
     )
   $$,
   '23514',

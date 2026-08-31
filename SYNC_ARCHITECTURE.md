@@ -1,6 +1,6 @@
 # Synchronization architecture
 
-Task 005 establishes synchronization observability without implementing an import, queue, cache, scheduler, or provider request.
+Task 005 establishes synchronization observability. Task 006 implements the first single-step league-discovery lifecycle without adding a queue, cache, scheduler, or child resource import.
 
 ## Run grain
 
@@ -33,7 +33,7 @@ for each fantasy account. Terminal history remains unlimited. Later scopes need 
 
 ## Stale-run recovery
 
-Every uniqueness-protected running operation requires a documented stale-run recovery path. Task 006 league discovery must:
+Every uniqueness-protected running operation requires a documented stale-run recovery path. Task 006 league discovery:
 
 1. Lock the fantasy-account/run boundary transactionally.
 2. Reuse an existing running league-discovery run when its `updated_at` activity timestamp is no more than five minutes old.
@@ -62,9 +62,13 @@ running → partial
 
 Completed attempts remain operational history. They are not deleted merely because a later attempt succeeds.
 
+Task 006 implements this lifecycle with service-only start, complete, and fail RPCs. Start serializes on the shared fantasy account, reuses a fresh run without a source request, and recovers a stale run before replacement. Complete performs provider-state, league, association, scoped-removal, result-count, and succeeded-run writes in one transaction. Shared league keys are processed in ascending external-ID order; first creation uses conflict-safe insert-or-load, so concurrent account imports reuse one canonical row without inconsistent lock ordering. Fail changes only a matching running run and preserves prior provider data; a repeated terminal failure returns `changed_run = false`.
+
 ## Results and errors
 
 `result_counts` stores small, structured counts such as resources observed, created, updated, removed, or skipped. It is not source data.
+
+Task 006 reports `stale_shared_leagues_skipped` separately from updated leagues and records whether the provider-season state was applied or skipped because it was older. Shared provider state and shared league representations update only when incoming `fetched_at` is at least the stored fetch time. Account-specific discovery associations may still advance when their shared representation is stale.
 
 `error_summary` stores sanitized operational metadata such as a bounded error category, safe message, retryability, and affected stage. It must never contain:
 
@@ -79,6 +83,8 @@ Completed attempts remain operational history. They are not deleted merely becau
 
 A source error is not an empty collection. Failed, partial, unavailable, and confirmed-empty outcomes stay distinct.
 
+A zero-length fully validated source array completes with zero observed and active associations. A timeout, HTTP error, malformed row, duplicate ID, or wrong-season row fails the run instead.
+
 ## No queue yet
 
 `sync_run_items` is deferred until multi-resource work needs resumability, item-level retries, or checkpoint recovery. Task 006 league discovery is expected to be small enough to complete as one reviewed server-side attempt.
@@ -87,12 +93,14 @@ A source error is not an empty collection. Failed, partial, unavailable, and con
 
 ## Portfolio synchronization timestamp
 
-`fantasy_accounts.last_synced_at` remains reserved for a complete portfolio synchronization. Identity connection does not set it. League discovery alone will not set it. A future reconciliation milestone must define exactly which resource scopes constitute a complete portfolio before updating the timestamp.
+`fantasy_accounts.last_synced_at` remains reserved for a complete portfolio synchronization. Identity connection does not set it. Task 006 league discovery does not set it. A future reconciliation milestone must define exactly which resource scopes constitute a complete portfolio before updating the timestamp.
 
 ## Authorization and writes
 
 Authenticated browser sessions may read only sync runs whose `fantasy_account_id` is linked to `auth.uid()` through `user_fantasy_accounts`. Browser roles receive no insert, update, or delete grants.
 
-Direct `service_role` privileges on provider-data tables are revoked. Future writes must occur through a narrowly scoped, reviewed `SECURITY DEFINER` RPC invoked by a validated server-side operation; `service_role` receives only `EXECUTE` on that function. The Server Action must validate the app user before constructing an admin client, confirm the tracked-account authorization path, sanitize errors, and preserve terminal run history.
+Direct `service_role` privileges on provider-data tables are revoked. Task 006 writes occur through narrowly scoped, reviewed `SECURITY DEFINER` RPCs invoked by a validated server-side operation; `service_role` receives only `EXECUTE` on those functions. The Server Action validates the app user before constructing an admin client, confirms the tracked-account authorization path, sanitizes errors, and preserves terminal run history.
 
-League-discovery persistence must also validate transactionally that `fantasy_accounts.provider = leagues.provider = sync_runs.provider`. Cross-provider associations are invalid. Task 005.1 adds no import RPC or Server Action; Task 006 must introduce and test its own service-only function before performing any provider-data write.
+League-discovery persistence validates transactionally that `fantasy_accounts.provider = leagues.provider = sync_runs.provider`. Cross-provider associations are invalid. Completion accepts only a fully normalized state object and collection, then atomically updates one exact account/provider/sport/season boundary.
+
+Current-season dashboard reads first resolve shared provider state, then filter active associations and successful discovery runs to the resolved league season. Historical associations and terminal run history remain available but do not become current-season UI state.

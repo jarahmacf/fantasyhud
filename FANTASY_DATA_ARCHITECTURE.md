@@ -338,3 +338,17 @@ Task 005 creates only:
 It makes no Sleeper request, discovers no league, starts no synchronization, and creates none of the planned child, fact, ranking, cache, queue, scheduler, or analytics tables described above.
 
 Task 005.1 adds one corrective constraint replacement and revokes direct provider-table privileges from `service_role`. It creates no table, function, provider request, provider import, or product behavior.
+
+## Task 006 boundary
+
+Task 006 is the first provider-data import. It resolves the active league season from provider state, validates the entire current-season Sleeper league collection twice (application and SQL), and atomically upserts provider state, canonical shared leagues, account discovery associations, scoped removals, and one terminal sync run. Current-season reads resolve provider state first and then scope active associations and succeeded runs to the exact resolved season; historical associations remain stored but are not current-season rows.
+
+League fetch time is recorded in required `leagues.fetched_at`. Shared provider-state and league current representations are monotonic by fetch time: an older observation cannot overwrite a newer row, although its importing account may still gain an association. The nullable `provider_updated_at` column is reserved for a reliable provider-published update time, is not populated from request time, and is preserved when a later accepted observation contains null. Exact settings, scoring settings, roster positions, and unmodeled metadata remain available beside conservative classifications.
+
+Concurrent first discovery of a shared league uses conflict-safe canonical insert-or-load. Collections are persisted in ascending external league ID order so transactions acquire shared-resource locks deterministically and every account resolves the same internal league IDs.
+
+A confirmed empty collection is successful. Any source, shape, duplicate, season, or completion error preserves the last successful data. Reconciliation never crosses the exact account, provider, sport, and season scope, never deletes a shared league, never infers roster ownership, and never updates `fantasy_accounts.last_synced_at`.
+
+No roster, player, draft, pick, matchup, transaction, rank, market, cache, queue, or analytics table is added by Task 006.
+
+Live source-shape and classification verification remains a controlled post-merge canary; fixtures and documentation do not substitute for a retained live response.

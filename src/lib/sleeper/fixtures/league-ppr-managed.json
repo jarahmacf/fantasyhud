@@ -1,0 +1,15 @@
+{
+  "league_id": "fixture-league-managed",
+  "sport": "nfl",
+  "season": "2026",
+  "name": "Fixture Managed",
+  "status": "pre_draft",
+  "season_type": "regular",
+  "total_rosters": 10,
+  "settings": { "type": 1, "best_ball": 0 },
+  "scoring_settings": { "rec": 1, "rec_yd": 0.1, "rec_td": 6 },
+  "roster_positions": ["QB", "RB", "WR", "WR", "TE", "FLEX", "BN"],
+  "avatar": null,
+  "previous_league_id": "fixture-league-managed-2025",
+  "draft_id": "fixture-draft-managed"
+}

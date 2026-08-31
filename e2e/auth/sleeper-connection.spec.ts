@@ -62,8 +62,12 @@ test("connects and persists one canonical Sleeper identity", async ({
 
   await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:3101\/$/)
   await expect(page.getByText("Fixture Sleeper User")).toBeVisible()
-  await expect(page.getByText("@CanonicalFixtureUser")).toBeVisible()
-  await expect(page.getByText("Sleeper", { exact: true })).toBeVisible()
+  await expect(
+    page
+      .getByLabel("League discovery summary")
+      .getByText("@CanonicalFixtureUser", { exact: true })
+  ).toBeVisible()
+  await expect(page.getByText("Sleeper account", { exact: true })).toBeVisible()
   await expect(page.getByText("Primary", { exact: true })).toBeVisible()
   await expect(page.getByText("Not started", { exact: true })).toBeVisible()
 
@@ -77,6 +81,7 @@ test("connects and persists one canonical Sleeper identity", async ({
     animations: "disabled",
     fullPage: true,
   })
+  await page.setViewportSize({ width: 1280, height: 720 })
 
   await page.goto("/onboarding")
   await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:3101\/$/)
@@ -88,6 +93,10 @@ test("connects and persists one canonical Sleeper identity", async ({
   await page.getByRole("button", { name: "Sign in" }).click()
 
   await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:3101\/$/)
-  await expect(page.getByText("@CanonicalFixtureUser")).toBeVisible()
+  await expect(
+    page
+      .getByLabel("League discovery summary")
+      .getByText("@CanonicalFixtureUser", { exact: true })
+  ).toBeVisible()
   await expect(page.getByText("Not started", { exact: true })).toBeVisible()
 })

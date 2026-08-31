@@ -1,0 +1,15 @@
+{
+  "league_id": "fixture-league-te-premium",
+  "sport": "nfl",
+  "season": "2026",
+  "name": "Fixture TE Premium",
+  "status": "in_season",
+  "season_type": "regular",
+  "total_rosters": 14,
+  "settings": { "type": 2, "best_ball": 0 },
+  "scoring_settings": { "rec": 1, "bonus_rec_te": 0.5, "rec_yd": 0.1 },
+  "roster_positions": ["QB", "RB", "WR", "TE", "QB_FLEX", "BN"],
+  "avatar": null,
+  "previous_league_id": null,
+  "draft_id": "fixture-draft-te-premium"
+}

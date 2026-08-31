@@ -56,3 +56,10 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-31 | Historical player context is period-specific         | Present-day team and position cannot rewrite draft, scoring, transaction, statistic, or rank facts       | Accepted |
 | 2026-08-31 | Protected running operations require stale recovery  | A uniqueness guard without bounded recovery can permanently block later work                             | Accepted |
 | 2026-08-31 | Cross-provider associations are invalid              | Account, league, and synchronization identity must remain within one provider boundary                   | Accepted |
+| 2026-08-31 | Provider state selects the active league season      | Calendar time cannot safely substitute for Sleeper's current league-season context                       | Accepted |
+| 2026-08-31 | League collections validate before reconciliation    | One malformed or incomplete response must not remove previously observed leagues                         | Accepted |
+| 2026-08-31 | Fetch time and provider update time stay distinct    | Sleeper publishes no reliable league-level update time                                                   | Accepted |
+| 2026-08-31 | Current-season discovery is one atomic RPC lifecycle | State, shared leagues, associations, removals, and run outcome must agree transactionally                | Accepted |
+| 2026-08-31 | Current-season reads use provider season scope       | Historical associations and attempts must not be presented as the resolved current season                | Accepted |
+| 2026-08-31 | Shared current state is monotonic by fetch time      | A slower older response cannot regress a newer provider or league representation                         | Accepted |
+| 2026-08-31 | Shared creation and locking are concurrency-safe     | Conflict-safe insert-or-load and canonical key order prevent identity races and inconsistent lock order  | Accepted |

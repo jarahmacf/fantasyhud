@@ -1,0 +1,25 @@
+{
+  "league_id": "fixture-league-idp",
+  "sport": "nfl",
+  "season": "2026",
+  "name": "Fixture IDP",
+  "status": "complete",
+  "season_type": "regular",
+  "total_rosters": 8,
+  "settings": { "type": 0 },
+  "scoring_settings": { "rec": 0.5, "idp_sack": 4 },
+  "roster_positions": [
+    "QB",
+    "RB",
+    "WR",
+    "TE",
+    "DL",
+    "LB",
+    "DB",
+    "IDP_FLEX",
+    "BN"
+  ],
+  "avatar": null,
+  "previous_league_id": null,
+  "draft_id": "fixture-draft-idp"
+}

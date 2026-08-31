@@ -8,6 +8,7 @@ import { SleeperClientError } from "./types"
 const localEnvironment = {
   NODE_ENV: "test",
   SLEEPER_API_BASE_URL: "http://127.0.0.1:4100/v1",
+  SLEEPER_LOCAL_TEST_MODE: "1",
 }
 
 function validResponse(overrides: Record<string, unknown> = {}) {

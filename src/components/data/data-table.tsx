@@ -33,10 +33,12 @@ type DataTableProps<Row> = {
   ariaLabel: string
   caption?: string
   columns: ColumnDef<Row>[]
+  countNoun?: string
   data: Row[]
   description?: string
   emptyMessage?: string
   getRowId: (row: Row) => string
+  headingId?: string
   searchText: string
   title: string
 }
@@ -63,10 +65,12 @@ export function DataTable<Row>({
   ariaLabel,
   caption,
   columns,
+  countNoun = "systems",
   data,
   description,
   emptyMessage = "No results.",
   getRowId,
+  headingId = "data-table-heading",
   searchText,
   title,
 }: DataTableProps<Row>) {
@@ -90,14 +94,14 @@ export function DataTable<Row>({
 
   const filteredCount = table.getFilteredRowModel().rows.length
   const countLabel = searchText
-    ? `${filteredCount} of ${data.length} systems matching “${searchText}”`
-    : `${data.length} systems`
+    ? `${filteredCount} of ${data.length} ${countNoun} matching “${searchText}”`
+    : `${data.length} ${countNoun}`
 
   return (
-    <section aria-labelledby="foundation-status-heading" className="min-w-0">
+    <section aria-labelledby={headingId} className="min-w-0">
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h2 id="foundation-status-heading" className="text-sm font-semibold">
+          <h2 id={headingId} className="text-sm font-semibold">
             {title}
           </h2>
           {description ? (
@@ -113,7 +117,7 @@ export function DataTable<Row>({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-card">
+      <div className="overflow-x-auto rounded-lg border bg-card">
         <Table aria-label={ariaLabel} className="min-w-[640px]">
           {caption ? <TableCaption>{caption}</TableCaption> : null}
           <TableHeader className="sticky top-0 z-10 bg-muted">

@@ -1,6 +1,6 @@
 # Sleeper account connection
 
-Task 004 connects one authenticated FANTASY HUD user to one public Sleeper identity. It resolves identity only; it does not import or synchronize fantasy data.
+Task 004 connects one authenticated FANTASY HUD user to one public Sleeper identity. Identity resolution itself imports no fantasy data. Task 006 later uses that stored canonical identity for explicitly initiated league discovery.
 
 ## Source API
 
@@ -37,6 +37,8 @@ Execution is revoked from `PUBLIC`, `anon`, and `authenticated`, and granted onl
 
 The authenticated Server Action validates signed claims before creating the narrowly scoped admin client. Hosted deployments use a named `sb_secret_...` key in the server-only `SUPABASE_SECRET_KEY` variable. Local tests pass the local service-role equivalent through the same variable. The value is never public, logged, committed, sent to CI as a hosted secret, or returned to the browser.
 
-## Scope
+## League-discovery handoff
 
-Task 004 stores only identity and link state. `last_synced_at` remains null, and the UI states that portfolio import has not started. League, roster, player, draft, pick, matchup, transaction, and market data remain deferred.
+Task 004 stores only identity and link state. Task 006 uses the canonical `external_user_id` with the official NFL state and user-leagues endpoints; it never re-resolves the mutable username for import. See `LEAGUE_DISCOVERY.md`.
+
+League discovery stores only shared league parent rows, discovery associations, provider state, and sync-run history. It is not roster ownership or complete portfolio synchronization, so `last_synced_at` remains null. Roster, player, draft, pick, matchup, transaction, and market imports remain deferred.

@@ -67,3 +67,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never add a ranking without source and scoring context.
 - Every uniqueness-protected running operation requires a documented stale-run recovery path.
 - Never persist a cross-provider association; fantasy-account, league, and sync-run providers must match.
+- Never use the calendar year when provider state is unavailable.
+- Never import a partially validated league collection.
+- Never set `provider_updated_at` to request or fetch time.
+- Never reconcile league removals outside the exact account, provider, sport, and season collection.
+- Never label an unscoped association list as current-season.
+- Never allow an older provider observation to overwrite a newer shared row.
+- Every shared-resource upsert must be safe under concurrent first creation.
+- Acquire shared-resource locks in deterministic canonical-key order.
