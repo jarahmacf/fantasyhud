@@ -7,8 +7,15 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI || process.platform === "darwin" ? 1 : undefined,
   reporter: "html",
+  expect: {
+    toHaveScreenshot: {
+      // Allows only small cross-host antialiasing differences; layout drift still fails.
+      maxDiffPixelRatio: 0.005,
+      threshold: 0.2,
+    },
+  },
   use: {
     baseURL,
     launchOptions:
