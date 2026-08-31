@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
-import Home from "@/app/page"
+import FoundationPage from "@/app/foundation/page"
 
 describe("foundation page", () => {
   it("renders the canonical shell and repository heading", () => {
-    render(<Home />)
+    render(<FoundationPage />)
 
     expect(screen.getByText("FANTASY HUD")).toBeInTheDocument()
     expect(screen.getByText("Portfolio Command Center")).toBeInTheDocument()
@@ -17,7 +17,7 @@ describe("foundation page", () => {
   })
 
   it("renders four cards with the canonical composition", () => {
-    const { container } = render(<Home />)
+    const { container } = render(<FoundationPage />)
     const summary = screen.getByRole("region", { name: "Foundation summary" })
     const cards = summary.querySelectorAll('[data-slot="card"]')
 
@@ -42,11 +42,11 @@ describe("foundation page", () => {
     }
   })
 
-  it("renders ten truthful foundation rows", () => {
-    render(<Home />)
+  it("renders thirteen truthful foundation rows", () => {
+    render(<FoundationPage />)
 
     const table = screen.getByRole("table", { name: "Foundation status" })
-    expect(within(table).getAllByRole("row")).toHaveLength(11)
+    expect(within(table).getAllByRole("row")).toHaveLength(14)
     expect(
       within(table).getByRole("row", {
         name: /Hosted development Configured Supabase GitHub integration/i,
@@ -54,13 +54,13 @@ describe("foundation page", () => {
     ).toBeInTheDocument()
     expect(
       within(table).getByRole("row", {
-        name: /Product database Not modeled Deferred to Task 003/i,
+        name: /Account identity model Ready Shared provider identity/i,
       })
     ).toBeInTheDocument()
   })
 
   it("filters every foundation field and clearing restores all rows", () => {
-    render(<Home />)
+    render(<FoundationPage />)
 
     const search = screen.getByRole("searchbox", {
       name: "Search foundation status",
@@ -73,16 +73,16 @@ describe("foundation page", () => {
       within(table).getByRole("row", { name: /Database tests Ready pgTAP/i })
     ).toBeInTheDocument()
     expect(screen.getByRole("status")).toHaveTextContent(
-      "1 of 10 systems matching “pgTAP”"
+      "1 of 13 systems matching “pgTAP”"
     )
 
     fireEvent.click(screen.getByRole("button", { name: "Clear search" }))
     expect(search).toHaveValue("")
-    expect(within(table).getAllByRole("row")).toHaveLength(11)
+    expect(within(table).getAllByRole("row")).toHaveLength(14)
   })
 
   it("focuses search with the platform keyboard shortcut", () => {
-    render(<Home />)
+    render(<FoundationPage />)
 
     const search = screen.getByRole("searchbox", {
       name: "Search foundation status",
@@ -92,12 +92,12 @@ describe("foundation page", () => {
   })
 
   it("exposes no fake navigation or excluded template controls", () => {
-    render(<Home />)
+    render(<FoundationPage />)
 
     expect(screen.getAllByRole("link")).toHaveLength(2)
     expect(screen.getByRole("link", { name: /Foundation/i })).toHaveAttribute(
       "href",
-      "/"
+      "/foundation"
     )
 
     for (const excluded of [

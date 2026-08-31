@@ -29,11 +29,11 @@ const summaries = [
   },
   {
     label: "Test suite",
-    value: "3 gates",
+    value: "4 gates",
     badge: "Ready",
     Icon: ShieldCheck,
-    summary: "Unit, browser, and database checks",
-    detail: "Vitest, Playwright, and pgTAP are configured.",
+    summary: "Unit, public, auth, and database checks",
+    detail: "Vitest, Playwright, and pgTAP cover the foundation.",
   },
   {
     label: "Delivery",

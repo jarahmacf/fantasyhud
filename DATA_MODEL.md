@@ -5,7 +5,8 @@ This document names future domain entities and invariants only. It does not defi
 ## Entities
 
 - **App user:** A person who uses FANTASY HUD.
-- **Connected fantasy account:** A provider account associated with an app user.
+- **Fantasy account:** One shared provider identity keyed by provider and external user ID.
+- **User-to-fantasy-account link:** An app user's tracked association to a shared fantasy account.
 - **League:** A shared fantasy competition from a provider.
 - **Account-to-league membership:** The association between a connected account and a league.
 - **Roster:** A team roster within a league.
@@ -20,6 +21,10 @@ This document names future domain entities and invariants only. It does not defi
 ## Invariants
 
 - Shared Sleeper resources are stored once.
+- Auth users and provider identities remain separate concepts.
+- Provider plus external user ID is canonical; usernames are mutable.
+- A user may have at most one primary fantasy-account link.
+- Browser sessions cannot create fantasy accounts or links.
 - User ownership is represented through associations.
 - Complete draft boards include every drafter’s picks.
 - Pick ownership is derived, not stored as a universal boolean.
