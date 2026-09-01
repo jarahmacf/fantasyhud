@@ -1,0 +1,74 @@
+{
+  "ordinary": {
+    "player_id": "ordinary",
+    "sport": "nfl",
+    "first_name": "  Ada  ",
+    "last_name": "Lovelace",
+    "full_name": "  Ada Lovelace  ",
+    "position": "QB",
+    "fantasy_positions": ["QB", "QB"],
+    "team": "SEA",
+    "active": true,
+    "status": "Active",
+    "number": 12,
+    "age": 29,
+    "years_exp": 4,
+    "news_updated": 1788134400000,
+    "search_rank": 10,
+    "espn_id": 12345,
+    "yahoo_id": "yahoo-ordinary",
+    "custom_source_fact": "retained"
+  },
+  "retired": {
+    "player_id": "retired",
+    "sport": "nfl",
+    "full_name": "Retired Player",
+    "position": "RB",
+    "fantasy_positions": ["RB"],
+    "active": false,
+    "status": "Inactive"
+  },
+  "defense": {
+    "player_id": "defense",
+    "sport": "nfl",
+    "position": "DEF",
+    "fantasy_positions": ["DEF"],
+    "team": "SF",
+    "active": true
+  },
+  "dual": {
+    "player_id": "dual",
+    "sport": "nfl",
+    "first_name": "Dual",
+    "last_name": "Player",
+    "position": "WR",
+    "fantasy_positions": ["WR", "RB", "WR"]
+  },
+  "injured": {
+    "player_id": "injured",
+    "sport": "nfl",
+    "full_name": "Injured Player",
+    "position": "TE",
+    "fantasy_positions": ["TE"],
+    "injury_status": "Out",
+    "injury_body_part": "Knee",
+    "injury_start_date": "2026-08-30",
+    "practice_participation": "Did Not Participate"
+  },
+  "sparse": {
+    "player_id": "sparse",
+    "sport": "nfl"
+  },
+  "malformed": {
+    "player_id": "malformed",
+    "sport": "nfl",
+    "first_name": 42,
+    "active": "true",
+    "position": " qb ",
+    "fantasy_positions": ["QB", "bad-token"],
+    "age": 900,
+    "injury_start_date": "2026-02-30",
+    "news_updated": "yesterday",
+    "stats_id": 9007199254740992
+  }
+}

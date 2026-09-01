@@ -90,6 +90,12 @@ jobs:
       - name: Run league discovery concurrency test
         run: npm run db:test:league-concurrency
 
+      - name: Reset database before player catalog load test
+        run: npm run db:reset
+
+      - name: Run 5,000-record player catalog load test
+        run: npm run db:test:player-catalog-load
+
       - name: Upload authenticated browser failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4

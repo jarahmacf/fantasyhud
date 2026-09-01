@@ -18,7 +18,14 @@ export interface SleeperHttpEnvironment {
 export interface SleeperHttpOptions {
   timeoutMs?: number
   retryDelayMs?: number
+  maxResponseBytes?: number
   environment?: SleeperHttpEnvironment
+}
+
+export interface SleeperJsonResponse {
+  data: unknown
+  responseBytes: number
+  fetchedAt: string
 }
 
 function getSleeperApiBaseUrl(
@@ -87,19 +94,56 @@ function wait(milliseconds: number): Promise<void> {
 
 async function fetchWithTimeout(
   url: string,
-  timeoutMs: number
-): Promise<Response> {
+  timeoutMs: number,
+  maxResponseBytes?: number
+): Promise<
+  | { response: Response; body: null; responseBytes: 0; fetchedAt: null }
+  | {
+      response: Response
+      body: ArrayBuffer
+      responseBytes: number
+      fetchedAt: string
+    }
+> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    return await fetch(url, {
+    const response = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
       cache: "no-store",
       signal: controller.signal,
     })
+
+    if (!response.ok) {
+      return { response, body: null, responseBytes: 0, fetchedAt: null }
+    }
+
+    const contentLength = response.headers.get("content-length")?.trim()
+    if (maxResponseBytes !== undefined && contentLength) {
+      const advertisedBytes = Number(contentLength)
+      if (
+        Number.isFinite(advertisedBytes) &&
+        advertisedBytes > maxResponseBytes
+      ) {
+        throw new SleeperClientError("invalid_response")
+      }
+    }
+
+    const body = await response.arrayBuffer()
+    if (maxResponseBytes !== undefined && body.byteLength > maxResponseBytes) {
+      throw new SleeperClientError("invalid_response")
+    }
+
+    return {
+      response,
+      body,
+      responseBytes: body.byteLength,
+      fetchedAt: new Date().toISOString(),
+    }
   } catch (error) {
+    if (error instanceof SleeperClientError) throw error
     if (
       controller.signal.aborted ||
       (error instanceof Error &&
@@ -117,6 +161,14 @@ export async function sleeperGetJson(
   pathSegments: readonly string[],
   options: SleeperHttpOptions = {}
 ): Promise<unknown> {
+  const response = await sleeperGetJsonWithMetadata(pathSegments, options)
+  return response.data
+}
+
+export async function sleeperGetJsonWithMetadata(
+  pathSegments: readonly string[],
+  options: SleeperHttpOptions = {}
+): Promise<SleeperJsonResponse> {
   if (
     pathSegments.length === 0 ||
     pathSegments.some(
@@ -135,11 +187,19 @@ export async function sleeperGetJson(
   const url = `${baseUrl}/${encodedPath}`
   const timeoutMs = options.timeoutMs ?? defaultTimeoutMs
   const retryDelayMs = options.retryDelayMs ?? defaultRetryDelayMs
+  const maxResponseBytes = options.maxResponseBytes
+
+  if (
+    maxResponseBytes !== undefined &&
+    (!Number.isSafeInteger(maxResponseBytes) || maxResponseBytes < 1)
+  ) {
+    throw new SleeperClientError("invalid_response")
+  }
 
   for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
-    let response: Response
+    let result: Awaited<ReturnType<typeof fetchWithTimeout>>
     try {
-      response = await fetchWithTimeout(url, timeoutMs)
+      result = await fetchWithTimeout(url, timeoutMs, maxResponseBytes)
     } catch (error) {
       if (
         error instanceof SleeperClientError &&
@@ -151,6 +211,8 @@ export async function sleeperGetJson(
       }
       throw error
     }
+
+    const { response } = result
 
     if (response.status === 404) {
       throw new SleeperClientError("not_found")
@@ -169,7 +231,15 @@ export async function sleeperGetJson(
     }
 
     try {
-      return await response.json()
+      if (!result.body || !result.fetchedAt) {
+        throw new SleeperClientError("invalid_response")
+      }
+
+      return {
+        data: JSON.parse(new TextDecoder().decode(result.body)) as unknown,
+        responseBytes: result.responseBytes,
+        fetchedAt: result.fetchedAt,
+      }
     } catch {
       throw new SleeperClientError("invalid_response")
     }

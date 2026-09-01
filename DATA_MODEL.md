@@ -12,7 +12,9 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - **Account-to-league discovery:** The observation that a provider reported a shared league for a tracked fantasy account; it does not prove roster ownership.
 - **Roster:** A team roster within a league.
 - **Roster-player membership:** One canonical player's current membership on one roster, including source-grounded starter, reserve, and taxi state.
-- **Player:** A provider-identified football player.
+- **Player:** One shared canonical football entity with a mutable current profile; this may be an individual, team defense, or sparse unknown entity.
+- **Player external identity:** One exact namespace, sport, and external ID mapped historically to one canonical player.
+- **Provider catalog run:** One global provider, sport, catalog resource, and refresh attempt.
 - **Draft:** A draft associated with a league or provider context.
 - **Account-to-draft membership:** The association between a connected account and a draft.
 - **Complete draft board:** The full ordered set of selections from every drafter.
@@ -27,10 +29,15 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - `leagues`: one shared league per provider and exact external league ID.
 - `fantasy_account_leagues`: one discovery association per fantasy account and shared league.
 - `sync_runs`: one tracked fantasy account, scope, and attempt.
+- `players`: one shared canonical NFL entity and mutable current profile.
+- `player_external_ids`: one exact historical namespace, sport, and external ID mapping.
+- `provider_catalog_runs`: one global provider, sport, catalog resource, and attempt.
 
 Task 006 populates these grains for the first time through one validated current-season Sleeper collection. `leagues.fetched_at` is the required observation time. Shared provider state and league representations are monotonic by this time, while account associations remain independent observations. `leagues.provider_updated_at` remains nullable, is never replaced with request time, and is not erased by a null incoming value.
 
 The browser authorization path is `auth user → user_fantasy_accounts → fantasy account → fantasy_account_leagues → league`. Browser roles receive read-only, RLS-scoped access. Provider data is written only through reviewed service-only RPCs; `service_role` has no direct provider-table CRUD.
+
+The canonical player catalog is globally readable to an authenticated app user after the application confirms a tracked Sleeper account. It is not owned by one fantasy account. Global catalog-run status is browser-readable only through explicitly granted safe columns. Its `triggered_by_user_id` records server-only audit and run-ownership state and is not browser-selectable; source freshness and active-run uniqueness are global to Sleeper/NFL/players.
 
 ## Planned fantasy-data grains
 
@@ -40,6 +47,16 @@ The browser authorization path is `auth user → user_fantasy_accounts → fanta
 ## Invariants
 
 - Shared Sleeper resources are stored once.
+- Sleeper player IDs are primary canonical identity inputs; secondary IDs never auto-merge players.
+- A removed primary mapping is retained and reactivated if the exact Sleeper ID returns.
+- Current player profiles advance only for an equal or newer profile fetch observation.
+- Team defenses are canonical entities, while sparse valid source rows remain explicit unknown entities.
+- Canonical-entity counts include retained historical rows even after their primary Sleeper mapping is removed.
+- Active-player counts include only active individual player entities with an active primary Sleeper/NFL mapping.
+- Current team-defense counts include only team-defense entities with an active primary Sleeper/NFL mapping and do not depend on the optional provider active field.
+- Optional display fields reject original ASCII control characters before trimming supported outer whitespace.
+- Sleeper search rank is source search metadata, never fantasy rank or ADP.
+- The global full player map is fetched at most once per successful rolling 24-hour window.
 - Concurrent first creation of a shared resource reuses one canonical row.
 - Shared-resource locks are acquired in deterministic canonical-key order.
 - Older provider observations never overwrite newer shared current representations.
@@ -62,6 +79,7 @@ The browser authorization path is `auth user → user_fantasy_accounts → fanta
 - A valid empty current-season league collection is a successful observed zero; a source failure is not.
 - Current-season league rows and success are scoped to the provider-resolved league season; historical associations remain stored.
 - League discovery never updates `fantasy_accounts.last_synced_at`.
+- Player catalog refresh never updates `fantasy_accounts.last_synced_at`.
 - Best-ball starter and bench labels do not affect exposure.
 - Best-ball exposure counts every current `roster_players` membership while preserving source starter, reserve, and taxi facts.
 - Drafted exposure comes from immutable `draft_picks`; weekly lineup history comes from `matchup_player_points`; acquisitions, drops, and trades come from transaction facts.

@@ -1,11 +1,30 @@
 import { fireEvent, render, screen, within } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+vi.mock("next/server", () => ({ connection: vi.fn() }))
+vi.mock("@/lib/auth/current-user", () => ({
+  getCurrentAuthIdentity: vi.fn(),
+}))
+vi.mock("@/lib/supabase/server", () => ({
+  createServerSupabaseClient: vi.fn(),
+}))
 
 import FoundationPage from "@/app/foundation/page"
+import { getCurrentAuthIdentity } from "@/lib/auth/current-user"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
+
+const mockedIdentity = vi.mocked(getCurrentAuthIdentity)
+const mockedServerClient = vi.mocked(createServerSupabaseClient)
 
 describe("foundation page", () => {
-  it("renders the canonical shell and repository heading", () => {
-    render(<FoundationPage />)
+  beforeEach(() => {
+    mockedIdentity.mockReset()
+    mockedIdentity.mockResolvedValue(null)
+    mockedServerClient.mockReset()
+  })
+
+  it("renders the canonical shell and repository heading", async () => {
+    render(await FoundationPage())
 
     expect(screen.getByText("FANTASY HUD")).toBeInTheDocument()
     expect(screen.getByText("Portfolio Command Center")).toBeInTheDocument()
@@ -16,8 +35,8 @@ describe("foundation page", () => {
     expect(screen.getByText("No signed-in user")).toBeInTheDocument()
   })
 
-  it("renders four cards with the canonical composition", () => {
-    const { container } = render(<FoundationPage />)
+  it("renders four cards with the canonical composition", async () => {
+    const { container } = render(await FoundationPage())
     const summary = screen.getByRole("region", { name: "Foundation summary" })
     const cards = summary.querySelectorAll('[data-slot="card"]')
 
@@ -42,8 +61,8 @@ describe("foundation page", () => {
     }
   })
 
-  it("renders thirteen truthful foundation rows", () => {
-    render(<FoundationPage />)
+  it("renders thirteen truthful foundation rows", async () => {
+    render(await FoundationPage())
 
     const table = screen.getByRole("table", { name: "Foundation status" })
     expect(within(table).getAllByRole("row")).toHaveLength(14)
@@ -59,8 +78,8 @@ describe("foundation page", () => {
     ).toBeInTheDocument()
   })
 
-  it("filters every foundation field and clearing restores all rows", () => {
-    render(<FoundationPage />)
+  it("filters every foundation field and clearing restores all rows", async () => {
+    render(await FoundationPage())
 
     const search = screen.getByRole("searchbox", {
       name: "Search foundation status",
@@ -81,8 +100,8 @@ describe("foundation page", () => {
     expect(within(table).getAllByRole("row")).toHaveLength(14)
   })
 
-  it("focuses search with the platform keyboard shortcut", () => {
-    render(<FoundationPage />)
+  it("focuses search with the platform keyboard shortcut", async () => {
+    render(await FoundationPage())
 
     const search = screen.getByRole("searchbox", {
       name: "Search foundation status",
@@ -91,8 +110,8 @@ describe("foundation page", () => {
     expect(search).toHaveFocus()
   })
 
-  it("exposes no fake navigation or excluded template controls", () => {
-    render(<FoundationPage />)
+  it("exposes no fake navigation or excluded template controls", async () => {
+    render(await FoundationPage())
 
     expect(screen.getAllByRole("link")).toHaveLength(2)
     expect(screen.getByRole("link", { name: /Foundation/i })).toHaveAttribute(
@@ -114,5 +133,46 @@ describe("foundation page", () => {
         screen.queryByRole("link", { name: excluded })
       ).not.toBeInTheDocument()
     }
+  })
+
+  it("retains signed-in navigation, account label, and sign-out", async () => {
+    mockedIdentity.mockResolvedValue({
+      id: "user-id",
+      email: "signed-in@example.test",
+    })
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          fantasy_accounts: { provider: "sleeper", username: "fixture" },
+        },
+        error: null,
+      }),
+    }
+    builder.select.mockReturnValue(builder)
+    builder.eq.mockReturnValue(builder)
+    builder.order.mockReturnValue(builder)
+    builder.limit.mockReturnValue(builder)
+    mockedServerClient.mockResolvedValue({
+      from: vi.fn().mockReturnValue(builder),
+    } as never)
+
+    render(await FoundationPage())
+
+    expect(screen.getByRole("link", { name: /Leagues/i })).toHaveAttribute(
+      "href",
+      "/"
+    )
+    expect(screen.getByRole("link", { name: /Players/i })).toHaveAttribute(
+      "href",
+      "/players"
+    )
+    expect(screen.getByText("@fixture")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /Sign out/i })
+    ).toBeInTheDocument()
   })
 })

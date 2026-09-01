@@ -199,8 +199,6 @@ select is(
         'rosters',
         'roster_players',
         'fantasy_account_rosters',
-        'players',
-        'player_external_ids',
         'drafts',
         'fantasy_account_drafts',
         'draft_picks',
@@ -221,7 +219,7 @@ select is(
       )
   ),
   0,
-  'future child, cache, queue, ranking, and fact tables are deferred'
+  'remaining future child, cache, queue, ranking, and fact tables are deferred'
 );
 
 select has_index(
