@@ -1,10 +1,10 @@
 # FANTASY HUD
 
-FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, canonical Sleeper account identity, shared fantasy-data parent schema, and current-season Sleeper league discovery.
+FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, canonical Sleeper account identity, shared fantasy-data parent schema, current-season Sleeper league discovery, and canonical Sleeper NFL player catalog.
 
 ## Repository status
 
-Task 006 is in review. It resolves the active NFL league season from Sleeper state, validates one complete current-season collection, atomically reconciles shared leagues and account discovery associations through service-only RPCs, records sync-run history, and renders the first connected dashboard. It imports no roster, player, draft, matchup, transaction, ranking, market, or analytics rows.
+Task 007A is deployed and its controlled Production canary passed. It imports one shared canonical Sleeper NFL player catalog through private bounded staging and atomic service-only RPC publication. Task 007A.1 adds measured response-size headroom with an incremental decoded-body limit and a matching additive database constraint change. It does not change identity, normalization, batching, freshness, anti-wipe, authorization, or publication behavior, and Task 007B portfolio synchronization has not begun.
 
 ## Local setup
 
@@ -50,7 +50,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 For a first local browser-test run, install Chromium with `npx playwright install chromium`. The browser-test command builds and serves the production application automatically.
 
-See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the identity boundary, `LEAGUE_DISCOVERY.md` for the first provider import, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, `SYNC_ARCHITECTURE.md` for run lifecycle, and `HOSTING.md` for the Git-connected deployment model.
+See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the identity boundary, `LEAGUE_DISCOVERY.md` for league discovery, `PLAYER_CATALOG.md` for the canonical player source, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, `SYNC_ARCHITECTURE.md` for run lifecycle, and `HOSTING.md` for the Git-connected deployment model.
 
 ## Visual reference
 

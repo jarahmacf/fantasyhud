@@ -36,7 +36,7 @@ describe("fetchSleeperPlayerCatalog", () => {
       maxResponseBytes: sleeperPlayerCatalogMaximumBytes,
     })
     expect(sleeperPlayerCatalogTimeoutMs).toBe(30_000)
-    expect(sleeperPlayerCatalogMaximumBytes).toBe(15_000_000)
+    expect(sleeperPlayerCatalogMaximumBytes).toBe(25_000_000)
     expect(result).toMatchObject({
       sourceRecordCount: 500,
       sourceBytes: 20_000,

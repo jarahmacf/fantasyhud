@@ -80,3 +80,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never allow an older provider observation to overwrite a newer shared row.
 - Every shared-resource upsert must be safe under concurrent first creation.
 - Acquire shared-resource locks in deterministic canonical-key order.
+- Enforce large provider-response limits incrementally while streaming; a Content-Length check alone is insufficient.
+- Keep provider response limits aligned with measured operational headroom and matching database constraints.
+- Treat response-size violations as non-retryable invalid responses and never expose their payloads.
