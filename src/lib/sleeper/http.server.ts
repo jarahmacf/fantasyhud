@@ -92,6 +92,60 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
+async function readBoundedResponseBody(
+  response: Response,
+  controller: AbortController,
+  maxResponseBytes?: number
+): Promise<ArrayBuffer> {
+  if (!response.body || typeof response.body.getReader !== "function") {
+    const body = await response.arrayBuffer()
+    if (maxResponseBytes !== undefined && body.byteLength > maxResponseBytes) {
+      controller.abort()
+      throw new SleeperClientError("invalid_response")
+    }
+    return body
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let responseBytes = 0
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (!value || value.byteLength === 0) continue
+
+      const nextResponseBytes = responseBytes + value.byteLength
+      if (
+        !Number.isSafeInteger(nextResponseBytes) ||
+        (maxResponseBytes !== undefined && nextResponseBytes > maxResponseBytes)
+      ) {
+        try {
+          await reader.cancel()
+        } catch {
+          // The request is aborted below even when stream cancellation fails.
+        }
+        controller.abort()
+        throw new SleeperClientError("invalid_response")
+      }
+
+      chunks.push(value)
+      responseBytes = nextResponseBytes
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  const body = new Uint8Array(responseBytes)
+  let offset = 0
+  for (const chunk of chunks) {
+    body.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return body.buffer
+}
+
 async function fetchWithTimeout(
   url: string,
   timeoutMs: number,
@@ -127,14 +181,16 @@ async function fetchWithTimeout(
         Number.isFinite(advertisedBytes) &&
         advertisedBytes > maxResponseBytes
       ) {
+        controller.abort()
         throw new SleeperClientError("invalid_response")
       }
     }
 
-    const body = await response.arrayBuffer()
-    if (maxResponseBytes !== undefined && body.byteLength > maxResponseBytes) {
-      throw new SleeperClientError("invalid_response")
-    }
+    const body = await readBoundedResponseBody(
+      response,
+      controller,
+      maxResponseBytes
+    )
 
     return {
       response,

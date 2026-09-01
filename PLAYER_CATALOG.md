@@ -4,7 +4,9 @@ Task 007A introduces one shared current catalog from Sleeper's official, read-on
 
 ## Source and freshness
 
-The server fetches exactly `/players/nfl`, with no filters, at most twice for transient transport failures, a 30-second timeout, and a 15 MB decoded-body limit. Fetch completion records `source_fetched_at`, byte size, and record count. Neither the browser nor a query parameter can select another origin, bypass freshness, or submit source data.
+The server fetches exactly `/players/nfl`, with no filters, at most twice for transient transport failures, a 30-second timeout, and a 25,000,000-byte decoded-body limit. It rejects an advertised over-limit Content-Length before body consumption, then counts decoded stream chunks and cancels and aborts immediately if the cumulative size crosses the bound. Environments without a body reader retain a final post-read size check. Exactly 25,000,000 bytes is valid; one byte more fails as an invalid response and is never retried. Accepted responses are joined once for JSON decoding, and the exact accepted byte count is retained.
+
+The controlled Task 007A canary measured 14,649,993 decoded bytes for 12,225 records. That left only 350,007 bytes, or 2.33% of the former 15,000,000-byte ceiling. The new ceiling leaves 10,350,007 bytes, or 41.40% of the bound, without changing the source endpoint, record maximum, normalization, batching, freshness, staging, anti-wipe, or atomic publication contracts. Fetch completion records `source_fetched_at`, byte size, and record count. Neither the browser nor a query parameter can select another origin, bypass freshness, or submit source data.
 
 A successful Sleeper/NFL/players run is globally fresh for 24 rolling hours. Any connected app user reuses that successful catalog without a source request. One active global run is reused for 15 minutes; an older running attempt is failed with bounded metadata, its staging is removed, and a replacement may start.
 
@@ -43,4 +45,4 @@ The authenticated `/players` page distinguishes not imported, running, failed, i
 
 Catalog refresh does not update `fantasy_accounts.last_synced_at`. It imports no league ownership, roster membership, draft, matchup, transaction, ranking, market, or portfolio reconciliation facts. There is no scheduler, force-refresh control, queue, or automatic cross-ID merge in Task 007A.
 
-The Task 007A database contract uses an exact pgTAP assertion plan so missing or extra privacy, lifecycle, identity, and count assertions fail the suite.
+The Task 007A database contract uses an exact pgTAP assertion plan so missing or extra privacy, lifecycle, identity, and count assertions fail the suite. The Task 007A.1 contract separately verifies the 25,000,000-byte table and RPC bounds, unchanged 50,000-record maximum, unchanged function shape and grants, immutable per-run source envelope, private staging, and no premature publication.

@@ -8,7 +8,7 @@ Database migrations in `supabase/migrations/` are the schema source of truth. Ev
 
 The Supabase GitHub integration connects `jarahmacf/fantasyhud` with working directory `.` and deployment branch `main`. Reviewed migrations deploy to the hosted development project after they reach `main`. GitHub Actions verifies migrations locally and never deploys them.
 
-The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Tasks through 006.1 are deployed and their hosted gates passed. Task 007A remains branch-only until audit and merge.
+The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Tasks through 007A are deployed and their hosted gates passed. Task 007A.1 adds measured player-catalog response-size headroom through a reviewed additive migration and matching bounded server reader; it does not broaden the catalog data model.
 
 ## Local workflow
 
@@ -43,7 +43,7 @@ Task 003 adds profiles, shared fantasy accounts, and user-to-account association
 
 Task 005.1 revokes direct `service_role` access to the four provider-data tables. Task 006 implements that RPC-only boundary with fixed-search-path start, complete, and fail functions. The validated Server Action loads the primary tracked account through RLS before constructing the service-role client. `service_role` receives execute only; the completion function revalidates provider, account, run, normalized state, and the full league collection before one atomic write.
 
-Task 007A applies the same RPC-only model to the global player catalog. `players`, `player_external_ids`, `provider_catalog_runs`, and private staging grant no direct `service_role` CRUD. Four fixed-path lifecycle functions serialize the shared Sleeper/NFL/players boundary, enforce 24-hour freshness, accept idempotent batches of at most 500 normalized records, apply anti-wipe guards, publish atomically, and remove terminal staging. Completion has a 60-second function timeout; start, stage, and fail use 10 seconds.
+Task 007A applies the same RPC-only model to the global player catalog. `players`, `player_external_ids`, `provider_catalog_runs`, and private staging grant no direct `service_role` CRUD. Four fixed-path lifecycle functions serialize the shared Sleeper/NFL/players boundary, enforce 24-hour freshness, accept idempotent batches of at most 500 normalized records, apply anti-wipe guards, publish atomically, and remove terminal staging. Completion has a 60-second function timeout; start, stage, and fail use 10 seconds. Task 007A.1 raises only the decoded source-byte envelope from 15,000,000 to 25,000,000 in both the table constraint and stage RPC. The existing 50,000-record limit, signatures, grants, timeouts, validation, staging, and publication behavior remain unchanged.
 
 The implemented fantasy-data parent tables are:
 

@@ -11,6 +11,50 @@ const localEnvironment = {
   SLEEPER_LOCAL_TEST_MODE: "1",
 }
 
+function exactJsonStream(
+  byteLength: number,
+  options: {
+    chunkSize?: number
+    onCancel?: () => void
+    onEnqueue?: (totalBytes: number) => void
+  } = {}
+): ReadableStream<Uint8Array> {
+  const json = new Uint8Array([123, 125])
+  const chunkSize = options.chunkSize ?? 256 * 1024
+  let emittedBytes = 0
+
+  return new ReadableStream<Uint8Array>({
+    pull(controller) {
+      const remainingBytes = byteLength - emittedBytes
+      if (remainingBytes <= 0) {
+        controller.close()
+        return
+      }
+
+      if (emittedBytes === 0) {
+        const firstChunk = json.subarray(
+          0,
+          Math.min(json.byteLength, byteLength)
+        )
+        controller.enqueue(firstChunk)
+        emittedBytes += firstChunk.byteLength
+        options.onEnqueue?.(emittedBytes)
+        return
+      }
+
+      const currentChunkSize = Math.min(chunkSize, remainingBytes)
+      const chunk = new Uint8Array(currentChunkSize)
+      chunk.fill(32)
+      controller.enqueue(chunk)
+      emittedBytes += currentChunkSize
+      options.onEnqueue?.(emittedBytes)
+    },
+    cancel() {
+      options.onCancel?.()
+    },
+  })
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
@@ -157,7 +201,7 @@ describe("sleeperGetJson", () => {
     expect((caught as Error).message).not.toContain("raw-provider-secret")
   })
 
-  it("returns bounded response metadata without changing JSON callers", async () => {
+  it("accepts a response below the former limit and returns exact metadata", async () => {
     const body = JSON.stringify({ ok: true })
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body)))
 
@@ -172,13 +216,99 @@ describe("sleeperGetJson", () => {
     expect(new Date(result.fetchedAt).toISOString()).toBe(result.fetchedAt)
   })
 
-  it("rejects an advertised or decoded response above the configured limit", async () => {
-    const advertisedFetch = vi.fn().mockResolvedValue(
-      new Response("{}", {
-        headers: { "content-length": "1001" },
-      })
+  it("accepts a streamed response between the former and new limits", async () => {
+    const responseBytes = 15_000_001
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(exactJsonStream(responseBytes)))
     )
+
+    await expect(
+      sleeperGetJsonWithMetadata(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: 25_000_000,
+        retryDelayMs: 0,
+      })
+    ).resolves.toMatchObject({ data: {}, responseBytes })
+  })
+
+  it("accepts a streamed response exactly at the configured limit", async () => {
+    const responseBytes = 25_000_000
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(exactJsonStream(responseBytes)))
+    )
+
+    await expect(
+      sleeperGetJsonWithMetadata(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: responseBytes,
+        retryDelayMs: 0,
+      })
+    ).resolves.toMatchObject({ data: {}, responseBytes })
+  })
+
+  it("rejects a streamed response one byte above the configured limit", async () => {
+    const decodedFetch = vi
+      .fn()
+      .mockResolvedValue(new Response(exactJsonStream(25_000_001)))
+    vi.stubGlobal("fetch", decodedFetch)
+
+    await expect(
+      sleeperGetJsonWithMetadata(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: 25_000_000,
+        retryDelayMs: 0,
+      })
+    ).rejects.toMatchObject({ kind: "invalid_response" })
+    expect(decodedFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("rejects an advertised response above the limit before body consumption", async () => {
+    const getReader = vi.fn()
+    const arrayBuffer = vi.fn()
+    const advertisedFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ "content-length": "25000001" }),
+      body: { getReader },
+      arrayBuffer,
+    } as unknown as Response)
     vi.stubGlobal("fetch", advertisedFetch)
+
+    await expect(
+      sleeperGetJson(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: 25_000_000,
+        retryDelayMs: 0,
+      })
+    ).rejects.toMatchObject({ kind: "invalid_response" })
+    expect(advertisedFetch).toHaveBeenCalledTimes(1)
+    expect(getReader).not.toHaveBeenCalled()
+    expect(arrayBuffer).not.toHaveBeenCalled()
+  })
+
+  it("stops an over-limit stream immediately, cancels it, aborts it, and does not retry", async () => {
+    let emittedBytes = 0
+    let cancelled = false
+    let aborted = false
+    const body = exactJsonStream(5_000, {
+      chunkSize: 600,
+      onCancel: () => {
+        cancelled = true
+      },
+      onEnqueue: (totalBytes) => {
+        emittedBytes = totalBytes
+      },
+    })
+    const decodedFetch = vi.fn((_url: string, init?: RequestInit) => {
+      init?.signal?.addEventListener("abort", () => {
+        aborted = true
+      })
+      return Promise.resolve(new Response(body))
+    })
+    vi.stubGlobal("fetch", decodedFetch)
+
     await expect(
       sleeperGetJson(["players", "nfl"], {
         environment: localEnvironment,
@@ -186,20 +316,57 @@ describe("sleeperGetJson", () => {
         retryDelayMs: 0,
       })
     ).rejects.toMatchObject({ kind: "invalid_response" })
-    expect(advertisedFetch).toHaveBeenCalledTimes(1)
+    expect(decodedFetch).toHaveBeenCalledTimes(1)
+    expect(emittedBytes).toBeGreaterThan(1_000)
+    expect(emittedBytes).toBeLessThanOrEqual(1_802)
+    expect(emittedBytes).toBeLessThan(5_000)
+    expect(cancelled).toBe(true)
+    expect(aborted).toBe(true)
+  })
 
-    const decodedFetch = vi
-      .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ value: "too large" })))
-    vi.stubGlobal("fetch", decodedFetch)
+  it("retains the final size check when a response body reader is unavailable", async () => {
+    const body = new TextEncoder().encode("{}" + " ".repeat(998)).buffer
+    const arrayBuffer = vi.fn().mockResolvedValue(body)
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        body: {},
+        arrayBuffer,
+      } as unknown as Response)
+    )
+
+    await expect(
+      sleeperGetJsonWithMetadata(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: 1_000,
+        retryDelayMs: 0,
+      })
+    ).resolves.toMatchObject({ data: {}, responseBytes: 1_000 })
+    expect(arrayBuffer).toHaveBeenCalledTimes(1)
+  })
+
+  it("rejects a fallback response above the limit without retrying", async () => {
+    const body = new TextEncoder().encode("{} ").buffer
+    const fallbackFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      body: null,
+      arrayBuffer: vi.fn().mockResolvedValue(body),
+    } as unknown as Response)
+    vi.stubGlobal("fetch", fallbackFetch)
+
     await expect(
       sleeperGetJson(["players", "nfl"], {
         environment: localEnvironment,
-        maxResponseBytes: 5,
+        maxResponseBytes: 2,
         retryDelayMs: 0,
       })
     ).rejects.toMatchObject({ kind: "invalid_response" })
-    expect(decodedFetch).toHaveBeenCalledTimes(1)
+    expect(fallbackFetch).toHaveBeenCalledTimes(1)
   })
 
   it("fails closed on arbitrary Production override origins", async () => {

@@ -8,6 +8,8 @@ const supabaseExecutable = join(projectRoot, "node_modules", ".bin", "supabase")
 const overallTimeoutMs = 120_000
 const recordCount = 5_000
 const batchSize = 500
+const responseHeadroomBytes = 25_000_000
+const stagedSourceEnvelopeBytes = 20_000_000
 
 function assert(condition, message) {
   if (!condition) throw new Error(message)
@@ -183,10 +185,18 @@ async function run() {
   const records = Array.from({ length: recordCount }, (_, index) =>
     normalizedRecord(index, sourceFetchedAt)
   )
-  const sourceBytes = new TextEncoder().encode(
+  const generatedPayloadBytes = new TextEncoder().encode(
     JSON.stringify(records)
   ).byteLength
-  assert(sourceBytes <= 15_000_000, "The generated source exceeded 15 MB.")
+  assert(
+    generatedPayloadBytes < stagedSourceEnvelopeBytes,
+    "The generated fixture must remain smaller than its staged test envelope."
+  )
+  assert(
+    stagedSourceEnvelopeBytes > 15_000_000 &&
+      stagedSourceEnvelopeBytes < responseHeadroomBytes,
+    "The staged source envelope must exercise the new response-size headroom."
+  )
 
   for (let offset = 0; offset < records.length; offset += batchSize) {
     const staged = assertSucceeded(
@@ -196,7 +206,7 @@ async function run() {
         p_batch_index: Math.floor(offset / batchSize),
         p_expected_total: recordCount,
         p_source_fetched_at: sourceFetchedAt,
-        p_source_bytes: sourceBytes,
+        p_source_bytes: stagedSourceEnvelopeBytes,
         p_records: records.slice(offset, offset + batchSize),
       }),
       `stage player batch ${offset / batchSize}`
@@ -279,7 +289,7 @@ async function run() {
       .is("player_external_ids.removed_at", null),
     identityA.client
       .from("provider_catalog_runs")
-      .select("status, progress_current, progress_total")
+      .select("status, progress_current, progress_total, source_bytes")
       .eq("id", start.catalog_run_id)
       .single(),
     identityA.client
@@ -317,8 +327,9 @@ async function run() {
   assert(
     run.data.status === "succeeded" &&
       run.data.progress_current === recordCount &&
-      run.data.progress_total === recordCount,
-    "The load catalog run was not succeeded and complete."
+      run.data.progress_total === recordCount &&
+      run.data.source_bytes === stagedSourceEnvelopeBytes,
+    "The load catalog run was not succeeded, complete, and staged above 15 MB."
   )
   assert(
     sample.data.display_name === "Load Player 4999" &&
@@ -356,7 +367,7 @@ async function run() {
   )
 
   console.log(
-    `Player catalog load test passed: ${recordCount} records, ${recordCount} players, ${recordCount} primary mappings, 4455 active individual players, 50 current team defenses, ${Date.now() - startedAt}ms.`
+    `Player catalog load test passed: ${recordCount} records, ${generatedPayloadBytes} generated fixture bytes, ${stagedSourceEnvelopeBytes} staged source-envelope bytes, ${recordCount} players, ${recordCount} primary mappings, 4455 active individual players, 50 current team defenses, ${Date.now() - startedAt}ms.`
   )
 }
 

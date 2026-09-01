@@ -78,3 +78,4 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-31 | Active player counts require primary identity        | Player type, active state, and an active primary Sleeper mapping define current players                  | Accepted |
 | 2026-08-31 | Display controls fail optional-field normalization   | Original ASCII control characters must produce null plus warning instead of being silently trimmed       | Accepted |
 | 2026-08-31 | Database contracts use exact pgTAP plans             | Missing or extra assertions must fail each database contract file                                        | Accepted |
+| 2026-08-31 | Player catalog responses have measured headroom      | The measured response left 2.33% under the old cap; 25 MB streaming preserves fail-closed behavior       | Accepted |
