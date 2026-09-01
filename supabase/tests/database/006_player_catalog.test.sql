@@ -837,6 +837,13 @@ select is(
   'the shared catalog does not update portfolio synchronization time'
 );
 
+-- Keep the freshness contract independent of the wall-clock date on which this
+-- regression suite runs. Earlier fixture timestamps remain fixed so the
+-- monotonic profile assertions above stay deterministic.
+update public.provider_catalog_runs
+set source_fetched_at = clock_timestamp()
+where id = (select catalog_run_id from first_catalog_start);
+
 create temporary table fresh_catalog_start as
 select * from public.start_sleeper_player_catalog_sync(
   '70000000-0000-0000-0000-000000000002'

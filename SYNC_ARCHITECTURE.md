@@ -1,6 +1,6 @@
 # Synchronization architecture
 
-Task 005 establishes synchronization observability. Task 006 implements the first account-scoped league-discovery lifecycle. Task 007A adds a separate global player-catalog lifecycle without adding a queue, cache, scheduler, or portfolio child resource import.
+Task 005 establishes synchronization observability. Task 006 implements the first account-scoped league-discovery lifecycle. Task 007A adds a separate global player-catalog lifecycle. Task 007B.1 adds the account-scoped `roster_sync` observability contract without a source client or lifecycle RPC.
 
 ## Global catalog runs
 
@@ -26,7 +26,7 @@ one tracked fantasy account
 + one attempt
 ```
 
-The first allowed scope is `league_discovery`. The row records the provider, sport, optional season, triggering app user when present, progress, sanitized outcome metadata, and timestamps. `triggered_by_user_id` is audit context; authorization is always derived from `fantasy_account_id → user_fantasy_accounts`.
+The allowed scopes are `league_discovery` and `roster_sync`. The row records the provider, sport, optional season, triggering app user when present, progress, sanitized outcome metadata, and timestamps. `triggered_by_user_id` is server-only audit context; authorization is always derived from `fantasy_account_id → user_fantasy_accounts`.
 
 ## Active-run uniqueness
 
@@ -43,7 +43,7 @@ scope = league_discovery
 status = running
 ```
 
-for each fantasy account. Terminal history remains unlimited. Later scopes need their own reviewed concurrency contract rather than being silently folded into this index.
+for each fantasy account. Terminal history remains unlimited. `sync_runs_one_running_roster_sync_per_account_idx` independently permits one running `roster_sync` per fantasy account. Task 007B.2 must implement reviewed stale-run recovery and heartbeats before it starts these multi-resource runs.
 
 ## Stale-run recovery
 
@@ -115,10 +115,18 @@ Task 007A player catalog refresh also does not set it because the catalog is sha
 
 ## Authorization and writes
 
-Authenticated browser sessions may read only sync runs whose `fantasy_account_id` is linked to `auth.uid()` through `user_fantasy_accounts`. Browser roles receive no insert, update, or delete grants.
+Authenticated browser sessions may read only sync runs whose `fantasy_account_id` is linked to `auth.uid()` through `user_fantasy_accounts`. They receive an explicit safe-column projection; `triggered_by_user_id` is excluded so another user tracking the same shared account cannot read an Auth UUID. Browser roles receive no insert, update, or delete grants.
 
 Direct `service_role` privileges on provider-data tables are revoked. Task 006 writes occur through narrowly scoped, reviewed `SECURITY DEFINER` RPCs invoked by a validated server-side operation; `service_role` receives only `EXECUTE` on those functions. The Server Action validates the app user before constructing an admin client, confirms the tracked-account authorization path, sanitizes errors, and preserves terminal run history.
 
 League-discovery persistence validates transactionally that `fantasy_accounts.provider = leagues.provider = sync_runs.provider`. Cross-provider associations are invalid. Completion accepts only a fully normalized state object and collection, then atomically updates one exact account/provider/sport/season boundary.
 
-Current-season dashboard reads first resolve shared provider state, then filter active associations and successful discovery runs to the resolved league season. Historical associations and terminal run history remain available but do not become current-season UI state.
+## Future roster-sync concurrency and freshness
+
+Task 007B.2 must treat each fully validated league users-and-rosters collection as one observation. Shared `league_users`, `rosters`, and `roster_players` current state is monotonic by that collection observation time, including current flags, owner and co-owner values, settings, exact nullable source arrays, keeper state, and removal state. An older account sync may advance its own `fantasy_account_rosters` ownership observation, but it must not overwrite or remove newer shared current state.
+
+Concurrent first creation of a shared league user, roster, or membership must use conflict-safe insert-or-load behavior and continue with the canonical stored row. Catching and ignoring a unique violation is prohibited. Work and locks must follow one canonical sequence: external league ID, then external roster ID, then external league-user ID, then exact player ID.
+
+Roster-sync removals are limited to the exact fantasy account, provider, sport, season, and league set in the validated complete collection. Shared removal requires a collection observation at least as fresh as the stored shared state, and one account sync must never remove another account's ownership association. Before Task 007B.2 can merge, a simultaneous local-Supabase test must run overlapping account imports and prove conflict-safe shared creation, deterministic lock order, monotonic current state, freshness-guarded removal, and independent ownership.
+
+Current-season dashboard reads first resolve shared provider state, then filter active associations and successful discovery runs to the resolved league season. Shared current roster-domain reads likewise require at least one active league-discovery association through a tracked account. Historical ownership associations and terminal run history remain account-readable, but removed discovery associations do not authorize shared current league-user, roster, or membership rows.

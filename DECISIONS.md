@@ -79,3 +79,14 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-31 | Display controls fail optional-field normalization   | Original ASCII control characters must produce null plus warning instead of being silently trimmed       | Accepted |
 | 2026-08-31 | Database contracts use exact pgTAP plans             | Missing or extra assertions must fail each database contract file                                        | Accepted |
 | 2026-08-31 | Player catalog responses have measured headroom      | The measured response left 2.33% under the old cap; 25 MB streaming preserves fail-closed behavior       | Accepted |
+| 2026-09-01 | Roster ownership uses an explicit association        | League discovery cannot prove which league-local roster belongs to a tracked fantasy account             | Accepted |
+| 2026-09-01 | Exact roster arrays and memberships coexist          | Source fidelity and current queryability require atomic exact and normalized representations             | Accepted |
+| 2026-09-01 | Roster membership proves both player identities      | Canonical player and exact source mapping must agree for every current holding                           | Accepted |
+| 2026-09-01 | Shared league roster context is league-readable      | Future standings need reachable-league rosters while tracked-account ownership stays private             | Accepted |
+| 2026-09-01 | Sync trigger UUIDs are server-only                   | Shared tracked accounts must not reveal another app user's Auth identifier                               | Accepted |
+| 2026-09-01 | Source null and explicit empty remain distinct       | Filling absent roster arrays with empty arrays destroys exact provider semantics                         | Accepted |
+| 2026-09-01 | Keeper meanings remain time-scoped                   | Mutable current roster keeper state cannot replace immutable completed-draft keeper history              | Accepted |
+| 2026-09-01 | Current shared roster reads require active discovery | Removed discovery history must not keep authorizing shared current league context                        | Accepted |
+| 2026-09-01 | Roster current state is collection-monotonic         | An older overlapping account import cannot regress newer shared users, rosters, or memberships           | Accepted |
+| 2026-09-01 | Active membership order is roster-unique             | Exact source and starter positions need unambiguous normalized ordering with reuse after removal         | Accepted |
+| 2026-09-01 | Overlapping roster imports are a database gate       | Conflict-safe creation, deterministic locks, freshness, and ownership isolation require simultaneous SQL | Accepted |
