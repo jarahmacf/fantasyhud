@@ -10,8 +10,10 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - **League:** A shared fantasy competition from a provider.
 - **Provider season state:** The latest shared season and period state for one provider and sport.
 - **Account-to-league discovery:** The observation that a provider reported a shared league for a tracked fantasy account; it does not prove roster ownership.
+- **League user:** One provider user identity as represented within one league.
 - **Roster:** A team roster within a league.
-- **Roster-player membership:** One canonical player's current membership on one roster, including source-grounded starter, reserve, and taxi state.
+- **Account-to-roster ownership:** One explicit tracked fantasy-account association to one roster in one league.
+- **Roster-player membership:** One canonical player's current membership on one roster, including source-grounded starter, reserve, taxi, and keeper state.
 - **Player:** One shared canonical football entity with a mutable current profile; this may be an individual, team defense, or sparse unknown entity.
 - **Player external identity:** One exact namespace, sport, and external ID mapped historically to one canonical player.
 - **Provider catalog run:** One global provider, sport, catalog resource, and refresh attempt.
@@ -32,6 +34,10 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - `players`: one shared canonical NFL entity and mutable current profile.
 - `player_external_ids`: one exact historical namespace, sport, and external ID mapping.
 - `provider_catalog_runs`: one global provider, sport, catalog resource, and attempt.
+- `league_users`: one provider user identity as represented within one canonical league.
+- `rosters`: one league-local current provider roster with exact nullable source arrays that distinguish absent from explicitly empty.
+- `fantasy_account_rosters`: one explicit tracked-account ownership association to one roster in one league.
+- `roster_players`: one canonical player's current membership on one roster, tied to its exact source identity mapping.
 
 Task 006 populates these grains for the first time through one validated current-season Sleeper collection. `leagues.fetched_at` is the required observation time. Shared provider state and league representations are monotonic by this time, while account associations remain independent observations. `leagues.provider_updated_at` remains nullable, is never replaced with request time, and is not erased by a null incoming value.
 
@@ -41,7 +47,6 @@ The canonical player catalog is globally readable to an authenticated app user a
 
 ## Planned fantasy-data grains
 
-- `roster_players`: one current roster + canonical player membership. It preserves source status or roster-position metadata, starter/reserve/taxi state, and first/last observation times. It is mutable current state, not draft, weekly-lineup, or transaction history.
 - `league_standing_snapshots`: one league + season + scoring period or snapshot time + roster. It preserves source or versioned standings when immutable facts alone cannot reproduce provider and commissioner rules.
 
 ## Invariants
@@ -66,6 +71,13 @@ The canonical player catalog is globally readable to an authenticated app user a
 - Browser sessions cannot create fantasy accounts or links.
 - User ownership is represented through associations.
 - League discovery never implies roster ownership.
+- One tracked account may have at most one active roster ownership association in one league.
+- Shared rosters and memberships contain no app-user ownership.
+- Every roster membership references both a canonical player and its exact source identity mapping.
+- Exact roster source arrays remain stored beside normalized current memberships.
+- Current shared roster-domain reads require an active account-to-league discovery association.
+- Active source and starter membership orders are unique within each roster.
+- Current keeper state never substitutes for immutable completed-draft keeper history.
 - League-discovery persistence requires `fantasy_accounts.provider = leagues.provider = sync_runs.provider`; cross-provider associations are invalid.
 - Removing one account-to-league discovery association never deletes the shared league.
 - Dynasty, keeper/redraft, best ball, superflex, IDP, and broad scoring are independent context dimensions.
@@ -81,7 +93,7 @@ The canonical player catalog is globally readable to an authenticated app user a
 - League discovery never updates `fantasy_accounts.last_synced_at`.
 - Player catalog refresh never updates `fantasy_accounts.last_synced_at`.
 - Best-ball starter and bench labels do not affect exposure.
-- Best-ball exposure counts every current `roster_players` membership while preserving source starter, reserve, and taxi facts.
+- Best-ball exposure counts every current `roster_players` membership while preserving source starter, reserve, taxi, and keeper facts.
 - Drafted exposure comes from immutable `draft_picks`; weekly lineup history comes from `matchup_player_points`; acquisitions, drops, and trades come from transaction facts.
 - Current mutable state and historical facts use separate grains.
 - Historical standings are reproducible from immutable facts or stored as source/versioned snapshots; provider-only ranking rules and commissioner adjustments are not discarded.

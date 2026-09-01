@@ -83,3 +83,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Enforce large provider-response limits incrementally while streaming; a Content-Length check alone is insufficient.
 - Keep provider response limits aligned with measured operational headroom and matching database constraints.
 - Treat response-size violations as non-retryable invalid responses and never expose their payloads.
+- Never place app-user ownership on shared rosters or roster memberships.
+- Never use current roster membership as draft, transaction, or weekly-lineup history.
+- Best-ball exposure counts every active roster membership regardless of starter, reserve, or taxi labels.
+- Preserve exact roster source arrays separately from normalized memberships.
+- Every roster-player row must reference both a canonical player and the exact source identity mapping.
+- Never expose sync-run triggering Auth user IDs through browser-readable columns.
+- Never create a canonical player for a provider placeholder starter value.
+- Current shared roster-domain reads require an active league-discovery association.
+- Every active roster membership order must be unique within its roster.
+- Older roster observations must never overwrite newer shared current state.
+- Concurrent shared-roster creation must be conflict-safe and deterministically ordered.
+- Keeper state is a current source fact and never substitutes for completed draft keeper history.

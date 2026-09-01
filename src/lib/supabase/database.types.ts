@@ -57,6 +57,63 @@ export type Database = {
           },
         ]
       }
+      fantasy_account_rosters: {
+        Row: {
+          created_at: string
+          fantasy_account_id: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          league_id: string
+          ownership_role: string
+          removed_at: string | null
+          roster_id: string
+          source_metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fantasy_account_id: string
+          first_seen_at: string
+          id?: string
+          last_seen_at: string
+          league_id: string
+          ownership_role: string
+          removed_at?: string | null
+          roster_id: string
+          source_metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fantasy_account_id?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          league_id?: string
+          ownership_role?: string
+          removed_at?: string | null
+          roster_id?: string
+          source_metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_account_rosters_account_league_fkey"
+            columns: ["fantasy_account_id", "league_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_account_leagues"
+            referencedColumns: ["fantasy_account_id", "league_id"]
+          },
+          {
+            foreignKeyName: "fantasy_account_rosters_roster_league_fkey"
+            columns: ["roster_id", "league_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id", "league_id"]
+          },
+        ]
+      }
       fantasy_accounts: {
         Row: {
           avatar_url: string | null
@@ -101,6 +158,71 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      league_users: {
+        Row: {
+          avatar_id: string | null
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          external_user_id: string
+          fetched_at: string
+          first_seen_at: string
+          id: string
+          is_commissioner: boolean
+          last_seen_at: string
+          league_id: string
+          metadata: Json
+          removed_at: string | null
+          team_name: string | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          external_user_id: string
+          fetched_at: string
+          first_seen_at: string
+          id?: string
+          is_commissioner?: boolean
+          last_seen_at: string
+          league_id: string
+          metadata?: Json
+          removed_at?: string | null
+          team_name?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_id?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          external_user_id?: string
+          fetched_at?: string
+          first_seen_at?: string
+          id?: string
+          is_commissioner?: boolean
+          last_seen_at?: string
+          league_id?: string
+          metadata?: Json
+          removed_at?: string | null
+          team_name?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_users_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leagues: {
         Row: {
@@ -493,6 +615,162 @@ export type Database = {
           week?: number | null
         }
         Relationships: []
+      }
+      roster_players: {
+        Row: {
+          created_at: string
+          first_seen_at: string
+          id: string
+          is_keeper: boolean
+          is_reserve: boolean
+          is_starter: boolean
+          is_taxi: boolean
+          last_seen_at: string
+          league_id: string
+          player_id: string
+          removed_at: string | null
+          roster_id: string
+          source_metadata: Json
+          source_order: number | null
+          source_player_external_id_id: string
+          starter_order: number | null
+          starter_slot: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_seen_at: string
+          id?: string
+          is_keeper?: boolean
+          is_reserve?: boolean
+          is_starter?: boolean
+          is_taxi?: boolean
+          last_seen_at: string
+          league_id: string
+          player_id: string
+          removed_at?: string | null
+          roster_id: string
+          source_metadata?: Json
+          source_order?: number | null
+          source_player_external_id_id: string
+          starter_order?: number | null
+          starter_slot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          is_keeper?: boolean
+          is_reserve?: boolean
+          is_starter?: boolean
+          is_taxi?: boolean
+          last_seen_at?: string
+          league_id?: string
+          player_id?: string
+          removed_at?: string | null
+          roster_id?: string
+          source_metadata?: Json
+          source_order?: number | null
+          source_player_external_id_id?: string
+          starter_order?: number | null
+          starter_slot?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_players_mapping_player_fkey"
+            columns: ["source_player_external_id_id", "player_id"]
+            isOneToOne: false
+            referencedRelation: "player_external_ids"
+            referencedColumns: ["id", "player_id"]
+          },
+          {
+            foreignKeyName: "roster_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_players_roster_league_fkey"
+            columns: ["roster_id", "league_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id", "league_id"]
+          },
+        ]
+      }
+      rosters: {
+        Row: {
+          co_owner_external_user_ids: string[] | null
+          created_at: string
+          external_roster_id: number
+          fetched_at: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          league_id: string
+          metadata: Json
+          owner_external_user_id: string | null
+          removed_at: string | null
+          settings: Json
+          source_keeper_ids: string[] | null
+          source_player_ids: string[] | null
+          source_reserve_ids: string[] | null
+          source_starter_ids: string[] | null
+          source_taxi_ids: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          co_owner_external_user_ids?: string[] | null
+          created_at?: string
+          external_roster_id: number
+          fetched_at: string
+          first_seen_at: string
+          id?: string
+          last_seen_at: string
+          league_id: string
+          metadata?: Json
+          owner_external_user_id?: string | null
+          removed_at?: string | null
+          settings?: Json
+          source_keeper_ids?: string[] | null
+          source_player_ids?: string[] | null
+          source_reserve_ids?: string[] | null
+          source_starter_ids?: string[] | null
+          source_taxi_ids?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          co_owner_external_user_ids?: string[] | null
+          created_at?: string
+          external_roster_id?: number
+          fetched_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          league_id?: string
+          metadata?: Json
+          owner_external_user_id?: string | null
+          removed_at?: string | null
+          settings?: Json
+          source_keeper_ids?: string[] | null
+          source_player_ids?: string[] | null
+          source_reserve_ids?: string[] | null
+          source_starter_ids?: string[] | null
+          source_taxi_ids?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rosters_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sync_runs: {
         Row: {

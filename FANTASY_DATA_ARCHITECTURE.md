@@ -27,11 +27,11 @@ erDiagram
   FANTASY_ACCOUNTS ||--o{ SYNC_RUNS : attempts
   AUTH_USERS o|--o{ SYNC_RUNS : triggers
 
-  LEAGUES ||--o{ LEAGUE_USERS : plans
-  LEAGUES ||--o{ ROSTERS : plans
-  FANTASY_ACCOUNTS ||--o{ FANTASY_ACCOUNT_ROSTERS : plans
-  ROSTERS ||--o{ FANTASY_ACCOUNT_ROSTERS : plans
-  PLAYERS ||--o{ PLAYER_EXTERNAL_IDS : plans
+  LEAGUES ||--o{ LEAGUE_USERS : league_members
+  LEAGUES ||--o{ ROSTERS : league_teams
+  FANTASY_ACCOUNTS ||--o{ FANTASY_ACCOUNT_ROSTERS : owns_or_co_owns
+  ROSTERS ||--o{ FANTASY_ACCOUNT_ROSTERS : shared_roster
+  PLAYERS ||--o{ PLAYER_EXTERNAL_IDS : source_identity
   ROSTERS ||--o{ ROSTER_PLAYERS : current_membership
   PLAYERS ||--o{ ROSTER_PLAYERS : held_player
   LEAGUES ||--o{ DRAFTS : plans
@@ -42,7 +42,7 @@ erDiagram
   ROSTERS ||--o{ LEAGUE_STANDING_SNAPSHOTS : ranked_roster
 ```
 
-Solid relationships through `SYNC_RUNS` are implemented by Task 005. Relationships below that boundary describe reviewed future grains only; their tables do not exist yet.
+Relationships through `SYNC_RUNS` are implemented by Task 005. Task 007A implements player identity, and Task 007B.1 implements league users, rosters, tracked-account roster ownership, and current roster membership. Draft, matchup, standing, and transaction relationships remain planned.
 
 ## Layer 1 — Identity
 
@@ -96,7 +96,7 @@ Grain: one observation that provider user-league discovery reported one league f
 
 League-discovery persistence must validate transactionally that the tracked fantasy account, discovered league, and sync run have the same provider. The association does not repeat the provider column.
 
-### Planned dimensions
+### Roster dimensions — implemented in Task 007B.1
 
 #### `league_users`
 
@@ -108,13 +108,15 @@ This supports display and commissioner/member context without duplicating global
 
 Grain: one league-local provider roster.
 
-Future Sleeper roster IDs are league-local integers and must be paired with the league key. Current holdings are mutable state; historical facts are recorded separately.
+Future Sleeper roster IDs are league-local integers and must be paired with the league key. Exact co-owner, player, starter, reserve, taxi, and keeper arrays remain nullable source facts beside normalized membership: null means absent or source-null, while an empty array means explicitly empty. Current holdings are mutable state; historical facts are recorded separately.
 
 #### `fantasy_account_rosters`
 
 Grain: one explicit association between a tracked fantasy account and a league roster.
 
 This is the roster-ownership path. It must not be inferred from `fantasy_account_leagues`.
+
+### Player dimensions — implemented in Task 007A
 
 #### `players`
 
@@ -132,9 +134,13 @@ This mapping must support Sleeper IDs, ESPN IDs, Yahoo IDs, statistics-provider 
 
 Grain: one current roster + canonical player membership.
 
-This mutable current-membership table must support `roster_id`, `player_id`, `is_starter`, `is_reserve`, `is_taxi`, source status or roster-position metadata, `first_seen_at`, and `last_seen_at`. Starter, reserve, taxi, and other source-grounded states remain facts even when they do not change an exposure calculation.
+This mutable current-membership table supports `roster_id`, `player_id`, `is_starter`, `is_reserve`, `is_taxi`, `is_keeper`, source and starter order, source status or roster-position metadata, `first_seen_at`, and `last_seen_at`. Active membership and starter orders are unique within each roster. Starter, reserve, taxi, keeper, and other source-grounded states remain current facts even when they do not change an exposure calculation.
 
-Best-ball player exposure counts every current roster membership regardless of starter or bench labels. Drafted exposure comes from immutable `draft_picks`, weekly lineup history comes from `matchup_player_points`, and historical acquisitions, drops, and trades come from transaction facts. A membership-period or roster-snapshot table may be added only when source completeness or measured product requirements prove those facts insufficient.
+Best-ball player exposure counts every current roster membership regardless of starter or bench labels. Drafted exposure comes from immutable `draft_picks`, weekly lineup history comes from `matchup_player_points`, and historical acquisitions, drops, and trades come from transaction facts. Current `roster_players.is_keeper` never substitutes for a future completed `draft_picks.is_keeper` fact. A membership-period or roster-snapshot table may be added only when source completeness or measured product requirements prove those facts insufficient.
+
+Shared current league users, rosters, and memberships are readable only while the app user reaches their league through at least one active account-to-league discovery association. Removed discovery history does not authorize shared current rows. Account-scoped current and historical `fantasy_account_rosters` ownership remains readable through the tracked fantasy account independently of shared league reachability.
+
+Task 007B.2 must make shared roster-domain state monotonic by fully validated collection observation time. Older account syncs may refresh only their own ownership observations. Concurrent shared creation must be insert-or-load, never catch-and-ignore, and locking must follow external league ID, roster ID, league-user ID, then exact player ID. Removal is scoped to the exact account/provider/sport/season/league collection and freshness-guarded for shared rows. A simultaneous local-Supabase overlapping-import test is a required merge gate.
 
 ## Layer 3 — Historical and period facts
 
@@ -158,7 +164,7 @@ This association must not replace complete draft-board storage.
 
 Grain: one selection at one exact position in one draft.
 
-The table stores the complete provider board, not only user picks. Exact original and current pick ownership must come from source relationships and transaction facts. `is_user_pick`, `is_value`, and similar analytics flags are prohibited.
+The table stores the complete provider board, not only user picks. A completed pick's future `is_keeper` value is immutable draft history and is separate from mutable current `roster_players.is_keeper`. Exact original and current pick ownership must come from source relationships and transaction facts. `is_user_pick`, `is_value`, and similar analytics flags are prohibited.
 
 ### Detailed weekly scoreboards
 
@@ -362,3 +368,11 @@ Team defenses are canonical entities. Sparse valid IDs remain explicit unknown e
 The full map is normalized before private deterministic batches are staged. Initial and relative count guards prevent destructive truncation. Final publication, mapping reconciliation, terminal result counts, and staging cleanup are atomic. Canonical-entity totals retain all player rows; active-player totals require an active individual-player profile and active primary Sleeper/NFL mapping; team-defense totals require an active primary mapping but not the provider's optional active flag. Unknown entities remain separate. Browser roles read player data under RLS and global catalog status only through safe column grants; catalog-run `triggered_by_user_id` remains server-only audit state. `service_role` has execute-only lifecycle access and no direct catalog-table CRUD.
 
 Task 007A creates no roster, account-to-roster ownership, roster-player membership, draft, matchup, transaction, statistic, fantasy ranking, market, cache, queue, scheduler, or analytics data. It never updates `fantasy_accounts.last_synced_at`. Task 007B remains the future account-to-roster ownership boundary.
+
+## Task 007B.1 boundary
+
+Task 007B.1 creates the empty `league_users`, `rosters`, `fantasy_account_rosters`, and `roster_players` relational domain. It preserves exact current source arrays beside normalized membership, enforces one active owned roster per account and league, and proves each membership's canonical player and exact source mapping agree.
+
+Authenticated users may read complete shared context for reachable leagues while tracked-account ownership remains private to users linked to that fantasy account. Browser roles and `service_role` receive no direct mutation access. The `roster_sync` scope and its independent running uniqueness are present, but no lifecycle function exists yet. Safe sync-run columns remain browser-readable while `triggered_by_user_id` is server-only.
+
+Task 007B.1 makes no Sleeper request, imports no row, adds no product route, and creates no draft, matchup, transaction, standing snapshot, rank, market, cache, queue, scheduler, or analytic fact. Task 007B.2 remains unstarted.
