@@ -107,9 +107,89 @@ const userFixtures = new Map([
 let temporaryErrorAttempts = 0
 let shrinkingCollectionRequests = 0
 let malformedCollectionRequests = 0
+let playerCatalogRequests = 0
+
+function createPlayerCatalog() {
+  const catalog = {}
+  for (let index = 0; index < 600; index += 1) {
+    const playerId = `catalog-${index.toString().padStart(4, "0")}`
+    catalog[playerId] = {
+      player_id: playerId,
+      sport: "nfl",
+      full_name: `Fixture Catalog Player ${index.toString().padStart(4, "0")}`,
+      position: "WR",
+      fantasy_positions: ["WR"],
+      team: "SEA",
+      active: index <= 6,
+      status: index <= 6 ? "Active" : "Inactive",
+      number: index % 99,
+      age: 25,
+      years_exp: 3,
+      search_rank: index,
+    }
+  }
+
+  catalog["catalog-0000"] = {
+    ...catalog["catalog-0000"],
+    first_name: "  Aaron  ",
+    last_name: "Fixture",
+    full_name: "  Aaron Fixture  ",
+    espn_id: 100,
+  }
+  catalog["catalog-0001"] = {
+    ...catalog["catalog-0001"],
+    full_name: "Arizona Fixture Defense",
+    position: "DEF",
+    fantasy_positions: ["DEF"],
+    team: "ARI",
+    yahoo_id: "defense-yahoo-id",
+  }
+  catalog["catalog-0002"] = {
+    ...catalog["catalog-0002"],
+    full_name: "Dual Position Fixture",
+    position: "WR",
+    fantasy_positions: ["WR", "RB", "WR"],
+    stats_id: "dual-stats-id",
+  }
+  catalog["catalog-0003"] = {
+    ...catalog["catalog-0003"],
+    full_name: "Injured Fixture",
+    position: "TE",
+    fantasy_positions: ["TE"],
+    injury_status: "Out",
+    injury_body_part: "Knee",
+    injury_start_date: "2026-08-30",
+  }
+  catalog["catalog-0004"] = {
+    player_id: "catalog-0004",
+    sport: "nfl",
+    active: true,
+    status: null,
+  }
+  catalog["catalog-0005"] = {
+    ...catalog["catalog-0005"],
+    full_name: "Warning Fixture",
+    active: "true",
+    age: 900,
+    news_updated: "not-an-epoch",
+  }
+
+  return catalog
+}
+
+const playerCatalog = createPlayerCatalog()
 const mockSleeperServer = createServer((request, response) => {
   const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1")
   const segments = requestUrl.pathname.split("/").filter(Boolean)
+
+  if (
+    request.method === "GET" &&
+    requestUrl.pathname === "/__test/player-request-count"
+  ) {
+    response.setHeader("content-type", "application/json")
+    response.end(JSON.stringify({ count: playerCatalogRequests }))
+    return
+  }
 
   if (request.method !== "GET" || segments[0] !== "v1") {
     response.writeHead(404).end()
@@ -124,6 +204,16 @@ const mockSleeperServer = createServer((request, response) => {
     segments[2] === "nfl"
   ) {
     response.end(JSON.stringify(nflState))
+    return
+  }
+
+  if (
+    segments.length === 3 &&
+    segments[1] === "players" &&
+    segments[2] === "nfl"
+  ) {
+    playerCatalogRequests += 1
+    response.end(JSON.stringify(playerCatalog))
     return
   }
 
@@ -233,6 +323,7 @@ const playwright = spawn(
       NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3101",
       SUPABASE_SECRET_KEY: secretKey,
       SLEEPER_API_BASE_URL: `http://127.0.0.1:${address.port}/v1`,
+      SLEEPER_MOCK_CONTROL_URL: `http://127.0.0.1:${address.port}/__test`,
       SLEEPER_LOCAL_TEST_MODE: "1",
     },
     stdio: "inherit",

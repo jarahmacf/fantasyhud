@@ -64,3 +64,13 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-08-31 | Shared current state is monotonic by fetch time      | A slower older response cannot regress a newer provider or league representation                         | Accepted |
 | 2026-08-31 | Shared creation and locking are concurrency-safe     | Conflict-safe insert-or-load and canonical key order prevent identity races and inconsistent lock order  | Accepted |
 | 2026-08-31 | Provider display labels may trim outer whitespace    | Human-readable labels may contain insignificant padding; canonical IDs and enum-like values remain exact | Accepted |
+| 2026-08-31 | Canonical players use Sleeper primary IDs            | Exact Sleeper map keys provide stable source identity without relying on mutable profile fields          | Accepted |
+| 2026-08-31 | Team defenses are canonical catalog entities         | Sleeper publishes DEF identities in the same full NFL player resource                                    | Accepted |
+| 2026-08-31 | Sparse valid source entities remain explicit         | Missing optional profile data must not erase a valid exact Sleeper identity                              | Accepted |
+| 2026-08-31 | Player profiles are monotonic by fetch time          | An older catalog completion cannot regress newer mutable current data                                    | Accepted |
+| 2026-08-31 | Player catalog freshness is global for 24 hours      | The full shared map should be requested no more than once per rolling successful day                     | Accepted |
+| 2026-08-31 | Catalog publication uses private bounded staging     | Partial batches must never become public domain truth                                                    | Accepted |
+| 2026-08-31 | Catalog size guards fail closed                      | Initial and relative floors prevent malformed or truncated maps from wiping identity state               | Accepted |
+| 2026-08-31 | Secondary player IDs never auto-merge                | Ambiguity and historical corrections require explicit review rather than silent identity reassignment    | Accepted |
+| 2026-08-31 | Sleeper search rank is not fantasy rank              | Source search metadata lacks scoring, period, and ranking-type context                                   | Accepted |
+| 2026-08-31 | Player catalog refresh is not portfolio sync         | A global prerequisite does not prove account rosters, drafts, matchups, or complete reconciliation       | Accepted |

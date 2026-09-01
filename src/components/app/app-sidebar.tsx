@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelsTopLeft, Trophy } from "lucide-react"
+import { PanelsTopLeft, Trophy, Users } from "lucide-react"
 import Link from "next/link"
 
 import type { AppShellIdentity } from "@/components/app/app-shell"
@@ -38,6 +38,9 @@ export function AppSidebar({
       label: "Workspace",
       items: [
         ...(identity ? [{ title: "Leagues", url: "/", icon: Trophy }] : []),
+        ...(identity
+          ? [{ title: "Players", url: "/players", icon: Users }]
+          : []),
         { title: "Foundation", url: "/foundation", icon: PanelsTopLeft },
       ],
     },

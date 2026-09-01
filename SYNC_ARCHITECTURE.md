@@ -1,6 +1,20 @@
 # Synchronization architecture
 
-Task 005 establishes synchronization observability. Task 006 implements the first single-step league-discovery lifecycle without adding a queue, cache, scheduler, or child resource import.
+Task 005 establishes synchronization observability. Task 006 implements the first account-scoped league-discovery lifecycle. Task 007A adds a separate global player-catalog lifecycle without adding a queue, cache, scheduler, or portfolio child resource import.
+
+## Global catalog runs
+
+`provider_catalog_runs` has a different grain from account-scoped `sync_runs`:
+
+```text
+one provider + sport + catalog resource + attempt
+```
+
+Task 007A permits only Sleeper/NFL/players. `triggered_by_user_id` is audit context and run ownership during staging; it does not make the shared catalog account-owned. A connected second user reuses a successful catalog fetched within 24 hours or a running attempt active within 15 minutes. The partial unique index permits one running global attempt.
+
+The created run accepts only normalized private batches of 1–500 records. The first batch establishes exact fetch time, byte count, and expected record count; later batches must match. Progress is the distinct staged-ID count. Identical replay is idempotent, while changed batch identity or content fails closed.
+
+Completion locks the global resource, requires exact full progress, enforces initial and relative count floors, and publishes profiles plus mapping history in one transaction. Public tables never expose partial batches. Success and failure both delete run staging. Source and operational errors never erase the previous successful public catalog.
 
 ## Run grain
 
@@ -91,9 +105,13 @@ A zero-length fully validated source array completes with zero observed and acti
 
 `provider_resource_cache` is deferred until measured request reuse and freshness semantics justify it. `scheduled_refreshes` and cron are deferred until a scheduler, rate policy, and operational owner are reviewed.
 
+Task 007A's 24-hour successful-run lookup is a domain freshness rule, not a generic cache. No force bypass, scheduled refresh, or item queue exists.
+
 ## Portfolio synchronization timestamp
 
 `fantasy_accounts.last_synced_at` remains reserved for a complete portfolio synchronization. Identity connection does not set it. Task 006 league discovery does not set it. A future reconciliation milestone must define exactly which resource scopes constitute a complete portfolio before updating the timestamp.
+
+Task 007A player catalog refresh also does not set it because the catalog is shared prerequisite data and proves no account portfolio completeness.
 
 ## Authorization and writes
 
