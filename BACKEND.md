@@ -8,7 +8,7 @@ Database migrations in `supabase/migrations/` are the schema source of truth. Ev
 
 The Supabase GitHub integration connects `jarahmacf/fantasyhud` with working directory `.` and deployment branch `main`. Reviewed migrations deploy to the hosted development project after they reach `main`. GitHub Actions verifies migrations locally and never deploys them.
 
-The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Task 004 and Task 005.1 are deployed and their hosted gates passed. Task 006 remains branch-only until audit and merge.
+The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Tasks through 006.1 are deployed and their hosted gates passed. Task 007A remains branch-only until audit and merge.
 
 ## Local workflow
 
@@ -43,13 +43,18 @@ Task 003 adds profiles, shared fantasy accounts, and user-to-account association
 
 Task 005.1 revokes direct `service_role` access to the four provider-data tables. Task 006 implements that RPC-only boundary with fixed-search-path start, complete, and fail functions. The validated Server Action loads the primary tracked account through RLS before constructing the service-role client. `service_role` receives execute only; the completion function revalidates provider, account, run, normalized state, and the full league collection before one atomic write.
 
+Task 007A applies the same RPC-only model to the global player catalog. `players`, `player_external_ids`, `provider_catalog_runs`, and private staging grant no direct `service_role` CRUD. Four fixed-path lifecycle functions serialize the shared Sleeper/NFL/players boundary, enforce 24-hour freshness, accept idempotent batches of at most 500 normalized records, apply anti-wipe guards, publish atomically, and remove terminal staging. Completion has a 60-second function timeout; start, stage, and fail use 10 seconds.
+
 The implemented fantasy-data parent tables are:
 
 - `provider_season_states`: latest shared provider/sport state
 - `leagues`: one canonical shared provider league
 - `fantasy_account_leagues`: discovery association, not roster ownership
 - `sync_runs`: one tracked account, scope, and attempt
+- `players`: one shared canonical NFL entity and mutable current profile
+- `player_external_ids`: one exact historical external identity mapping
+- `provider_catalog_runs`: one global provider/sport/catalog attempt
 
-See `LEAGUE_DISCOVERY.md` for the import boundary, `FANTASY_DATA_ARCHITECTURE.md` for future grains and history rules, and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 006 adds no queue, cache, scheduler, child fact table, or production Supabase project.
+See `LEAGUE_DISCOVERY.md` and `PLAYER_CATALOG.md` for import boundaries, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 007A adds no queue, cache, scheduler, portfolio child fact, or production Supabase project.
 
 Authentication uses `@supabase/ssr`, cookie sessions, Next.js `proxy.ts` refresh, and signed claims for protection. `getSession()` is never an authorization source. See `AUTH.md`, `ACCOUNT_IDENTITY.md`, and `SLEEPER_CONNECTION.md`.

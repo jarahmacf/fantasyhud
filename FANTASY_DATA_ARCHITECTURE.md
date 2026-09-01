@@ -352,3 +352,13 @@ A confirmed empty collection is successful. Any source, shape, duplicate, season
 No roster, player, draft, pick, matchup, transaction, rank, market, cache, queue, or analytics table is added by Task 006.
 
 Live source-shape and classification verification remains a controlled post-merge canary; fixtures and documentation do not substitute for a retained live response.
+
+## Task 007A boundary
+
+Task 007A creates `players`, `player_external_ids`, and `provider_catalog_runs` plus private bounded staging. It imports the complete shared Sleeper NFL player resource through one global 24-hour freshness boundary. Canonical player identity follows the exact Sleeper map key. Current profiles advance only by `profile_fetched_at`; source `news_updated_at` remains a distinct optional field, and search rank remains non-fantasy search metadata.
+
+Team defenses are canonical entities. Sparse valid IDs remain explicit unknown entities. Optional display fields reject ASCII control characters in the original value before outer whitespace normalization. Primary mappings preserve removal and reactivation history, so a retained canonical row may outlive its active Sleeper mapping. Documented secondary IDs are conservative candidates only: ambiguity and cross-player conflicts are skipped, and no secondary identifier can merge canonical players automatically.
+
+The full map is normalized before private deterministic batches are staged. Initial and relative count guards prevent destructive truncation. Final publication, mapping reconciliation, terminal result counts, and staging cleanup are atomic. Canonical-entity totals retain all player rows; active-player totals require an active individual-player profile and active primary Sleeper/NFL mapping; team-defense totals require an active primary mapping but not the provider's optional active flag. Unknown entities remain separate. Browser roles read player data under RLS and global catalog status only through safe column grants; catalog-run `triggered_by_user_id` remains server-only audit state. `service_role` has execute-only lifecycle access and no direct catalog-table CRUD.
+
+Task 007A creates no roster, account-to-roster ownership, roster-player membership, draft, matchup, transaction, statistic, fantasy ranking, market, cache, queue, scheduler, or analytics data. It never updates `fantasy_accounts.last_synced_at`. Task 007B remains the future account-to-roster ownership boundary.

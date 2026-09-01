@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("server-only", () => ({}))
 
-import { sleeperGetJson } from "./http.server"
+import { sleeperGetJson, sleeperGetJsonWithMetadata } from "./http.server"
 import { SleeperClientError } from "./types"
 
 const localEnvironment = {
@@ -155,6 +155,51 @@ describe("sleeperGetJson", () => {
     }
     expect(caught).toBeInstanceOf(SleeperClientError)
     expect((caught as Error).message).not.toContain("raw-provider-secret")
+  })
+
+  it("returns bounded response metadata without changing JSON callers", async () => {
+    const body = JSON.stringify({ ok: true })
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(body)))
+
+    const result = await sleeperGetJsonWithMetadata(["players", "nfl"], {
+      environment: localEnvironment,
+      maxResponseBytes: 1_000,
+      retryDelayMs: 0,
+    })
+
+    expect(result.data).toEqual({ ok: true })
+    expect(result.responseBytes).toBe(new TextEncoder().encode(body).byteLength)
+    expect(new Date(result.fetchedAt).toISOString()).toBe(result.fetchedAt)
+  })
+
+  it("rejects an advertised or decoded response above the configured limit", async () => {
+    const advertisedFetch = vi.fn().mockResolvedValue(
+      new Response("{}", {
+        headers: { "content-length": "1001" },
+      })
+    )
+    vi.stubGlobal("fetch", advertisedFetch)
+    await expect(
+      sleeperGetJson(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: 1_000,
+        retryDelayMs: 0,
+      })
+    ).rejects.toMatchObject({ kind: "invalid_response" })
+    expect(advertisedFetch).toHaveBeenCalledTimes(1)
+
+    const decodedFetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ value: "too large" })))
+    vi.stubGlobal("fetch", decodedFetch)
+    await expect(
+      sleeperGetJson(["players", "nfl"], {
+        environment: localEnvironment,
+        maxResponseBytes: 5,
+        retryDelayMs: 0,
+      })
+    ).rejects.toMatchObject({ kind: "invalid_response" })
+    expect(decodedFetch).toHaveBeenCalledTimes(1)
   })
 
   it("fails closed on arbitrary Production override origins", async () => {

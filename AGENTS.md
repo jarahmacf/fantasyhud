@@ -57,6 +57,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never import the admin client into Client Components.
 - Never label a connected identity as synchronized.
 - Never call the real Sleeper API in CI.
+- Never expose provider-run triggering Auth user IDs through global browser-readable status tables.
+- Never label all active catalog entities as active players; entity type and active primary mapping must be explicit.
+- Never silently trim ASCII control characters from provider display fields.
+- Every pgTAP contract file must use an exact assertion plan.
 - Never infer roster ownership from league discovery.
 - Never infer one draft per league.
 - Never discard exact scoring settings.
