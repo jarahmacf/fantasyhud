@@ -83,6 +83,22 @@ export async function loadLeagueDashboardData(
       if (result.error) throw new LeagueDashboardQueryError()
       return result.data !== null
     },
+    async hasCurrentSeasonRosterImport(accountId, season) {
+      const result = await supabase
+        .from("sync_runs")
+        .select("id")
+        .eq("fantasy_account_id", accountId)
+        .eq("provider", "sleeper")
+        .eq("sport", "nfl")
+        .eq("scope", "roster_sync")
+        .eq("season", season)
+        .in("status", ["succeeded", "partial"])
+        .limit(1)
+        .maybeSingle()
+
+      if (result.error) throw new LeagueDashboardQueryError()
+      return result.data !== null
+    },
   }
 
   return loadCurrentSeasonLeagueDashboard(reader, fantasyAccountId)

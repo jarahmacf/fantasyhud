@@ -8,6 +8,7 @@ export type LeagueDiscoveryAttempt = {
 export type LeagueDashboardData = {
   currentLeagueSeason: number | null
   hasSuccessfulDiscovery: boolean
+  hasCurrentSeasonRosterImport: boolean
   latestAttempt: LeagueDiscoveryAttempt | null
   leagues: LeagueTableRow[]
 }
@@ -25,6 +26,10 @@ export type LeagueDashboardReader = {
     fantasyAccountId: string,
     season: number
   ) => Promise<boolean>
+  hasCurrentSeasonRosterImport: (
+    fantasyAccountId: string,
+    season: number
+  ) => Promise<boolean>
 }
 
 export async function loadCurrentSeasonLeagueDashboard(
@@ -38,19 +43,26 @@ export async function loadCurrentSeasonLeagueDashboard(
     return {
       currentLeagueSeason: null,
       hasSuccessfulDiscovery: false,
+      hasCurrentSeasonRosterImport: false,
       latestAttempt,
       leagues: [],
     }
   }
 
-  const [leagues, hasSuccessfulDiscovery] = await Promise.all([
-    reader.getCurrentSeasonLeagues(fantasyAccountId, currentLeagueSeason),
-    reader.hasCurrentSeasonSuccess(fantasyAccountId, currentLeagueSeason),
-  ])
+  const [leagues, hasSuccessfulDiscovery, hasCurrentSeasonRosterImport] =
+    await Promise.all([
+      reader.getCurrentSeasonLeagues(fantasyAccountId, currentLeagueSeason),
+      reader.hasCurrentSeasonSuccess(fantasyAccountId, currentLeagueSeason),
+      reader.hasCurrentSeasonRosterImport(
+        fantasyAccountId,
+        currentLeagueSeason
+      ),
+    ])
 
   return {
     currentLeagueSeason,
     hasSuccessfulDiscovery,
+    hasCurrentSeasonRosterImport,
     latestAttempt,
     leagues: [...leagues].sort((left, right) =>
       left.name.localeCompare(right.name)

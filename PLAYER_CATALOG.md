@@ -46,3 +46,9 @@ The authenticated `/players` page distinguishes not imported, running, failed, i
 Catalog refresh does not update `fantasy_accounts.last_synced_at`. It imports no league ownership, roster membership, draft, matchup, transaction, ranking, market, or portfolio reconciliation facts. There is no scheduler, force-refresh control, queue, or automatic cross-ID merge in Task 007A.
 
 The Task 007A database contract uses an exact pgTAP assertion plan so missing or extra privacy, lifecycle, identity, and count assertions fail the suite. The Task 007A.1 contract separately verifies the 25,000,000-byte table and RPC bounds, unchanged 50,000-record maximum, unchanged function shape and grants, immutable per-run source envelope, private staging, and no premature publication.
+
+## Roster-reference integration
+
+Task 007B.2 requires one successful Sleeper/NFL/player catalog run and at least 500 active primary mappings before a roster run may start. Every normalized roster membership references both a canonical player and the exact Sleeper/NFL primary mapping used by the source.
+
+An exact current roster ID reactivates its historical removed primary mapping. A valid exact non-placeholder ID absent from all mapping history creates one sparse `unknown` canonical entity and one exact primary mapping with bounded roster-reference metadata. It invents no profile fields, and a later catalog refresh populates that same identity when the ID appears in the catalog. Catalog absence does not retire a mapping while an active current roster membership still references it. The verified exact starter placeholder `"0"` never creates a player or mapping. Roster import does not bypass or refresh the catalog's 24-hour source policy and does not update `fantasy_accounts.last_synced_at`.

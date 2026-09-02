@@ -95,3 +95,19 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Older roster observations must never overwrite newer shared current state.
 - Concurrent shared-roster creation must be conflict-safe and deterministically ordered.
 - Keeper state is a current source fact and never substitutes for completed draft keeper history.
+- Never stage or publish a partial multi-league roster source collection.
+- Never infer ownership from league membership alone.
+- Never translate a null source array into an explicit empty array.
+- Null roster annotations preserve prior confirmed normalized state; explicit empty arrays clear it.
+- Only the players array defines current roster membership.
+- Never create canonical players for verified starter placeholders.
+- Valid unmapped roster IDs create sparse reference-only canonical identities.
+- Older roster bundles never overwrite newer shared current state.
+- Concurrent overlapping roster imports require deterministic conflict-safe persistence.
+- Never update `fantasy_accounts.last_synced_at` from roster import alone.
+- Per-row freshness cannot protect collection absence; complete mutable collections require a collection-level watermark.
+- Preserved unresolved ownership history must never be presented as current confirmed ownership.
+- Current owned-roster analytics require an explicit owned resolution state.
+- Never render a source-null roster array as confirmed empty or false.
+- League-user source league IDs must match the requested canonical league.
+- Provider avatar IDs are exact identifiers and must not be display-trimmed.

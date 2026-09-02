@@ -34,6 +34,7 @@ describe("current-season league dashboard data", () => {
     const attempts: LeagueDiscoveryAttempt[] = [
       { season: 2025, status: "succeeded" },
     ]
+    const rosterImportSeasons = new Set([2025])
     const requestedSeasons: number[] = []
     const reader: LeagueDashboardReader = {
       async getCurrentLeagueSeason() {
@@ -53,6 +54,9 @@ describe("current-season league dashboard data", () => {
             attempt.season === season && attempt.status === "succeeded"
         )
       },
+      async hasCurrentSeasonRosterImport(_accountId, season) {
+        return rosterImportSeasons.has(season)
+      },
     }
 
     const beforeCurrentImport = await loadCurrentSeasonLeagueDashboard(
@@ -63,6 +67,7 @@ describe("current-season league dashboard data", () => {
     expect(beforeCurrentImport).toMatchObject({
       currentLeagueSeason: 2026,
       hasSuccessfulDiscovery: false,
+      hasCurrentSeasonRosterImport: false,
       leagues: [],
       latestAttempt: { season: 2025, status: "succeeded" },
     })
@@ -71,6 +76,7 @@ describe("current-season league dashboard data", () => {
 
     leaguesBySeason.set(2026, [league2026])
     attempts.push({ season: 2026, status: "succeeded" })
+    rosterImportSeasons.add(2026)
 
     const afterCurrentImport = await loadCurrentSeasonLeagueDashboard(
       reader,
@@ -80,6 +86,7 @@ describe("current-season league dashboard data", () => {
     expect(afterCurrentImport).toMatchObject({
       currentLeagueSeason: 2026,
       hasSuccessfulDiscovery: true,
+      hasCurrentSeasonRosterImport: true,
       leagues: [league2026],
       latestAttempt: { season: 2026, status: "succeeded" },
     })
@@ -103,6 +110,10 @@ describe("current-season league dashboard data", () => {
         currentSeasonRead = true
         return true
       },
+      async hasCurrentSeasonRosterImport() {
+        currentSeasonRead = true
+        return true
+      },
     }
 
     await expect(
@@ -110,6 +121,7 @@ describe("current-season league dashboard data", () => {
     ).resolves.toEqual({
       currentLeagueSeason: null,
       hasSuccessfulDiscovery: false,
+      hasCurrentSeasonRosterImport: false,
       latestAttempt: { season: 2025, status: "succeeded" },
       leagues: [],
     })

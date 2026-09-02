@@ -90,3 +90,20 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-09-01 | Roster current state is collection-monotonic         | An older overlapping account import cannot regress newer shared users, rosters, or memberships           | Accepted |
 | 2026-09-01 | Active membership order is roster-unique             | Exact source and starter positions need unambiguous normalized ordering with reuse after removal         | Accepted |
 | 2026-09-01 | Overlapping roster imports are a database gate       | Conflict-safe creation, deterministic locks, freshness, and ownership isolation require simultaneous SQL | Accepted |
+| 2026-09-01 | Roster runs freeze the current league scope          | League additions or removals during a run must not silently change the source collection                 | Accepted |
+| 2026-09-01 | Complete roster collections publish atomically       | One missing, malformed, or failed league must preserve all prior public roster state                     | Accepted |
+| 2026-09-01 | Null annotations preserve and empty arrays clear     | Source-null is unknown while an explicit empty array confirms the absence of current annotation state    | Accepted |
+| 2026-09-01 | Players arrays alone define current membership       | Starter, reserve, taxi, and keeper arrays annotate holdings but cannot create them                       | Accepted |
+| 2026-09-01 | Exact zero starter values are placeholders           | Controlled source evidence found repeated `"0"` sentinels and no other unexplained starter value         | Accepted |
+| 2026-09-01 | Valid unmapped holdings create sparse identities     | Catalog lag must not discard an exact current holding or invent profile data                             | Accepted |
+| 2026-09-01 | Active holdings protect exact player mappings        | Catalog absence cannot retire a mapping while current roster membership still depends on it              | Accepted |
+| 2026-09-01 | Ambiguous co-owner absence yields partial state      | A null co-owner collection cannot safely prove that prior account-specific ownership ended               | Accepted |
+| 2026-09-01 | Roster import is not portfolio synchronization       | Roster state alone proves no draft, transaction, matchup, or complete-account reconciliation             | Accepted |
+| 2026-09-01 | Roster bundles use a per-league watermark            | Per-row freshness cannot protect resources that a newer complete collection proves absent                | Accepted |
+| 2026-09-01 | Account-league ownership resolution is explicit      | Current canonical rosters must distinguish owned, confirmed not-owned, unresolved, and never evaluated   | Accepted |
+| 2026-09-01 | Unresolved ownership history is not current          | Preserving an association for history must not present it as a confirmed owned roster or current holding | Accepted |
+| 2026-09-01 | Current ownership analytics require owned status     | Active ownership rows alone cannot communicate the certainty of the latest account-league observation    | Accepted |
+| 2026-09-01 | Roster source certainty remains visible              | Null source arrays mean not reported, while explicit empty arrays confirm zero                           | Accepted |
+| 2026-09-01 | Membership annotations are tri-state                 | Validated source-state metadata separates yes, no, and not reported from retained last-confirmed flags   | Accepted |
+| 2026-09-01 | League-user source identity is exact                 | Each source league ID must match the requested canonical league before normalized publication            | Accepted |
+| 2026-09-01 | Provider avatar IDs are not display labels           | Exact identifier padding and controls must fail instead of being normalized away                         | Accepted |

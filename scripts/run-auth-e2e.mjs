@@ -58,6 +58,15 @@ const userFixtures = new Map([
     },
   ],
   [
+    "fixture-user-isolated",
+    {
+      user_id: "fixture-canonical-isolated",
+      username: "CanonicalFixtureUser",
+      display_name: "Fixture Sleeper User",
+      avatar: "fixture-avatar",
+    },
+  ],
+  [
     "empty-user",
     {
       user_id: "fixture-canonical-empty",
@@ -108,6 +117,26 @@ let temporaryErrorAttempts = 0
 let shrinkingCollectionRequests = 0
 let malformedCollectionRequests = 0
 let playerCatalogRequests = 0
+let rosterScenario = "normal"
+let rosterUserRequests = 0
+let rosterRosterRequests = 0
+const transientRosterAttempts = new Map()
+
+const rosterScenarios = new Set([
+  "normal",
+  "same_collection",
+  "shrinking_collection",
+  "null_arrays",
+  "empty_arrays",
+  "co_owned",
+  "unmatched",
+  "unresolved_coowners",
+  "unknown_player",
+  "removed_player_mapping",
+  "malformed_user",
+  "malformed_roster",
+  "transient_error",
+])
 
 function createPlayerCatalog() {
   const catalog = {}
@@ -178,6 +207,244 @@ function createPlayerCatalog() {
 }
 
 const playerCatalog = createPlayerCatalog()
+
+function leagueUsers(leagueId) {
+  const users =
+    leagueId === "fixture-league-best-ball"
+      ? [
+          {
+            user_id: "fixture-canonical-normal",
+            username: "CanonicalFixtureUser",
+            display_name: "  Fixture Owner  ",
+            avatar: "fixture-owner-avatar",
+            league_id: leagueId,
+            metadata: { team_name: "  Fixture Alpha  ", fixture: true },
+            is_owner: true,
+          },
+          {
+            user_id: "fixture-best-ball-member",
+            username: "FixtureBestBallMember",
+            display_name: "Fixture Best Ball Member",
+            avatar: null,
+            league_id: leagueId,
+            metadata: null,
+            is_owner: null,
+          },
+        ]
+      : [
+          {
+            user_id: "fixture-dynasty-owner",
+            username: "FixtureDynastyOwner",
+            display_name: "Fixture Dynasty Owner",
+            avatar: null,
+            league_id: leagueId,
+            metadata: { team_name: "Fixture Dynasty Team" },
+            is_owner: true,
+          },
+          {
+            user_id: "fixture-canonical-normal",
+            username: "CanonicalFixtureUser",
+            display_name: "Fixture Co-owner",
+            avatar: "fixture-owner-avatar",
+            league_id: leagueId,
+            metadata: {},
+            is_owner: null,
+          },
+        ]
+
+  if (rosterScenario === "malformed_user" && leagueId.endsWith("dynasty")) {
+    return [...users, { display_name: "Missing exact identity" }]
+  }
+
+  if (rosterScenario === "shrinking_collection") {
+    return users.slice(0, 1)
+  }
+
+  return users
+}
+
+function normalRosters(leagueId) {
+  if (leagueId === "fixture-league-best-ball") {
+    return [
+      {
+        roster_id: 1,
+        league_id: leagueId,
+        owner_id: "fixture-canonical-normal",
+        co_owners: null,
+        players: [
+          "catalog-0000",
+          "catalog-0001",
+          "catalog-0002",
+          "catalog-0003",
+          "catalog-0004",
+          "catalog-0005",
+          "catalog-0006",
+          "catalog-0007",
+          "roster-unknown-0001",
+        ],
+        starters: [
+          "catalog-0000",
+          "catalog-0001",
+          "catalog-0002",
+          "catalog-0003",
+          "catalog-0004",
+          "0",
+          "0",
+        ],
+        reserve: ["catalog-0007"],
+        taxi: null,
+        keepers: ["catalog-0000"],
+        settings: { wins: 4, losses: 1, ties: 0, fpts: 512 },
+        metadata: { fixture: "best-ball-owner" },
+      },
+      {
+        roster_id: 2,
+        league_id: leagueId,
+        owner_id: "fixture-best-ball-member",
+        co_owners: null,
+        players: ["catalog-0020", "catalog-0021"],
+        starters: ["catalog-0020", "0", "0", "0", "0", "0", "0"],
+        reserve: [],
+        taxi: null,
+        keepers: null,
+        settings: { wins: 2, losses: 3, ties: 0 },
+        metadata: null,
+      },
+    ]
+  }
+
+  return [
+    {
+      roster_id: 1,
+      league_id: leagueId,
+      owner_id: "fixture-dynasty-owner",
+      co_owners: ["fixture-canonical-normal"],
+      players: [
+        "catalog-0008",
+        "catalog-0009",
+        "catalog-0010",
+        "catalog-0011",
+        "catalog-0012",
+        "catalog-0013",
+      ],
+      starters: [
+        "catalog-0008",
+        "catalog-0009",
+        "catalog-0010",
+        "catalog-0011",
+        "catalog-0012",
+      ],
+      reserve: [],
+      taxi: ["catalog-0013"],
+      keepers: [],
+      settings: { wins: 5, losses: 0, ties: 0, fpts: 620 },
+      metadata: { fixture: "dynasty-co-owner" },
+    },
+    {
+      roster_id: 2,
+      league_id: leagueId,
+      owner_id: "fixture-dynasty-member",
+      co_owners: null,
+      players: ["catalog-0030", "catalog-0031"],
+      starters: ["catalog-0030", "0", "0", "0", "0"],
+      reserve: null,
+      taxi: null,
+      keepers: null,
+      settings: { wins: 1, losses: 4, ties: 0 },
+      metadata: null,
+    },
+  ]
+}
+
+function leagueRosters(leagueId) {
+  const rosters = normalRosters(leagueId).map((roster) => ({ ...roster }))
+
+  if (rosterScenario === "malformed_roster" && leagueId.endsWith("dynasty")) {
+    return [...rosters, { roster_id: 3, league_id: leagueId, settings: null }]
+  }
+
+  if (rosterScenario === "shrinking_collection") {
+    if (leagueId.endsWith("dynasty")) return []
+    return [
+      {
+        ...rosters[0],
+        players: rosters[0].players.slice(0, -2),
+        reserve: [],
+      },
+    ]
+  }
+
+  if (rosterScenario === "null_arrays") {
+    return rosters.map((roster) => ({
+      ...roster,
+      players: null,
+      starters: null,
+      reserve: null,
+      taxi: null,
+      keepers: null,
+    }))
+  }
+
+  if (rosterScenario === "empty_arrays") {
+    return rosters.map((roster) => ({
+      ...roster,
+      players: [],
+      starters: [],
+      reserve: [],
+      taxi: [],
+      keepers: [],
+    }))
+  }
+
+  if (rosterScenario === "co_owned") {
+    return rosters.map((roster, index) => ({
+      ...roster,
+      owner_id: `fixture-untracked-owner-${index + 1}`,
+      co_owners: index === 0 ? ["fixture-canonical-normal"] : [],
+    }))
+  }
+
+  if (rosterScenario === "unmatched") {
+    return rosters.map((roster, index) => ({
+      ...roster,
+      owner_id: `fixture-untracked-owner-${index + 1}`,
+      co_owners: [],
+    }))
+  }
+
+  if (rosterScenario === "unresolved_coowners") {
+    return rosters.map((roster, index) => ({
+      ...roster,
+      owner_id: `fixture-untracked-owner-${index + 1}`,
+      co_owners: null,
+    }))
+  }
+
+  if (rosterScenario === "unknown_player") {
+    return rosters.map((roster, index) =>
+      index === 0
+        ? {
+            ...roster,
+            players: [...roster.players, "roster-unknown-0002"],
+          }
+        : roster
+    )
+  }
+
+  if (rosterScenario === "removed_player_mapping") {
+    return rosters.map((roster, index) =>
+      index === 0
+        ? {
+            ...roster,
+            players: [...roster.players, "roster-historical-0001"],
+          }
+        : roster
+    )
+  }
+
+  return rosters
+}
+
 const mockSleeperServer = createServer((request, response) => {
   const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1")
   const segments = requestUrl.pathname.split("/").filter(Boolean)
@@ -188,6 +455,71 @@ const mockSleeperServer = createServer((request, response) => {
   ) {
     response.setHeader("content-type", "application/json")
     response.end(JSON.stringify({ count: playerCatalogRequests }))
+    return
+  }
+
+  if (
+    request.method === "GET" &&
+    requestUrl.pathname === "/__test/roster-request-count"
+  ) {
+    response.setHeader("content-type", "application/json")
+    response.end(
+      JSON.stringify({
+        users: rosterUserRequests,
+        rosters: rosterRosterRequests,
+        total: rosterUserRequests + rosterRosterRequests,
+      })
+    )
+    return
+  }
+
+  if (
+    request.method === "GET" &&
+    requestUrl.pathname === "/__test/roster-scenario"
+  ) {
+    const nextScenario = requestUrl.searchParams.get("name")
+    if (!nextScenario || !rosterScenarios.has(nextScenario)) {
+      response.writeHead(400).end()
+      return
+    }
+    rosterScenario = nextScenario
+    transientRosterAttempts.clear()
+    response.setHeader("content-type", "application/json")
+    response.end(JSON.stringify({ scenario: rosterScenario }))
+    return
+  }
+
+  if (
+    request.method === "GET" &&
+    requestUrl.pathname === "/__test/private-roster-state"
+  ) {
+    const runId = requestUrl.searchParams.get("run_id")
+    if (
+      !runId ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+        runId
+      )
+    ) {
+      response.writeHead(400).end()
+      return
+    }
+
+    const privateDump = spawnSync(
+      supabaseExecutable,
+      ["db", "dump", "--local", "--data-only", "--schema", "app_private"],
+      {
+        cwd: projectRoot,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }
+    )
+    if (privateDump.error || privateDump.status !== 0) {
+      response.writeHead(500).end()
+      return
+    }
+
+    response.setHeader("content-type", "application/json")
+    response.end(JSON.stringify({ clean: !privateDump.stdout.includes(runId) }))
     return
   }
 
@@ -204,6 +536,43 @@ const mockSleeperServer = createServer((request, response) => {
     segments[2] === "nfl"
   ) {
     response.end(JSON.stringify(nflState))
+    return
+  }
+
+  if (
+    segments.length === 4 &&
+    segments[1] === "league" &&
+    (segments[3] === "users" || segments[3] === "rosters")
+  ) {
+    const leagueId = decodeURIComponent(segments[2])
+    if (
+      leagueId !== "fixture-league-best-ball" &&
+      leagueId !== "fixture-league-dynasty"
+    ) {
+      response.writeHead(404).end("null")
+      return
+    }
+
+    if (segments[3] === "users") rosterUserRequests += 1
+    else rosterRosterRequests += 1
+
+    if (rosterScenario === "transient_error") {
+      const attemptKey = `${leagueId}:${segments[3]}`
+      const attempts = transientRosterAttempts.get(attemptKey) ?? 0
+      transientRosterAttempts.set(attemptKey, attempts + 1)
+      if (attempts === 0) {
+        response.writeHead(503).end(JSON.stringify({ error: "temporary" }))
+        return
+      }
+    }
+
+    response.end(
+      JSON.stringify(
+        segments[3] === "users"
+          ? leagueUsers(leagueId)
+          : leagueRosters(leagueId)
+      )
+    )
     return
   }
 

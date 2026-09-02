@@ -98,7 +98,9 @@ export default async function Home() {
           hasSuccessfulDiscovery={dashboard.hasSuccessfulDiscovery}
         />
         <p className="text-sm text-muted-foreground">
-          Rosters and drafts not imported.
+          {dashboard.hasCurrentSeasonRosterImport
+            ? "Rosters imported. Drafts not imported."
+            : "Rosters and drafts not imported."}
         </p>
       </div>
     </AppShell>
