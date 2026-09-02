@@ -8,7 +8,7 @@ Database migrations in `supabase/migrations/` are the schema source of truth. Ev
 
 The Supabase GitHub integration connects `jarahmacf/fantasyhud` with working directory `.` and deployment branch `main`. Reviewed migrations deploy to the hosted development project after they reach `main`. GitHub Actions verifies migrations locally and never deploys them.
 
-The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Tasks through 007A.1 are deployed and their hosted gates passed. Task 007B.1 adds the empty relational roster domain, RLS, integrity, and roster-sync observability without a provider request, import lifecycle, or product UI.
+The current free plan does not support database preview branches. Branch-level database work therefore uses local Supabase or the container-backed database CI job. Tasks through 007B.1 are deployed and their hosted gates passed. Task 007B.2 is implemented on a draft branch and remains undeployed until its migration, application, concurrency, load, and hosted canary gates pass.
 
 ## Local workflow
 
@@ -45,7 +45,11 @@ Task 005.1 revokes direct `service_role` access to the four provider-data tables
 
 Task 007A applies the same RPC-only model to the global player catalog. `players`, `player_external_ids`, `provider_catalog_runs`, and private staging grant no direct `service_role` CRUD. Four fixed-path lifecycle functions serialize the shared Sleeper/NFL/players boundary, enforce 24-hour freshness, accept idempotent batches of at most 500 normalized records, apply anti-wipe guards, publish atomically, and remove terminal staging. Completion has a 60-second function timeout; start, stage, and fail use 10 seconds. Task 007A.1 raises only the decoded source-byte envelope from 15,000,000 to 25,000,000 in both the table constraint and stage RPC. The existing 50,000-record limit, signatures, grants, timeouts, validation, staging, and publication behavior remain unchanged.
 
-Task 007B.1 creates `league_users`, `rosters`, `fantasy_account_rosters`, and `roster_players` as empty RPC-only provider-data tables. Authenticated users may read shared league context through indexed league reachability and tracked-account ownership only through their own fantasy-account links. `service_role` has no direct CRUD. The task adds no write RPC; Task 007B.2 must add reviewed complete-collection lifecycle functions before provider data can enter these tables.
+Task 007B.1 creates `league_users`, `rosters`, `fantasy_account_rosters`, and `roster_players` as RPC-only provider-data tables. Authenticated users may read shared league context through indexed league reachability and tracked-account ownership only through their own fantasy-account links. `service_role` has no direct CRUD.
+
+Task 007B.2 adds private frozen-scope and one-bundle-per-league staging plus four fixed-search-path roster lifecycle RPCs. Start derives the exact current-season league set from current database relationships, reuses a valid running attempt for 15 minutes, and recovers stale or inconsistent private state. Stage accepts one bounded normalized bundle in the frozen scope and is idempotent only for an identical server-computed hash. Completion requires the exact full staged set and publishes shared league users, rosters, explicit account ownership, and canonical player memberships atomically. Fail, success, partial completion, and stale recovery delete private roster stage and scope rows. Start, stage, and fail have ten-second function timeouts; completion has a 60-second timeout. Browser roles cannot execute these functions, and `service_role` retains execute-only access with no direct public or private table CRUD.
+
+The roster Server Action validates signed claims, resolves the primary tracked Sleeper account through RLS, requires provider season state, active current-season leagues, and a published player catalog, then fetches the complete official users-and-rosters collection through the server-only Sleeper boundary. It validates the complete collection before sequential staging and revalidates both `/` and `/rosters` after terminal state. No source payload, provider ID list, service secret, or database error is returned to the browser.
 
 The implemented fantasy-data parent tables are:
 
@@ -61,6 +65,6 @@ The implemented fantasy-data parent tables are:
 - `fantasy_account_rosters`: one explicit tracked-account ownership association
 - `roster_players`: one canonical player's current roster membership with its exact source mapping
 
-See `LEAGUE_DISCOVERY.md`, `PLAYER_CATALOG.md`, and `ROSTER_DOMAIN.md` for source boundaries, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 007B.1 adds no provider call, queue, cache, scheduler, historical fact, or production Supabase project.
+See `LEAGUE_DISCOVERY.md`, `PLAYER_CATALOG.md`, `ROSTER_DOMAIN.md`, and `ROSTER_IMPORT.md` for source boundaries, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, and `SYNC_ARCHITECTURE.md` for lifecycle, concurrency, and sanitized-error requirements. Task 007B.2 adds no queue, cache, scheduler, historical fact, complete portfolio timestamp, or production Supabase project.
 
 Authentication uses `@supabase/ssr`, cookie sessions, Next.js `proxy.ts` refresh, and signed claims for protection. `getSession()` is never an authorization source. See `AUTH.md`, `ACCOUNT_IDENTITY.md`, and `SLEEPER_CONNECTION.md`.

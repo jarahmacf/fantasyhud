@@ -54,7 +54,7 @@ jobs:
 
   database:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Check out repository
@@ -95,6 +95,18 @@ jobs:
 
       - name: Run 5,000-record player catalog load test
         run: npm run db:test:player-catalog-load
+
+      - name: Reset database before roster concurrency test
+        run: npm run db:reset
+
+      - name: Run roster synchronization concurrency test
+        run: npm run db:test:roster-concurrency
+
+      - name: Reset database before roster load test
+        run: npm run db:reset
+
+      - name: Run 30-league roster load test
+        run: npm run db:test:roster-load
 
       - name: Upload authenticated browser failure artifacts
         if: failure()

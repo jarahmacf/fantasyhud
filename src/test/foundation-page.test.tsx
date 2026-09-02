@@ -170,6 +170,10 @@ describe("foundation page", () => {
       "href",
       "/players"
     )
+    expect(screen.getByRole("link", { name: /Rosters/i })).toHaveAttribute(
+      "href",
+      "/rosters"
+    )
     expect(screen.getByText("@fixture")).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: /Sign out/i })

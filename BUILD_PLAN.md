@@ -39,4 +39,4 @@ Task 007A and its response-headroom correction are deployed and production-verif
 
 Task 007B.1 establishes the empty relational roster domain, exact source-array preservation, account-to-roster ownership, canonical-player membership integrity, indexed RLS, safe sync-run status grants, and the `roster_sync` scope. It makes no provider request and adds no product UI.
 
-Task 007B.2 remains unstarted. It will implement complete current-season Sleeper league-user and roster import, ownership and membership reconciliation, and the first roster product surface only after the 007B.1 schema is merged and production-verified.
+Task 007B.2 is implemented on a focused draft branch. It adds complete current-season Sleeper league-user and roster import, ownership and membership reconciliation, and the first roster product surface. It is not marked complete until its pull request is audited and merged and the controlled Production canary passes. Task 008 has not begun.

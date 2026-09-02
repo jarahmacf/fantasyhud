@@ -25,6 +25,8 @@
     "db:test": "supabase test db",
     "db:test:league-concurrency": "node scripts/test-league-discovery-concurrency.mjs",
     "db:test:player-catalog-load": "node scripts/test-player-catalog-load.mjs",
+    "db:test:roster-concurrency": "node scripts/test-roster-sync-concurrency.mjs",
+    "db:test:roster-load": "node scripts/test-roster-sync-load.mjs",
     "db:types": "node scripts/generate-database-types.mjs",
     "db:types:check": "node scripts/check-database-types.mjs",
     "db:check": "npm run db:reset && npm run db:test && npm run db:types:check",

@@ -18,6 +18,8 @@ export type Database = {
           last_seen_at: string
           league_id: string
           removed_at: string | null
+          roster_ownership_observed_at: string | null
+          roster_ownership_status: string | null
           updated_at: string
         }
         Insert: {
@@ -28,6 +30,8 @@ export type Database = {
           last_seen_at: string
           league_id: string
           removed_at?: string | null
+          roster_ownership_observed_at?: string | null
+          roster_ownership_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -38,6 +42,8 @@ export type Database = {
           last_seen_at?: string
           league_id?: string
           removed_at?: string | null
+          roster_ownership_observed_at?: string | null
+          roster_ownership_status?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -240,6 +246,7 @@ export type Database = {
           provider: string
           provider_metadata: Json
           provider_updated_at: string | null
+          roster_bundle_fetched_at: string | null
           roster_management_type: string
           roster_positions: Json
           roster_size: number
@@ -268,6 +275,7 @@ export type Database = {
           provider: string
           provider_metadata?: Json
           provider_updated_at?: string | null
+          roster_bundle_fetched_at?: string | null
           roster_management_type: string
           roster_positions: Json
           roster_size: number
@@ -296,6 +304,7 @@ export type Database = {
           provider?: string
           provider_metadata?: Json
           provider_updated_at?: string | null
+          roster_bundle_fetched_at?: string | null
           roster_management_type?: string
           roster_positions?: Json
           roster_size?: number
@@ -925,6 +934,47 @@ export type Database = {
           updated_players: number
         }[]
       }
+      complete_sleeper_roster_sync: {
+        Args: {
+          p_fantasy_account_id: string
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: {
+          active_owned_memberships: number
+          active_owned_rosters: number
+          applied_shared_league_bundles: number
+          confirmed_not_owned_leagues: number
+          created_league_users: number
+          created_memberships: number
+          created_ownerships: number
+          created_reference_players: number
+          created_rosters: number
+          final_status: string
+          observed_league_users: number
+          observed_leagues: number
+          observed_memberships: number
+          observed_rosters: number
+          owned_leagues: number
+          placeholder_starter_values: number
+          reactivated_ownerships: number
+          reactivated_player_mappings: number
+          removed_league_users: number
+          removed_memberships: number
+          removed_ownerships: number
+          removed_rosters: number
+          stale_league_users_skipped: number
+          stale_memberships_skipped: number
+          stale_ownership_resolutions_skipped: number
+          stale_rosters_skipped: number
+          stale_shared_league_bundles_skipped: number
+          sync_run_id: string
+          unresolved_ownership_leagues: number
+          updated_league_users: number
+          updated_memberships: number
+          updated_rosters: number
+        }[]
+      }
       connect_sleeper_account: {
         Args: {
           p_avatar_url: string
@@ -970,6 +1020,21 @@ export type Database = {
           status: string
         }[]
       }
+      fail_sleeper_roster_sync: {
+        Args: {
+          p_error_code: string
+          p_error_message: string
+          p_fantasy_account_id: string
+          p_retryable: boolean
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: {
+          changed_run: boolean
+          status: string
+          sync_run_id: string
+        }[]
+      }
       stage_sleeper_player_catalog_batch: {
         Args: {
           p_batch_index: number
@@ -986,6 +1051,21 @@ export type Database = {
           replayed_batch: boolean
           staged_records: number
           total_staged_records: number
+        }[]
+      }
+      stage_sleeper_roster_league_bundle: {
+        Args: {
+          p_bundle: Json
+          p_external_league_id: string
+          p_fantasy_account_id: string
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: {
+          progress_total: number
+          replayed_bundle: boolean
+          staged_leagues: number
+          sync_run_id: string
         }[]
       }
       start_sleeper_league_discovery: {
@@ -1006,6 +1086,17 @@ export type Database = {
           last_success_at: string
           recovered_stale_run: boolean
           reused_run: boolean
+        }[]
+      }
+      start_sleeper_roster_sync: {
+        Args: { p_fantasy_account_id: string; p_user_id: string }
+        Returns: {
+          created_run: boolean
+          expected_external_league_ids: string[]
+          league_season: number
+          recovered_stale_run: boolean
+          reused_run: boolean
+          sync_run_id: string
         }[]
       }
     }

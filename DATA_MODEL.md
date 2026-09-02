@@ -9,7 +9,7 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - **User-to-fantasy-account link:** An app user's tracked association to a shared fantasy account.
 - **League:** A shared fantasy competition from a provider.
 - **Provider season state:** The latest shared season and period state for one provider and sport.
-- **Account-to-league discovery:** The observation that a provider reported a shared league for a tracked fantasy account; it does not prove roster ownership.
+- **Account-to-league discovery:** The observation that a provider reported a shared league for a tracked fantasy account. Its presence alone does not prove roster ownership; paired account/league resolution status and observation time record that truth separately on the same association.
 - **League user:** One provider user identity as represented within one league.
 - **Roster:** A team roster within a league.
 - **Account-to-roster ownership:** One explicit tracked fantasy-account association to one roster in one league.
@@ -28,8 +28,8 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 ## Implemented fantasy-data grains
 
 - `provider_season_states`: one latest state row per provider and sport.
-- `leagues`: one shared league per provider and exact external league ID.
-- `fantasy_account_leagues`: one discovery association per fantasy account and shared league.
+- `leagues`: one shared league per provider and exact external league ID, including the latest published complete roster-bundle watermark.
+- `fantasy_account_leagues`: one discovery association per fantasy account and shared league, including nullable `owned`, `not_owned`, or `unresolved` roster-ownership resolution and its observation time.
 - `sync_runs`: one tracked fantasy account, scope, and attempt.
 - `players`: one shared canonical NFL entity and mutable current profile.
 - `player_external_ids`: one exact historical namespace, sport, and external ID mapping.
@@ -40,6 +40,10 @@ This document summarizes the conceptual model. `FANTASY_DATA_ARCHITECTURE.md` is
 - `roster_players`: one canonical player's current membership on one roster, tied to its exact source identity mapping.
 
 Task 006 populates these grains for the first time through one validated current-season Sleeper collection. `leagues.fetched_at` is the required observation time. Shared provider state and league representations are monotonic by this time, while account associations remain independent observations. `leagues.provider_updated_at` remains nullable, is never replaced with request time, and is not erased by a null incoming value.
+
+Task 007B.2 populates the four roster-domain grains through one frozen current-season scope and one complete validated users-and-rosters bundle per expected league. Exact source arrays remain beside normalized membership. `players` is the membership authority; null preserves prior confirmed normalized state while explicit empty confirms absence. `leagues.roster_bundle_fetched_at` records the latest fully validated users-and-rosters collection published for the shared league. Shared league users, rosters, memberships, annotations, and removals advance only when the incoming complete bundle is at least as fresh as that watermark, so an older collection cannot resurrect a resource that a newer collection proved absent. Per-row freshness checks remain defense in depth.
+
+Roster ownership resolution is account/league state on `fantasy_account_leagues`, with paired `roster_ownership_status` and `roster_ownership_observed_at`. The status is `owned`, `not_owned`, `unresolved`, or null when never evaluated. Resolution reads the current canonical shared rosters at the league roster-bundle watermark. A preserved `fantasy_account_rosters` row under `unresolved` remains historical account state, not current confirmed ownership. Current owned-roster and holdings reads require the matching account/league status to be `owned`.
 
 The browser authorization path is `auth user → user_fantasy_accounts → fantasy account → fantasy_account_leagues → league`. Browser roles receive read-only, RLS-scoped access. Provider data is written only through reviewed service-only RPCs; `service_role` has no direct provider-table CRUD.
 
@@ -65,6 +69,7 @@ The canonical player catalog is globally readable to an authenticated app user a
 - Concurrent first creation of a shared resource reuses one canonical row.
 - Shared-resource locks are acquired in deterministic canonical-key order.
 - Older provider observations never overwrite newer shared current representations.
+- Complete mutable collections use a collection-level watermark because per-row timestamps cannot protect the absence of a row.
 - Auth users and provider identities remain separate concepts.
 - Provider plus external user ID is canonical; usernames are mutable.
 - A user may have at most one primary fantasy-account link.
@@ -78,6 +83,17 @@ The canonical player catalog is globally readable to an authenticated app user a
 - Current shared roster-domain reads require an active account-to-league discovery association.
 - Active source and starter membership orders are unique within each roster.
 - Current keeper state never substitutes for immutable completed-draft keeper history.
+- Roster import validates every expected league before private staging and publishes the exact staged scope atomically.
+- Only exact `players` source arrays define current roster membership; annotation arrays only preserve or clear current flags and order.
+- Repeated exact `"0"` starter placeholders remain source facts and never create canonical player identities.
+- Valid exact unmapped roster references create sparse source-marked canonical identities rather than being discarded.
+- A null co-owner source state is unresolved and cannot prove that prior account ownership ended.
+- Roster ownership status and observation time are paired on each account/league association; current ownership analytics require status `owned`.
+- Preserved ownership history for an `unresolved` association is excluded from current owned-roster and holdings reads.
+- Source-null roster arrays render as not reported, while explicit empty arrays render as confirmed zero.
+- Membership annotation source state is validated per starter, reserve, taxi, and keeper field and renders as yes, no, or not reported.
+- Every league-user source object must provide an exact `league_id` matching the requested canonical league before normalization; provider avatar IDs remain exact rather than display-trimmed.
+- Roster import never updates `fantasy_accounts.last_synced_at`.
 - League-discovery persistence requires `fantasy_accounts.provider = leagues.provider = sync_runs.provider`; cross-provider associations are invalid.
 - Removing one account-to-league discovery association never deletes the shared league.
 - Dynasty, keeper/redraft, best ball, superflex, IDP, and broad scoring are independent context dimensions.

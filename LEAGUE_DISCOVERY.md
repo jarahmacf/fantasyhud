@@ -84,3 +84,9 @@ One fresh running discovery per fantasy account is reused for five minutes witho
 Unit and authenticated browser tests use deterministic local fixtures and a loopback Sleeper server. Production rejects the override. CI never calls real Sleeper endpoints.
 
 The live source-shape and classification check is deferred to the controlled post-merge canary documented in `docs/verification/task-006-sleeper-league-source.md`.
+
+## Roster-import handoff
+
+Task 007B.2 treats the provider-resolved `league_season` and the exact active account-to-league association set as prerequisites. Its start RPC freezes the sorted current-season external league IDs internally; neither the browser nor the source caller supplies them. Changes made by a later league-discovery run do not alter an already running roster import.
+
+Roster import never infers ownership from league discovery. It fetches each frozen league's official users and rosters collections and matches the connected canonical account only against exact roster owner and co-owner source fields. A succeeded or partial roster run for the same resolved current season changes the Leagues footer to `Rosters imported. Drafts not imported.` Historical or failed roster attempts do not.

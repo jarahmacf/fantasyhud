@@ -57,7 +57,7 @@ test("connects and persists one canonical Sleeper identity", async ({
     page.getByRole("alert").filter({ hasText: "Sleeper account not found." })
   ).toBeVisible()
 
-  await page.getByLabel("Sleeper username").fill("@fixture-user")
+  await page.getByLabel("Sleeper username").fill("@fixture-user-isolated")
   await page.getByRole("button", { name: "Connect Sleeper account" }).click()
 
   await expect(page).toHaveURL(/^http:\/\/127\.0\.0\.1:3101\/$/)
