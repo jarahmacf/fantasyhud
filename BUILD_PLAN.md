@@ -11,17 +11,22 @@ Every milestone is implemented and audited separately.
 7. 007A Canonical Sleeper NFL player catalog
 8. 007B.1 Roster domain architecture
 9. 007B.2 Current-season Sleeper roster import
-10. 008 Drafts and complete boards
-11. 009 First real portfolio reconciliation
-12. 010 Player exposure
-13. 011 NFL-team exposure
-14. 012 Draft-capital analytics
-15. 013 Stack and co-holding analytics
-16. 014 Core Overview
-17. 015 Players screen
-18. 016 Player detail
-19. 017 Market ADP as an independently verified data project
-20. 018 In-season matchup command center
+10. 008A.1 Scoring, format, and performance context architecture
+11. 008A.2 Draft domain architecture
+12. 008B Current-season drafts and complete boards
+13. 009 First real portfolio reconciliation
+14. 010 Context-aware player exposure
+15. 011 Context-aware NFL-team exposure
+16. 012 Draft-capital analytics
+17. 013A Player-statistics source and scoring-engine architecture
+18. 013B Weekly statistics, context-specific fantasy scoring, and season rankings
+19. 014 Draft-capital versus season-performance analytics
+20. 015 Stack and co-holding analytics
+21. 016 Core Overview
+22. 017 Players screen
+23. 018 Player detail with dynamic context metrics
+24. 019 Independently licensed market ADP
+25. 020 In-season matchup command center
 
 Task 002 establishes local Supabase migrations, pgTAP, generated types, typed client factories, GitHub Actions database checks, and Git-connected Supabase development and Vercel hosting. Product tables and authentication begin in Task 003.
 
@@ -39,4 +44,6 @@ Task 007A and its response-headroom correction are deployed and production-verif
 
 Task 007B.1 establishes the empty relational roster domain, exact source-array preservation, account-to-roster ownership, canonical-player membership integrity, indexed RLS, safe sync-run status grants, and the `roster_sync` scope. It makes no provider request and adds no product UI.
 
-Task 007B.2 is implemented on a focused draft branch. It adds complete current-season Sleeper league-user and roster import, ownership and membership reconciliation, and the first roster product surface. It is not marked complete until its pull request is audited and merged and the controlled Production canary passes. Task 008 has not begun.
+Task 007B.2 is deployed and production-verified. It adds complete current-season Sleeper league-user and roster import, ownership and membership reconciliation, and the first roster product surface.
+
+Task 008A.1 is the current focused, undeployed draft-branch work. Its in-scope correction hardens the same unmerged migration with material-rule-preserving semantic scoring compatibility, exact league-settings identity, count-sensitive lineup compatibility, independent quarterback and IDP dimensions, fully recomputed immutable inserts, and one accepted format context per league observation time. It also defines future context-aware ADP and performance-versus-draft-capital contracts. It implements no draft import, statistics source, scoring engine, ranking, performance metric, or product UI. It is not complete until correction review, merge, and hosted verification pass. Task 008A.2 and Task 008B have not begun.
