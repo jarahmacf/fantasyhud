@@ -15,6 +15,23 @@ This contract defines the durable data boundaries for FANTASY HUD. It governs fu
 9. Keep league discovery provider-consistent: `fantasy_accounts.provider`, `leagues.provider`, and `sync_runs.provider` must match.
 10. Mutate provider data only through reviewed, narrowly scoped service-only RPCs; service credentials receive no direct provider-table CRUD.
 11. Protect complete mutable collections with a collection-level watermark; per-row freshness alone cannot represent a newer observation of absence.
+12. Treat exact provider scoring settings as authoritative immutable scoring identity; derived labels are filters and diagnostics, not replacements.
+13. Keep scoring context, league format context, and the future draft environment as separate versioned layers.
+14. Treat ADP and average pick as contextual query results, never mutable player or pick properties.
+15. Never silently broaden a context match, count one canonical provider draft more than once, or use future information in an at-time comparator.
+16. Derive positional ADP rank from context-specific player ADP inside a versioned draft-time position group; never require or persist a provider-supplied label such as `RB17`.
+17. Treat season rank as a typed, scoring-context-specific, through-period result. Total-points and points-per-game rankings remain distinct, and no universal current rank belongs on `players`.
+18. Keep raw football statistics, exact-context fantasy scoring results, and player rankings at separate grains. Reuse one scoring result across every league sharing the same scoring context instead of duplicating raw stats per league.
+19. Do not assume Sleeper's consumer surfaces or documented public API provide a supported player-statistics, projection, ranking, or ADP feed; source authorization, licensing, coverage, revision, and category feasibility are a separate implementation gate.
+20. Preserve position and NFL team at draft on historical draft facts, and resolve outcome position through a versioned period-specific methodology. Never silently join historical performance only to the current player profile.
+21. Keep player-level positional-rank delta as a display measure, not an additive cross-position unit. Portfolio and team aggregation use a versioned comparable scale such as capital percentile, outcome percentile, or points above expectation.
+22. Derive performance-versus-capital analytics from immutable picks, exact draft environments, prior-only eligible comparator samples, context-scored outcomes, and versioned ranking and expected-outcome methods; never store mutable hit, bust, alpha, or outperformance flags on source rows.
+23. Make aggregation paths explicit at pick, player, NFL team at draft, draft or fantasy roster, league, and tracked-portfolio grains. Deduplicate network drafts canonically while attributing portfolio picks only through explicit tracked-account draft associations.
+24. Preserve every material scoring difference in semantic compatibility. Normalize only reviewed semantic no-ops; unknown or malformed values remain in bounded exact fallback and narrow matching.
+25. Make exact league settings part of immutable exact format identity, and recompute every identity and derived routing field before insertion.
+26. Keep exact lineup order separate from compatible lineup composition. Compatibility uses every exact slot token and count, while quarterback topology and IDP remain independent dimensions.
+27. Treat provider-neutral compatibility keys as versioned FANTASY HUD semantic identities, not proof that an unmapped source provider is equivalent.
+28. Permit one accepted format context per league and source observation time. Exact replay is idempotent; a contradiction fails closed and rolls back the enclosing discovery mutation.
 
 ## Layered model
 
@@ -27,6 +44,11 @@ erDiagram
   LEAGUES ||--o{ FANTASY_ACCOUNT_LEAGUES : shared_resource
   FANTASY_ACCOUNTS ||--o{ SYNC_RUNS : attempts
   AUTH_USERS o|--o{ SYNC_RUNS : triggers
+
+  SCORING_CONTEXTS ||--o{ LEAGUE_FORMAT_CONTEXTS : exact_scoring
+  LEAGUE_FORMAT_CONTEXTS ||--o{ LEAGUE_FORMAT_OBSERVATIONS : observed_format
+  LEAGUES ||--o{ LEAGUE_FORMAT_OBSERVATIONS : format_history
+  LEAGUE_FORMAT_CONTEXTS ||--o{ LEAGUES : future_current_format
 
   LEAGUES ||--o{ LEAGUE_USERS : league_members
   LEAGUES ||--o{ ROSTERS : league_teams
@@ -43,7 +65,7 @@ erDiagram
   ROSTERS ||--o{ LEAGUE_STANDING_SNAPSHOTS : ranked_roster
 ```
 
-Relationships through `SYNC_RUNS` are implemented by Task 005. Task 007A implements player identity, and Task 007B.1 implements league users, rosters, tracked-account roster ownership, and current roster membership. Draft, matchup, standing, and transaction relationships remain planned.
+Relationships through `SYNC_RUNS` are implemented by Task 005. Task 007A implements player identity, Task 007B.1 implements league users, rosters, tracked-account roster ownership, and current roster membership, and Task 007B.2 populates that roster domain. Task 008A.1 introduces scoring-context, league-format-context, and format-observation relationships on the current undeployed draft branch and documents the future context-aware ADP and performance-versus-draft-capital contract. Draft, statistics, scoring-result, ranking, performance, matchup, standing, and transaction relationships remain planned; their presence in this contract does not assert that their tables or foreign keys exist.
 
 ## Layer 1 — Identity
 
@@ -90,6 +112,38 @@ The row contains exact provider settings plus independent derived dimensions:
 A league may be dynasty and best ball simultaneously. Broad scoring never replaces exact `scoring_settings`. One league may have multiple drafts, so no draft foreign key belongs on the league row.
 
 `roster_bundle_fetched_at` is the nullable observation time of the latest fully validated users-and-rosters bundle published for the shared league. It is distinct from league-discovery `fetched_at`. A common per-league watermark is correct because publication requires both source endpoints to succeed and the complete bundle to validate.
+
+### Scoring and league format contexts — Task 008A.1 draft branch
+
+#### `scoring_contexts`
+
+Grain: one immutable exact scoring identity per provider, sport, normalization version, and scoring fingerprint.
+
+The exact source `scoring_settings` JSON is authoritative. A provider-specific canonical fingerprint and normalization version define immutable identity. A changed exact source object or classification version creates or reuses a different row; no context is updated in place.
+
+Derived fields may include broad format (`ppr`, `half_ppr`, `standard`, `custom`, or `unknown`), reception points, passing-touchdown points, tight-end bonus, position-specific reception or bonus flags, IDP scoring state, a versioned compatibility key, and bounded diagnostics. Version 1 may classify base receptions of `1` as PPR, `0.5` as Half-PPR, and `0` as Standard; reviewed position-specific or premium rules that make the base misleading are Custom, while absent or malformed values are Unknown. Broad format and compatibility keys are never unique scoring identities.
+
+The version-one effective-scoring projection preserves every supported point-changing rule, including passing, rushing, receiving, first-down, two-point, fumble, kicking, team-defense, special-teams, IDP, bonus, and position-specific scoring. It removes only explicitly allowlisted, reviewed additive-bonus rules whose value is numeric zero and numeric `rec_fb`, `rec_qb`, `rec_rb`, `rec_te`, or `rec_wr` values equal to numeric base `rec`. Unknown keys and malformed values remain through bounded exact fallback rather than disappearing. The compatibility key uses the provider-neutral `fantasyhud:nfl:scoring_compatibility` namespace; exact scoring identity remains provider-specific, and another provider is not considered equivalent until it has a reviewed semantic mapping.
+
+#### `league_format_contexts`
+
+Grain: one immutable exact league-level draft-relevant format per normalization version and format fingerprint.
+
+The identity references one scoring context and includes its exact scoring fingerprint plus exact ordered roster positions, exact league-settings fingerprint, team count, roster size, roster-management type, best-ball state, quarterback topology, and IDP state. Exact league settings and roster positions remain stored on the row; their fingerprints participate in immutable identity, so a row with different exact settings cannot be reused.
+
+`lineup_fingerprint` preserves exact roster-position order. The dedicated `lineup_profile` is an order-independent count object that preserves every exact slot token, including safe unknown tokens, and `lineup_profile_fingerprint` provides provider-neutral compatible identity. Equal counts in a different order may be compatible without being exact; different WR, TE, FLEX, bench, reserve, taxi, QB, IDP, or unknown-token counts remain distinct even when roster size is equal.
+
+`quarterback_format` is independently derived as `one_qb`, `superflex`, `two_qb`, `two_qb_superflex`, `no_qb`, `custom`, or `unknown`; `has_idp` remains a separate boolean. The version-one draft-relevant league-settings projection covers reviewed `type`, `best_ball`, `num_teams`, `capacity_override`, `draft_rounds`, `max_keepers`, `pick_trading`, reserve-slot and reserve-eligibility settings, and taxi-slot, taxi-year, taxi-veteran, and taxi-deadline settings. Every other exact key/value enters a provider-neutral fallback fingerprint, narrowing matching until classified.
+
+The format compatibility key combines semantic scoring compatibility, lineup-profile fingerprint, team count, roster size, roster-management type, best-ball state, quarterback format, IDP state, the reviewed settings projection, and conservative fallback. `context_quality` is `exact`, `partial`, or `unknown`. One version-one classifier supplies both creation and insert validation; immutable insertion recomputes scoring linkage, league-settings, ordered-lineup, lineup-profile and exact-format fingerprints, quarterback format, compatibility key, context quality, and derived dimensions. Unsupported providers or versions cannot claim exact quality. `leagues.current_format_context_id` points through this format context to scoring identity, so the league does not duplicate a mutable scoring-context pointer.
+
+#### `league_format_observations`
+
+Grain: one accepted league-format observation event for one league and source observation time, carrying one context, source, and normalization version.
+
+Observations are append-only and unique by league plus observation time. Replaying the same context and version is idempotent. A different context or version at the same time fails closed and, because discovery and context maintenance share one transaction, rolls back the underlying league source fields, current pointer, and observation together. A later accepted representation may append history; an older representation is stale and appends nothing. History begins with the first known stored accepted observation and never fabricates an older context from current league state.
+
+Task 008A.1's undeployed draft migration creates these tables, the league pointer, atomic league-discovery integration, immutable owner-only helpers, scoped RLS, and safe derived projections. Its semantic-integrity correction amends that same unmerged migration; no second migration is introduced. Its performance-versus-draft-capital work is documentation only: the task adds no statistics, scoring-result, ranking, or performance table or data. The context tables are not Production state until the correction is reviewed, merged, and hosted verification passes.
 
 ### `fantasy_account_leagues` — implemented in Task 005
 
@@ -163,6 +217,10 @@ Grain: one provider draft in its league or provider context.
 
 A league may have zero, one, or many drafts. Draft status is mutable until the source completes the draft; source completion makes the board immutable except for reviewed correction workflows.
 
+Task 008A.2 must give every draft `league_format_context_id`, `context_resolution_status`, `context_observed_at`, `draft_environment_fingerprint`, `draft_environment_version`, and `draft_pool_type`. Context resolution is `exact`, `partial`, or `unknown`. A current league format cannot be attached to a historical draft as exact unless the source relationship is contemporaneous and verified.
+
+The future draft environment is a separate layer: league format context plus draft type, player pool, rounds, draft-specific settings, and context-resolution quality.
+
 #### `fantasy_account_drafts`
 
 Grain: one explicit association between a tracked fantasy account and a draft context.
@@ -173,7 +231,9 @@ This association must not replace complete draft-board storage.
 
 Grain: one selection at one exact position in one draft.
 
-The table stores the complete provider board, not only user picks. A completed pick's future `is_keeper` value is immutable draft history and is separate from mutable current `roster_players.is_keeper`. Exact original and current pick ownership must come from source relationships and transaction facts. `is_user_pick`, `is_value`, and similar analytics flags are prohibited.
+The table stores the complete provider board, not only user picks. A completed pick's future `is_keeper` value is immutable draft history and is separate from mutable current `roster_players.is_keeper`. Exact original and current pick ownership must come from source relationships and transaction facts. Each pick inherits scoring, format, and draft-environment context through its parent draft.
+
+Future pick facts must also preserve the player's NFL team at draft and the source position context needed to reproduce a versioned draft-time position group. For dual-eligible players, that context includes all source-reported eligible fantasy positions and discloses whether the methodology selects a primary source position or one normalized analytics group. A later player-profile team or position change never rewrites this draft-time context. Mutable ADP fields, `is_user_pick`, `is_value`, and similar analytics flags are prohibited; pick comparators are derived or explicitly versioned analytics.
 
 ### Detailed weekly scoreboards
 
@@ -221,17 +281,33 @@ A source or versioned snapshot may preserve wins, losses, ties, rank, points for
 
 Current standings may be computed from roster state and completed matchup facts. Historical standings shown to users must either be reproducibly computed from immutable facts or stored as source/versioned snapshots. Commissioner adjustments and provider-only ranking rules must not be silently lost. League-standing snapshots remain separate from player fantasy rankings, portfolio internal rankings, and market rankings.
 
-### Player statistics and rankings
+### Player statistics, scoring, and rankings
 
 #### `player_stat_snapshots`
 
-Grain: one player + source + statistical period snapshot.
+Grain: one canonical player + statistics source + sport + season + season type + week or statistical period + source revision or as-of observation.
+
+This grain stores raw football statistical truth, not league-scored fantasy points. It preserves exact source identity, period, source timestamp, source fingerprint, and either a bounded exact source-stat object or reviewed typed facts. Source revisions create a reproducible as-of history rather than silently changing prior calculated results.
+
+#### `player_scoring_snapshots`
+
+Grain: one canonical player + exact scoring context + statistical period or through-week + statistics source + scoring-engine version.
+
+A result may include weekly and season-to-date fantasy points, games played, fantasy points per game, scored-through week, source as-of time, and calculation time. One result is reused by every league sharing the same exact scoring context; raw statistics are never duplicated once per league.
 
 #### `player_ranking_snapshots`
 
-Grain: one player + ranking source + season + week or snapshot date + scoring context + ranking type.
+Grain: one scoring-result universe + ranking type + versioned position group + period + canonical player.
 
-Every player ranking row requires a source, season, period or snapshot, scoring context, rank or value, and update timestamp. Sleeper search rank is never treated as fantasy rank.
+Every ranking result identifies `scoring_context_id`, season, season type, `through_week` or as-of time, ranking type, position group and version, any minimum-games or minimum-opportunities rule, statistics source, scoring-engine version, ranking-methodology version, rank or value, and calculation time. At minimum, `season_total_points_rank`, `season_points_per_game_rank`, `overall_total_points_rank`, and `overall_points_per_game_rank` remain separate. A points-per-game rank cannot omit its eligibility rule.
+
+These rankings begin as reviewed views over scoring results. Stored snapshots are justified only by historical reproducibility, source revisions, or measured query performance. Sleeper search rank is never treated as fantasy rank, and a default-source rank never substitutes for exact league scoring.
+
+#### Source-feasibility boundary
+
+No implementation may assume the documented public Sleeper API or its consumer surfaces provide a supported statistics, projection, ranking, or ADP feed. A separate source-feasibility task must verify authorization and commercial use, canonical-player ID coverage, corrections and revisions, weekly and season-to-date availability, historical depth, team-defense and IDP support, every stat category required by stored scoring contexts, and latency and update cadence.
+
+The preferred boundary is authorized raw NFL statistics → canonical player mapping → versioned scoring engine → exact scoring-context results → context-specific rankings. Undocumented endpoints, consumer UI values, and provider ranks without an exact scoring definition are not supported data contracts.
 
 ### Market data
 
@@ -243,7 +319,7 @@ Grain: one independently verified market source snapshot and its context.
 
 Grain: one player or market entity value within one ADP snapshot.
 
-Market ADP stays separate from portfolio-sample ADP. Source licensing, coverage, scoring context, draft type, and snapshot time are part of the domain contract.
+Market ADP stays separate from portfolio-sample and FANTASY HUD Sleeper-network ADP. Every future external-market record requires source, platform, sample universe, as-of time, format or scoring context, match level, sample size, and methodology version. No ambiguous universal market ADP snapshot is allowed.
 
 ## Ranking domains stay separate
 
@@ -280,53 +356,82 @@ Normalized source rows and explicit associations remain authoritative. Analytics
 
 Every portfolio query is scoped through a tracked fantasy account. The intended paths include:
 
-| Analysis                        | Source path                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------ |
-| Player exposure                 | tracked account → account/league status `owned` → roster association → holdings      |
-| NFL-team breadth                | player exposure → player current or period-specific NFL-team context                 |
-| Roster-slot share               | roster holdings → exact source roster slot → normalized presentation category        |
-| Position allocation             | canonical player position plus explicit roster and league context                    |
-| Draft capital                   | complete draft board + exact draft position + ownership movement facts               |
-| Stacks                          | co-holdings joined to explicit player/NFL-team relationships for the selected period |
-| Co-holdings                     | pairs or sets derived from simultaneous roster holdings, never a persisted boolean   |
-| Scoring and league-size filters | exact league settings plus independent derived dimensions                            |
-| Multi-season comparison         | season-keyed leagues, rosters, drafts, matchups, and snapshots                       |
-| Weekly portfolio performance    | matchup entries + player score lines scoped through owned rosters                    |
-| Current and historical rankings | source-specific ranking snapshots joined by canonical player identity                |
-| Portfolio-sample ADP            | complete tracked draft boards, explicitly labeled as the user's sample               |
-| External market ADP             | independent market snapshots and values with their own source contract               |
+| Analysis                         | Source path                                                                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Player exposure                  | tracked account → account/league status `owned` → roster association → holdings                                                           |
+| NFL-team breadth                 | player exposure → player current or period-specific NFL-team context                                                                      |
+| Roster-slot share                | roster holdings → exact source roster slot → normalized presentation category                                                             |
+| Position allocation              | canonical player position plus explicit roster and league context                                                                         |
+| Draft capital                    | complete draft board + exact draft position + ownership movement facts                                                                    |
+| Stacks                           | co-holdings joined to explicit player/NFL-team relationships for the selected period                                                      |
+| Co-holdings                      | pairs or sets derived from simultaneous roster holdings, never a persisted boolean                                                        |
+| Scoring and league-size filters  | exact league settings plus independent derived dimensions                                                                                 |
+| Multi-season comparison          | season-keyed leagues, rosters, drafts, matchups, and snapshots                                                                            |
+| Weekly portfolio performance     | matchup entries + player score lines scoped through owned rosters                                                                         |
+| Current and historical rankings  | source-specific ranking snapshots joined by canonical player identity                                                                     |
+| Portfolio-sample ADP             | deduplicated complete tracked draft boards, explicit context and eligibility, and prior-only leave-one-out comparison when scoring a pick |
+| FANTASY HUD Sleeper-network ADP  | deduplicated canonical imported drafts, an explicit option to exclude the current user's portfolio, and reviewed privacy suppression      |
+| External market ADP              | independent named market snapshots with source, context, match level, sample size, as-of time, and methodology version                    |
+| Positional ADP rank              | eligible deduplicated player ADP → versioned draft-time position group → ordered contextual rank                                          |
+| Context-specific fantasy scoring | raw player-stat snapshots → exact scoring context + statistical period + scoring-engine version                                           |
+| Performance versus draft capital | immutable pick + exact draft environment + prior-only comparator + context-scored outcome + versioned expectation method                  |
+| NFL-team draft performance       | original pick capital grouped by NFL team at draft; current-team views remain separate                                                    |
+
+### Performance-versus-draft-capital contract
+
+Performance analytics remain derived from immutable source facts and reviewed, versioned methods. At player or pick grain, the first display measures may include draft overall pick, contextual overall ADP, contextual positional ADP rank, season-to-date and final positional rank, draft-capital and outcome percentiles, actual and expected total fantasy points, points above expectation, actual and expected fantasy points per game, and their comparable-scale deltas.
+
+`position_rank_delta = adp_position_rank - outcome_position_rank`; a positive result means the player finished better than drafted. This is a player-level display measure only. It cannot be summed across QB, RB, WR, TE, IDP, scoring contexts, or seasons. Cross-position and higher-grain aggregation uses a versioned common unit such as capital percentile, outcome percentile, points above context-specific expectation, points-per-game above expectation, or normalized capital efficiency. An outcome is never compared with ADP from a different or silently broadened context.
+
+A context-specific expected-outcome curve must disclose its training seasons, eligible draft classes, context-matching policy, capital normalization, outcome metric, injury or availability treatment, minimum sample, and methodology version. At-draft results use only comparator observations available before the subject pick, exclude the subject draft, and distinguish through-week from final outcomes. Every result records its source as-of time and calculation time.
+
+Aggregation paths are explicit:
+
+- Pick: one immutable selection's normalized investment compared with its context-scored outcome and an eligible prior-only, leave-one-out expected-outcome curve.
+- Player: confirmed portfolio picks for one canonical player, including unique drafts, average and median pick, average normalized capital, outcome, and capital efficiency.
+- NFL team: original capital grouped by NFL team at draft; a current-team view may be shown separately.
+- Draft, fantasy roster, or league: only picks attributed to the tracked account's confirmed draft slot count as portfolio ownership; the complete board remains the comparator universe.
+- Portfolio: total normalized capital, actual versus expected production, capital efficiency, versioned hit and bust rates, position allocation, and NFL-team-at-draft allocation.
+
+Network samples deduplicate one canonical provider draft before aggregation, and tracked-account attribution flows only through explicit account-to-draft associations. Total-production and per-game-production views remain separate. Availability-adjusted analysis is a separate versioned method and may not silently classify an injured player with the same outcome definition as a healthy underperformer.
+
+Implementation begins with immutable facts, reusable context-scoring results, and reviewed queryable views. It must not create a giant mutable performance row or permanent `outperformed_adp`, `was_a_hit`, `was_a_bust`, `season_alpha`, or equivalent source-field flag. Materialization is allowed only for historical reproducibility, source-revision history, or measured performance with explicit refresh semantics.
 
 ## History contract
 
-| Entity category                              | History rule                                                                                                                 |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Profile and fantasy-account presentation     | Mutable current state; canonical IDs and creation time remain stable.                                                        |
-| Provider season state                        | Mutable latest state, replaced per provider and sport; not historical facts.                                                 |
-| League current configuration/status          | Mutable current state while exact provider configuration remains preserved on the current row.                               |
-| Account-to-league discovery                  | Mutable observation window; `first_seen_at` is stable, later sightings update `last_seen_at`, and absence sets `removed_at`. |
-| Roster current holdings                      | Mutable current state; exact arrays and normalized membership advance only under the complete per-league bundle watermark.   |
-| Account/league roster ownership resolution   | Mutable account-scoped state; status and observation time advance from current canonical shared roster state.                |
-| Player current profile                       | Mutable current state; provider/source timestamps identify freshness.                                                        |
-| Player external identity mapping             | Stable mapping unless a source correction is explicitly audited.                                                             |
-| Draft metadata before completion             | Mutable source state.                                                                                                        |
-| Completed draft board and picks              | Immutable after source completion except reviewed correction.                                                                |
-| Matchup entries and per-player weekly points | Append-only historical facts per league, season, and week after source finalization.                                         |
-| Transactions and their player/pick movements | Append-only historical facts.                                                                                                |
-| Completed playoff bracket entries            | Immutable after source completion.                                                                                           |
-| League standing snapshots                    | Append-only source/versioned snapshots when immutable facts cannot reproduce the standing.                                   |
-| Player stat snapshots                        | Append-only source snapshots.                                                                                                |
-| Player ranking snapshots                     | Append-only source-and-context snapshots.                                                                                    |
-| Market ADP snapshots and values              | Immutable source snapshots.                                                                                                  |
-| Sync runs                                    | Append-only attempts whose running row may progress to one terminal state; completed attempts are retained.                  |
-| Derived analytics                            | Recomputable functions or views; stored materialization requires measured need and explicit refresh rules.                   |
+| Entity category                              | History rule                                                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Profile and fantasy-account presentation     | Mutable current state; canonical IDs and creation time remain stable.                                                            |
+| Provider season state                        | Mutable latest state, replaced per provider and sport; not historical facts.                                                     |
+| League current configuration/status          | Mutable current state while exact provider configuration remains preserved on the current row.                                   |
+| Scoring contexts                             | Immutable provider-specific exact identities plus conservative versioned semantic compatibility; material rules remain distinct. |
+| League format contexts                       | Immutable exact identities include exact settings and ordered lineup; count-profile compatibility never replaces them.           |
+| League format observations                   | Append-only, one context per league and source time; conflicts fail closed and no older history is inferred.                     |
+| Account-to-league discovery                  | Mutable observation window; `first_seen_at` is stable, later sightings update `last_seen_at`, and absence sets `removed_at`.     |
+| Roster current holdings                      | Mutable current state; exact arrays and normalized membership advance only under the complete per-league bundle watermark.       |
+| Account/league roster ownership resolution   | Mutable account-scoped state; status and observation time advance from current canonical shared roster state.                    |
+| Player current profile                       | Mutable current state; provider/source timestamps identify freshness.                                                            |
+| Player external identity mapping             | Stable mapping unless a source correction is explicitly audited.                                                                 |
+| Draft metadata before completion             | Mutable source state.                                                                                                            |
+| Completed draft board and picks              | Immutable after source completion except reviewed correction.                                                                    |
+| Matchup entries and per-player weekly points | Append-only historical facts per league, season, and week after source finalization.                                             |
+| Transactions and their player/pick movements | Append-only historical facts.                                                                                                    |
+| Completed playoff bracket entries            | Immutable after source completion.                                                                                               |
+| League standing snapshots                    | Append-only source/versioned snapshots when immutable facts cannot reproduce the standing.                                       |
+| Player stat snapshots                        | Append-only raw source facts by exact statistical period and source revision; never league-scored.                               |
+| Player scoring snapshots                     | Reusable, versioned calculation results by player, exact scoring context, period, statistics source, and scoring engine.         |
+| Player ranking snapshots                     | Append-only typed, through-period, exact-context results with versioned position-group and ranking methodologies.                |
+| Market ADP snapshots and values              | Immutable source snapshots.                                                                                                      |
+| Sync runs                                    | Append-only attempts whose running row may progress to one terminal state; completed attempts are retained.                      |
+| Derived analytics                            | Recomputable functions or views; stored materialization requires measured need and explicit refresh rules.                       |
 
 Source errors are never translated into empty collections. Unknown, unavailable, not yet fetched, and confirmed empty remain distinct states. Immutable historical facts are not overwritten by current player, roster, league, or team state.
 
 ## Historical player-context rule
 
-Immutable and period facts preserve the player context used when the fact occurred. Depending on the grain, that includes position at draft, NFL team at draft, NFL team during the scoring week, the source player ID used for the fact, and the scoring context used for a rank or score. A future implementation may use fact-level snapshot columns or reviewed effective-dated player/team relationships.
+Immutable and period facts preserve the player context used when the fact occurred. Draft facts preserve NFL team at draft and enough source position eligibility to reproduce the versioned draft-time primary or normalized position group. Scoring and ranking results preserve the versioned outcome position group for their exact period. Other grains may require NFL team during the scoring week, the source player ID used for the fact, and the exact scoring context used for a rank or score. A future implementation may use fact-level snapshot columns or reviewed effective-dated player/team relationships.
 
-This rule applies explicitly to `draft_picks`, `matchup_player_points`, `transactions` and their player movements, `player_stat_snapshots`, and `player_ranking_snapshots`. Historical analytics never silently join only to a player's present-day team or position.
+This rule applies explicitly to `draft_picks`, `matchup_player_points`, `transactions` and their player movements, `player_stat_snapshots`, `player_scoring_snapshots`, and `player_ranking_snapshots`. Current player team and position may be displayed separately, but historical analytics never silently join only to present-day profile values or use them to rewrite capital allocation or outcome grouping.
 
 ## Authorization contract
 
@@ -341,6 +446,8 @@ auth.uid()
 ```
 
 Future roster, draft, matchup, and analytic reads extend this path through explicit associations. Browser roles never write provider data. Direct `service_role` CRUD on provider-data tables is revoked. Validated server-side operations may write later imports only through reviewed `SECURITY DEFINER` RPCs after app-user claims, tracked-account reachability, and provider consistency are validated; `service_role` receives only `EXECUTE` on those functions.
+
+Future scoring and league-format context persistence follows the same boundary. Exact source JSON is exposed only through scoped RLS or reviewed safe projections, context rows reject update and delete, and service operations receive execute-only access to reviewed functions rather than direct table CRUD.
 
 ## Task 005 boundary
 
@@ -385,4 +492,10 @@ Task 007B.1 creates the empty `league_users`, `rosters`, `fantasy_account_roster
 
 Authenticated users may read complete shared context for reachable leagues while tracked-account ownership remains private to users linked to that fantasy account. Browser roles and `service_role` receive no direct mutation access. The `roster_sync` scope and its independent running uniqueness are present, but no lifecycle function exists yet. Safe sync-run columns remain browser-readable while `triggered_by_user_id` is server-only.
 
-Task 007B.1 makes no Sleeper request, imports no row, and adds no product route. Task 007B.2 imports only the complete current-season league-user, roster, account-ownership, and current-membership collection and adds `/rosters`. It creates no draft, matchup, transaction, standing snapshot, rank, market, cache, queue, scheduler, or analytic fact, and it does not update `fantasy_accounts.last_synced_at`. Task 008 has not begun.
+Task 007B.1 makes no Sleeper request, imports no row, and adds no product route. Task 007B.2 is deployed and Production-verified. It imports only the complete current-season league-user, roster, account-ownership, and current-membership collection and adds `/rosters`. It creates no draft, matchup, transaction, standing snapshot, rank, market, cache, queue, scheduler, or analytic fact, and it does not update `fantasy_accounts.last_synced_at`.
+
+## Task 008A.1 draft boundary
+
+The current undeployed Task 008A.1 draft branch introduces immutable `scoring_contexts`, `league_format_contexts`, append-only `league_format_observations`, `leagues.current_format_context_id`, versioned normalization and fingerprints, atomic league-discovery context maintenance, scoped RLS, and safe derived projections. Its pre-deployment correction preserves all material scoring semantics, includes exact league settings in exact identity, adds full count-sensitive lineup compatibility, separates quarterback topology from IDP, fully validates immutable insertions, and enforces one context per league observation time. It amends the existing unmerged migration rather than adding another. The task also establishes the future context-aware ADP and performance-versus-draft-capital contracts documented in `ADP_CONTEXT_ARCHITECTURE.md` and `PERFORMANCE_VS_DRAFT_CAPITAL_ARCHITECTURE.md`. Exact league `settings`, `scoring_settings`, and `roster_positions` remain authoritative beside the contexts.
+
+The task adds no draft, pick, player-stat, player-scoring, player-ranking, performance-result, market, or ADP-metric table or data; no statistics source, scoring engine, rank or performance calculation; and no provider request beyond existing league discovery, route, or product UI. Task 008A.2 and Task 008B have not begun.

@@ -107,3 +107,28 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-09-01 | Membership annotations are tri-state                 | Validated source-state metadata separates yes, no, and not reported from retained last-confirmed flags   | Accepted |
 | 2026-09-01 | League-user source identity is exact                 | Each source league ID must match the requested canonical league before normalized publication            | Accepted |
 | 2026-09-01 | Provider avatar IDs are not display labels           | Exact identifier padding and controls must fail instead of being normalized away                         | Accepted |
+| 2026-09-01 | Exact scoring settings are immutable identity        | Derived labels cannot replace or mutate the authoritative exact provider scoring object                  | Accepted |
+| 2026-09-01 | League format is separate from scoring identity      | Lineup and other draft-relevant dimensions must not change scoring-rule identity                         | Accepted |
+| 2026-09-01 | Context classification is versioned                  | Classification changes create new identities rather than silently reinterpreting existing context rows   | Accepted |
+| 2026-09-01 | ADP is a contextual metric, not a player field       | Average pick depends on cohort, context, time, eligibility, methodology, and sample size                 | Accepted |
+| 2026-09-01 | Context fallback is never silent                     | A broader cohort must be explicitly requested or displayed with its match level                          | Accepted |
+| 2026-09-01 | Internal network samples are not platform-wide       | Imported canonical drafts across FANTASY HUD users do not represent all Sleeper drafts                   | Accepted |
+| 2026-09-01 | Draft records are deduplicated before aggregation    | One canonical provider draft must contribute at most one observation across app users                    | Accepted |
+| 2026-09-01 | At-time comparisons prohibit future information      | A pick-value result must use only information available at or before that draft or pick                  | Accepted |
+| 2026-09-01 | Pick-level comparators are leave-one-out             | The subject draft must not determine the benchmark used to score its own pick                            | Accepted |
+| 2026-09-01 | Auctions use AAV rather than pick ADP                | Auction amounts and snake or linear pick positions are different measurement domains                     | Accepted |
+| 2026-09-01 | Keeper and player-pool eligibility are explicit      | Keeper, rookie, startup, redraft, supplemental, and unknown cohorts cannot be blended implicitly         | Accepted |
+| 2026-09-04 | Positional ADP rank is context-derived               | Rank cohort-specific ADP within one versioned position group instead of requiring provider labels        | Accepted |
+| 2026-09-04 | Raw statistics and fantasy scoring stay separate     | Reuse source facts across exact scoring contexts instead of duplicating one stat line per league         | Accepted |
+| 2026-09-04 | Season rankings are typed and context-specific       | A rank requires scoring context, period, ranking type, position method, source, and engine version       | Accepted |
+| 2026-09-04 | Rank delta is not a cross-position aggregate         | RB, WR, QB, TE, and IDP rank differences are not one additive portfolio unit                             | Accepted |
+| 2026-09-04 | Cross-position performance methods are versioned     | Comparable capital, percentile, and expected-points methods must disclose their version and sample       | Accepted |
+| 2026-09-04 | Team draft performance uses team at draft            | Immutable NFL-team-at-draft context preserves original capital allocation when current teams change      | Accepted |
+| 2026-09-04 | Consumer ranking surfaces are not API contracts      | Consumer UI and undocumented endpoints do not establish an authorized player-statistics source           | Accepted |
+| 2026-09-04 | Material scoring rules stay compatibility-distinct   | Semantic routing may normalize only reviewed no-ops and must retain every material rule                  | Accepted |
+| 2026-09-04 | Exact league settings define exact format identity   | Reusable immutable rows cannot retain whichever differing source settings happened to arrive first       | Accepted |
+| 2026-09-04 | Lineup compatibility uses complete slot counts       | Equal roster size cannot substitute for WR, TE, FLEX, bench, reserve, QB, IDP, or unknown-token demand   | Accepted |
+| 2026-09-04 | Quarterback topology and IDP are independent         | One-QB, Superflex, and two-QB structures remain meaningful whether defensive slots are also present      | Accepted |
+| 2026-09-04 | One league time accepts one format context           | A contradictory same-time observation must fail and roll back instead of creating ambiguous history      | Accepted |
+| 2026-09-04 | Immutable context inserts fully recompute            | Every exact identity and derived routing field must agree with the authoritative source before insertion | Accepted |
+| 2026-09-04 | Unknown context keys narrow compatibility            | Conservative exact fallback prevents unreviewed scoring or league settings from creating false matches   | Accepted |

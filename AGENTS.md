@@ -111,3 +111,27 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never render a source-null roster array as confirmed empty or false.
 - League-user source league IDs must match the requested canonical league.
 - Provider avatar IDs are exact identifiers and must not be display-trimmed.
+- Never add a global ADP or average-pick field to players.
+- Never group drafts only by PPR, Half-PPR, Standard, or Custom when exact scoring settings are available.
+- Never treat draft metadata scoring_type as a replacement for exact league scoring_settings.
+- Never silently broaden an ADP context when the exact sample is unavailable.
+- Never call FANTASY HUD's imported-user sample Sleeper platform-wide ADP.
+- Never compare a pick against a sample containing that same draft.
+- Never use future draft information in an at-time pick-value calculation.
+- Never mix auction values with snake or linear pick numbers.
+- Never blend rookie, dynasty startup, redraft, keeper-influenced, and supplemental drafts without an explicit requested cohort.
+- Never update an immutable scoring or format context; create a versioned new context.
+- Never treat Sleeper search_rank as season rank or fantasy rank.
+- Never require a provider-supplied RB17/WR9 label; derive positional ADP rank from the selected cohort.
+- Never store one universal season rank on players.
+- Never score unique league contexts from one default PPR ranking.
+- Never aggregate raw positional-rank deltas across positions as one portfolio metric.
+- Never join historical draft performance only to a player's current team or position.
+- Never claim Sleeper's consumer rankings or undocumented endpoints are a supported public statistics API.
+- Never omit a nonzero scoring rule from semantic compatibility unless a reviewed version proves it irrelevant.
+- Never store exact league settings on a reusable context unless those settings participate in exact identity.
+- Never use roster size as a substitute for full lineup composition.
+- Never model IDP and quarterback topology as mutually exclusive.
+- Never accept two format contexts for one league and observation timestamp.
+- Every immutable context insert must recompute every identity and derived routing field from source.
+- Unknown context keys must narrow matching, never broaden it.

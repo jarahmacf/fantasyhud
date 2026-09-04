@@ -165,6 +165,137 @@ export type Database = {
         }
         Relationships: []
       }
+      league_format_contexts: {
+        Row: {
+          compatibility_key: string
+          context_quality: string
+          created_at: string
+          derived_dimensions: Json
+          exact_league_settings: Json
+          exact_roster_positions: string[]
+          format_fingerprint: string
+          has_idp: boolean
+          has_superflex: boolean
+          id: string
+          is_best_ball: boolean
+          league_settings_fingerprint: string
+          lineup_fingerprint: string
+          lineup_profile: Json
+          lineup_profile_fingerprint: string
+          normalization_version: number
+          provider: string
+          quarterback_format: string
+          roster_management_type: string
+          roster_size: number
+          scoring_context_id: string
+          sport: string
+          team_count: number
+        }
+        Insert: {
+          compatibility_key: string
+          context_quality: string
+          created_at?: string
+          derived_dimensions?: Json
+          exact_league_settings: Json
+          exact_roster_positions: string[]
+          format_fingerprint: string
+          has_idp: boolean
+          has_superflex: boolean
+          id?: string
+          is_best_ball: boolean
+          league_settings_fingerprint: string
+          lineup_fingerprint: string
+          lineup_profile: Json
+          lineup_profile_fingerprint: string
+          normalization_version: number
+          provider: string
+          quarterback_format: string
+          roster_management_type: string
+          roster_size: number
+          scoring_context_id: string
+          sport: string
+          team_count: number
+        }
+        Update: {
+          compatibility_key?: string
+          context_quality?: string
+          created_at?: string
+          derived_dimensions?: Json
+          exact_league_settings?: Json
+          exact_roster_positions?: string[]
+          format_fingerprint?: string
+          has_idp?: boolean
+          has_superflex?: boolean
+          id?: string
+          is_best_ball?: boolean
+          league_settings_fingerprint?: string
+          lineup_fingerprint?: string
+          lineup_profile?: Json
+          lineup_profile_fingerprint?: string
+          normalization_version?: number
+          provider?: string
+          quarterback_format?: string
+          roster_management_type?: string
+          roster_size?: number
+          scoring_context_id?: string
+          sport?: string
+          team_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_format_contexts_scoring_context_id_fkey"
+            columns: ["scoring_context_id"]
+            isOneToOne: false
+            referencedRelation: "scoring_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      league_format_observations: {
+        Row: {
+          created_at: string
+          format_context_id: string
+          id: string
+          league_id: string
+          normalization_version: number
+          observed_at: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          format_context_id: string
+          id?: string
+          league_id: string
+          normalization_version: number
+          observed_at: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          format_context_id?: string
+          id?: string
+          league_id?: string
+          normalization_version?: number
+          observed_at?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_format_observations_format_context_id_fkey"
+            columns: ["format_context_id"]
+            isOneToOne: false
+            referencedRelation: "league_format_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_format_observations_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       league_users: {
         Row: {
           avatar_id: string | null
@@ -235,6 +366,7 @@ export type Database = {
           avatar_id: string | null
           avatar_url: string | null
           created_at: string
+          current_format_context_id: string | null
           external_league_id: string
           fetched_at: string
           has_idp: boolean
@@ -264,6 +396,7 @@ export type Database = {
           avatar_id?: string | null
           avatar_url?: string | null
           created_at?: string
+          current_format_context_id?: string | null
           external_league_id: string
           fetched_at: string
           has_idp: boolean
@@ -293,6 +426,7 @@ export type Database = {
           avatar_id?: string | null
           avatar_url?: string | null
           created_at?: string
+          current_format_context_id?: string | null
           external_league_id?: string
           fetched_at?: string
           has_idp?: boolean
@@ -318,7 +452,15 @@ export type Database = {
           team_count?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leagues_current_format_context_id_fkey"
+            columns: ["current_format_context_id"]
+            isOneToOne: false
+            referencedRelation: "league_format_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_external_ids: {
         Row: {
@@ -780,6 +922,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scoring_contexts: {
+        Row: {
+          broad_scoring_format: string
+          compatibility_key: string
+          created_at: string
+          derived_dimensions: Json
+          exact_scoring_settings: Json
+          has_bonus_scoring: boolean
+          has_idp_scoring: boolean
+          has_position_specific_reception: boolean
+          id: string
+          normalization_version: number
+          passing_touchdown_points: number | null
+          provider: string
+          reception_points: number | null
+          scoring_fingerprint: string
+          sport: string
+          tight_end_reception_bonus: number | null
+        }
+        Insert: {
+          broad_scoring_format: string
+          compatibility_key: string
+          created_at?: string
+          derived_dimensions?: Json
+          exact_scoring_settings: Json
+          has_bonus_scoring: boolean
+          has_idp_scoring: boolean
+          has_position_specific_reception: boolean
+          id?: string
+          normalization_version: number
+          passing_touchdown_points?: number | null
+          provider: string
+          reception_points?: number | null
+          scoring_fingerprint: string
+          sport: string
+          tight_end_reception_bonus?: number | null
+        }
+        Update: {
+          broad_scoring_format?: string
+          compatibility_key?: string
+          created_at?: string
+          derived_dimensions?: Json
+          exact_scoring_settings?: Json
+          has_bonus_scoring?: boolean
+          has_idp_scoring?: boolean
+          has_position_specific_reception?: boolean
+          id?: string
+          normalization_version?: number
+          passing_touchdown_points?: number | null
+          provider?: string
+          reception_points?: number | null
+          scoring_fingerprint?: string
+          sport?: string
+          tight_end_reception_bonus?: number | null
+        }
+        Relationships: []
       }
       sync_runs: {
         Row: {
