@@ -148,8 +148,6 @@ select is(
     from information_schema.tables
     where table_schema = 'public'
       and table_name in (
-        'drafts',
-        'draft_picks',
         'matchup_entries',
         'matchup_player_points',
         'transactions',
@@ -159,7 +157,7 @@ select is(
       )
   ),
   0,
-  'draft, matchup, transaction, ranking, and market tables remain deferred'
+  'matchup, transaction, ranking, and market tables remain deferred'
 );
 
 select has_function(
@@ -492,7 +490,7 @@ select ok(
         and conname = 'sync_runs_scope_is_known'
     )
   ) like '%roster_sync%',
-  'sync scope permits exactly the implemented discovery and roster scopes'
+  'sync scope retains the implemented discovery and roster scopes'
 );
 
 insert into auth.users (

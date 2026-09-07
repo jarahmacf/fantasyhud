@@ -16,7 +16,7 @@ This contract defines the durable data boundaries for FANTASY HUD. It governs fu
 10. Mutate provider data only through reviewed, narrowly scoped service-only RPCs; service credentials receive no direct provider-table CRUD.
 11. Protect complete mutable collections with a collection-level watermark; per-row freshness alone cannot represent a newer observation of absence.
 12. Treat exact provider scoring settings as authoritative immutable scoring identity; derived labels are filters and diagnostics, not replacements.
-13. Keep scoring context, league format context, and the future draft environment as separate versioned layers.
+13. Keep scoring context, league format context, and draft environment as separate versioned layers.
 14. Treat ADP and average pick as contextual query results, never mutable player or pick properties.
 15. Never silently broaden a context match, count one canonical provider draft more than once, or use future information in an at-time comparator.
 16. Derive positional ADP rank from context-specific player ADP inside a versioned draft-time position group; never require or persist a provider-supplied label such as `RB17`.
@@ -32,6 +32,11 @@ This contract defines the durable data boundaries for FANTASY HUD. It governs fu
 26. Keep exact lineup order separate from compatible lineup composition. Compatibility uses every exact slot token and count, while quarterback topology and IDP remain independent dimensions.
 27. Treat provider-neutral compatibility keys as versioned FANTASY HUD semantic identities, not proof that an unmapped source provider is equivalent.
 28. Permit one accepted format context per league and source observation time. Exact replay is idempotent; a contradiction fails closed and rolls back the enclosing discovery mutation.
+29. Store one canonical provider draft once, with complete-board picks and no app-user ownership on shared draft rows.
+30. Protect league, account, and board draft collections with independent complete-collection watermarks.
+31. Model normalized draft slots and explicit tri-state account participation separately from exact server-only participant maps.
+32. Anchor exact historical draft context to a real same-league accepted format observation and label later evidence partial.
+33. Treat finalized boards and confirmed participation as immutable until an explicit reviewed correction workflow exists.
 
 ## Layered model
 
@@ -57,15 +62,25 @@ erDiagram
   PLAYERS ||--o{ PLAYER_EXTERNAL_IDS : source_identity
   ROSTERS ||--o{ ROSTER_PLAYERS : current_membership
   PLAYERS ||--o{ ROSTER_PLAYERS : held_player
-  LEAGUES ||--o{ DRAFTS : plans
+  FANTASY_ACCOUNTS ||--o{ FANTASY_ACCOUNT_DRAFT_COLLECTIONS : observes_draft_collection
+  LEAGUES ||--o{ DRAFTS : shared_drafts
+  LEAGUE_FORMAT_CONTEXTS ||--o{ DRAFTS : historical_format
+  DRAFTS ||--o{ DRAFT_SLOTS : board_seats
+  FANTASY_ACCOUNTS ||--o{ FANTASY_ACCOUNT_DRAFTS : participation
+  DRAFTS ||--o{ FANTASY_ACCOUNT_DRAFTS : account_resolution
   DRAFTS ||--o{ DRAFT_PICKS : complete_board
+  DRAFT_SLOTS ||--o{ DRAFT_PICKS : slot_selections
+  PLAYERS ||--o{ DRAFT_PICKS : selected_player
+  PLAYER_EXTERNAL_IDS ||--o{ DRAFT_PICKS : exact_source_identity
+  ROSTERS o|--o{ DRAFT_SLOTS : resolved_roster
+  ROSTERS o|--o{ DRAFT_PICKS : resolved_roster
   LEAGUES ||--o{ MATCHUP_ENTRIES : weekly_scoreboard
   MATCHUP_ENTRIES ||--o{ MATCHUP_PLAYER_POINTS : score_lines
   LEAGUES ||--o{ LEAGUE_STANDING_SNAPSHOTS : standing_history
   ROSTERS ||--o{ LEAGUE_STANDING_SNAPSHOTS : ranked_roster
 ```
 
-Relationships through `SYNC_RUNS` are implemented by Task 005. Task 007A implements player identity, Task 007B.1 implements league users, rosters, tracked-account roster ownership, and current roster membership, and Task 007B.2 populates that roster domain. Task 008A.1 introduces scoring-context, league-format-context, and format-observation relationships on the current undeployed draft branch and documents the future context-aware ADP and performance-versus-draft-capital contract. Draft, statistics, scoring-result, ranking, performance, matchup, standing, and transaction relationships remain planned; their presence in this contract does not assert that their tables or foreign keys exist.
+Relationships through `SYNC_RUNS` are implemented by Task 005. Task 007A implements player identity, Task 007B.1 implements league users, rosters, tracked-account roster ownership, and current roster membership, and Task 007B.2 populates that roster domain. Task 008A.1 implements scoring-context, league-format-context, and format-observation relationships. Task 008A.2 establishes the empty draft, slot, participation, complete-board, and collection-state relationships shown here. Task 008B has not begun and is the first draft import. Statistics, scoring-result, ranking, performance, matchup, standing, and transaction relationships remain planned.
 
 ## Layer 1 — Identity
 
@@ -113,7 +128,7 @@ A league may be dynasty and best ball simultaneously. Broad scoring never replac
 
 `roster_bundle_fetched_at` is the nullable observation time of the latest fully validated users-and-rosters bundle published for the shared league. It is distinct from league-discovery `fetched_at`. A common per-league watermark is correct because publication requires both source endpoints to succeed and the complete bundle to validate.
 
-### Scoring and league format contexts — Task 008A.1 draft branch
+### Scoring and league format contexts — implemented in Task 008A.1
 
 #### `scoring_contexts`
 
@@ -143,7 +158,7 @@ Grain: one accepted league-format observation event for one league and source ob
 
 Observations are append-only and unique by league plus observation time. Replaying the same context and version is idempotent. A different context or version at the same time fails closed and, because discovery and context maintenance share one transaction, rolls back the underlying league source fields, current pointer, and observation together. A later accepted representation may append history; an older representation is stale and appends nothing. History begins with the first known stored accepted observation and never fabricates an older context from current league state.
 
-Task 008A.1's undeployed draft migration creates these tables, the league pointer, atomic league-discovery integration, immutable owner-only helpers, scoped RLS, and safe derived projections. Its semantic-integrity correction amends that same unmerged migration; no second migration is introduced. Its performance-versus-draft-capital work is documentation only: the task adds no statistics, scoring-result, ranking, or performance table or data. The context tables are not Production state until the correction is reviewed, merged, and hosted verification passes.
+Task 008A.1 creates these tables, the league pointer, atomic league-discovery integration, immutable owner-only helpers, scoped RLS, and safe derived projections. Its performance-versus-draft-capital work is documentation only: it adds no statistics, scoring-result, ranking, or performance table or data.
 
 ### `fantasy_account_leagues` — implemented in Task 005
 
@@ -195,7 +210,7 @@ Grain: one current roster + canonical player membership.
 
 This mutable current-membership table supports `roster_id`, `player_id`, `is_starter`, `is_reserve`, `is_taxi`, `is_keeper`, source and starter order, source status or roster-position metadata, `first_seen_at`, and `last_seen_at`. Active membership and starter orders are unique within each roster. Starter, reserve, taxi, keeper, and other source-grounded states remain current facts even when they do not change an exposure calculation.
 
-Best-ball player exposure counts every current roster membership regardless of starter or bench labels. Drafted exposure comes from immutable `draft_picks`, weekly lineup history comes from `matchup_player_points`, and historical acquisitions, drops, and trades come from transaction facts. Current `roster_players.is_keeper` never substitutes for a future completed `draft_picks.is_keeper` fact. A membership-period or roster-snapshot table may be added only when source completeness or measured product requirements prove those facts insufficient.
+Best-ball player exposure counts every current roster membership regardless of starter or bench labels. Drafted exposure comes from immutable `draft_picks`, weekly lineup history comes from `matchup_player_points`, and historical acquisitions, drops, and trades come from transaction facts. Current `roster_players.is_keeper` never substitutes for a completed `draft_picks.is_keeper` fact. A membership-period or roster-snapshot table may be added only when source completeness or measured product requirements prove those facts insufficient.
 
 Shared current league users, rosters, and memberships are readable only while the app user reaches their league through at least one active account-to-league discovery association. Removed discovery history does not authorize shared current rows. Account-scoped current and historical `fantasy_account_rosters` ownership remains readable through the tracked fantasy account independently of shared league reachability.
 
@@ -207,33 +222,47 @@ Roster source scope is frozen from current provider state and active account-to-
 
 ## Layer 3 — Historical and period facts
 
-These tables are planned, not created by Task 005.
+Task 008A.2 creates only the empty draft-domain grains below. Task 008B has not begun; other period and historical grains remain planned.
 
 ### Drafts and pick ownership
+
+#### `fantasy_account_draft_collections`
+
+Grain: one tracked fantasy account + sport + season + latest accepted complete user-drafts collection.
+
+This independent account/season watermark preserves validated empty collections and prevents an older inclusion or absence from superseding a newer complete observation. Exact source metadata remains server-only.
 
 #### `drafts`
 
 Grain: one provider draft in its league or provider context.
 
-A league may have zero, one, or many drafts. Draft status is mutable until the source completes the draft; source completion makes the board immutable except for reviewed correction workflows.
+A league may have zero, one, or many drafts. Canonical identity is provider plus exact external draft ID. A draft may be league-linked, standalone, or conservatively unknown; linked provider, sport, and season must agree with its league. Draft status and a pre-completion board may advance under newer complete observations, while source completion makes the board immutable except for a reviewed correction workflow.
 
-Task 008A.2 must give every draft `league_format_context_id`, `context_resolution_status`, `context_observed_at`, `draft_environment_fingerprint`, `draft_environment_version`, and `draft_pool_type`. Context resolution is `exact`, `partial`, or `unknown`. A current league format cannot be attached to a historical draft as exact unless the source relationship is contemporaneous and verified.
+Every draft carries nullable historical format linkage, `exact`, `partial`, or `unknown` resolution, an exact settings fingerprint, exact and compatible versioned draft-environment identities, draft type family, player pool, capital type, and quality. Exact resolution requires a real same-league accepted format observation at or before the draft anchor. A later observation is partial; absent safe evidence is unknown. Exact draft settings participate in environment identity.
 
-The future draft environment is a separate layer: league format context plus draft type, player pool, rounds, draft-specific settings, and context-resolution quality.
+Exact source creators, draft order, and slot-to-roster maps preserve null versus explicit empty and remain server-only. League draft-list collection watermark, count, and fingerprint live on the league rather than implying one draft.
+
+#### `draft_slots`
+
+Grain: one exact board seat or column per draft and slot number.
+
+Several exact source users may share a slot. Their normalized array is sorted and unique while exact source maps remain separate. Canonical roster resolution is optional and, when present for a league draft, must match both the draft league and exact external roster ID.
 
 #### `fantasy_account_drafts`
 
-Grain: one explicit association between a tracked fantasy account and a draft context.
+Grain: one explicit participation resolution between a tracked fantasy account and a shared draft.
 
-This association must not replace complete draft-board storage.
+Status is `confirmed`, `not_participant`, or `unresolved`; only confirmed has one real draft slot and enters the portfolio draft set. A finalized confirmed relationship cannot change status or slot or be removed without reviewed correction. This association never replaces complete board storage.
+
+Only an active confirmed participation row through a tracked account authorizes browser reads of the shared draft, slots, and complete safe board. Negative, unresolved, and removed rows remain account-readable resolution history but do not expose the board. That historical draft path is independent of later current-roster or league reachability.
 
 #### `draft_picks`
 
 Grain: one selection at one exact position in one draft.
 
-The table stores the complete provider board, not only user picks. A completed pick's future `is_keeper` value is immutable draft history and is separate from mutable current `roster_players.is_keeper`. Exact original and current pick ownership must come from source relationships and transaction facts. Each pick inherits scoring, format, and draft-environment context through its parent draft.
+The table stores the complete provider board, not only user picks. Exact identity is draft plus overall pick number; round plus slot remains a nonunique coordinate. Every pick references both a canonical player and the exact source identity mapping. A completed pick's nullable `is_keeper` value is immutable draft history and is separate from mutable current `roster_players.is_keeper`. Optional auction amount is a separate capital domain. Exact original and current pick ownership must come from source relationships and transaction facts. Each pick inherits scoring, format, and draft-environment context through its parent draft.
 
-Future pick facts must also preserve the player's NFL team at draft and the source position context needed to reproduce a versioned draft-time position group. For dual-eligible players, that context includes all source-reported eligible fantasy positions and discloses whether the methodology selects a primary source position or one normalized analytics group. A later player-profile team or position change never rewrites this draft-time context. Mutable ADP fields, `is_user_pick`, `is_value`, and similar analytics flags are prohibited; pick comparators are derived or explicitly versioned analytics.
+Pick facts preserve available draft-time display name, entity type, primary and all fantasy positions, NFL team, status, injury, selection time, keeper state, auction value, and bounded exact metadata. A later player-profile team or position change never rewrites this context. Mutable ADP fields, `is_user_pick`, `is_value`, and similar analytics flags are prohibited; pick comparators are derived or explicitly versioned analytics.
 
 ### Detailed weekly scoreboards
 
@@ -338,9 +367,11 @@ These domains may be compared analytically but must not share an ambiguous unive
 
 Grain: one attempt for one tracked fantasy account and one synchronization scope.
 
-Task 005 permits only `league_discovery`. Status is `running`, `succeeded`, `failed`, or `partial`. Progress and sanitized result/error summaries support operations without storing raw provider responses. Only one running league-discovery attempt may exist per fantasy account.
+The current allowed scopes are `league_discovery`, `roster_sync`, and architecture-only `draft_sync`. Status is `running`, `succeeded`, `failed`, or `partial`. Progress and sanitized result/error summaries support operations without storing raw provider responses. Each scope has an independent one-running-attempt-per-account uniqueness rule.
 
 Task 006 league discovery must lock the fantasy-account/run boundary, reuse a running run whose `updated_at` activity is no more than five minutes old, and recover an older run atomically. Recovery marks the stale run `failed` with terminal time and bounded `stale_run_timeout` metadata before starting a new run. Later multi-resource imports require item leases or explicit heartbeats rather than this single-step timeout rule.
+
+Task 008A.2 adds no draft lifecycle function. Task 008B must implement an explicit heartbeat, bounded stale-run recovery, a frozen account/provider/sport/season/league scope, deterministic draft processing, complete-collection validation, and conflict-safe publication before using `draft_sync`.
 
 ### Deferred synchronization tables
 
@@ -494,8 +525,8 @@ Authenticated users may read complete shared context for reachable leagues while
 
 Task 007B.1 makes no Sleeper request, imports no row, and adds no product route. Task 007B.2 is deployed and Production-verified. It imports only the complete current-season league-user, roster, account-ownership, and current-membership collection and adds `/rosters`. It creates no draft, matchup, transaction, standing snapshot, rank, market, cache, queue, scheduler, or analytic fact, and it does not update `fantasy_accounts.last_synced_at`.
 
-## Task 008A.1 draft boundary
+## Task 008A boundary
 
-The current undeployed Task 008A.1 draft branch introduces immutable `scoring_contexts`, `league_format_contexts`, append-only `league_format_observations`, `leagues.current_format_context_id`, versioned normalization and fingerprints, atomic league-discovery context maintenance, scoped RLS, and safe derived projections. Its pre-deployment correction preserves all material scoring semantics, includes exact league settings in exact identity, adds full count-sensitive lineup compatibility, separates quarterback topology from IDP, fully validates immutable insertions, and enforces one context per league observation time. It amends the existing unmerged migration rather than adding another. The task also establishes the future context-aware ADP and performance-versus-draft-capital contracts documented in `ADP_CONTEXT_ARCHITECTURE.md` and `PERFORMANCE_VS_DRAFT_CAPITAL_ARCHITECTURE.md`. Exact league `settings`, `scoring_settings`, and `roster_positions` remain authoritative beside the contexts.
+Task 008A.1 is deployed and hosted-verified. It introduces immutable `scoring_contexts`, `league_format_contexts`, append-only `league_format_observations`, `leagues.current_format_context_id`, versioned identity, atomic league-discovery context maintenance, scoped RLS, and safe derived projections. Exact league `settings`, `scoring_settings`, and `roster_positions` remain authoritative beside the contexts.
 
-The task adds no draft, pick, player-stat, player-scoring, player-ranking, performance-result, market, or ADP-metric table or data; no statistics source, scoring engine, rank or performance calculation; and no provider request beyond existing league discovery, route, or product UI. Task 008A.2 and Task 008B have not begun.
+Task 008A.2 establishes the empty relational draft domain, collection state, conservative environment identity, immutable-board and participation protections, `draft_sync` observability, indexed RLS, safe projections, and the future complete-collection contract in `DRAFT_DOMAIN.md`. It imports no row and adds no provider request, private staging, lifecycle RPC, action, route, navigation item, ADP, ranking, statistic, scoring, performance metric, or product UI. `fantasy_accounts.last_synced_at` remains untouched. Task 008B has not begun.

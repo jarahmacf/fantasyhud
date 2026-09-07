@@ -1,6 +1,6 @@
 # Synchronization architecture
 
-Task 005 establishes synchronization observability. Task 006 implements the first account-scoped league-discovery lifecycle. Task 007A adds a separate global player-catalog lifecycle. Task 007B.1 adds the account-scoped `roster_sync` observability contract without a source client or lifecycle RPC.
+Task 005 establishes synchronization observability. Task 006 implements the first account-scoped league-discovery lifecycle. Task 007A adds a separate global player-catalog lifecycle. Task 007B.1 adds account-scoped `roster_sync`, and Task 007B.2 implements it. Task 008A.2 adds the architecture-only `draft_sync` scope without a source client, private stage, or lifecycle RPC.
 
 ## Global catalog runs
 
@@ -26,7 +26,7 @@ one tracked fantasy account
 + one attempt
 ```
 
-The allowed scopes are `league_discovery` and `roster_sync`. The row records the provider, sport, optional season, triggering app user when present, progress, sanitized outcome metadata, and timestamps. `triggered_by_user_id` is server-only audit context; authorization is always derived from `fantasy_account_id → user_fantasy_accounts`.
+The allowed scopes are `league_discovery`, `roster_sync`, and `draft_sync`. The row records the provider, sport, optional season, triggering app user when present, progress, sanitized outcome metadata, and timestamps. `triggered_by_user_id` is server-only audit context; authorization is always derived from `fantasy_account_id → user_fantasy_accounts`.
 
 ## Active-run uniqueness
 
@@ -44,6 +44,8 @@ status = running
 ```
 
 for each fantasy account. Terminal history remains unlimited. `sync_runs_one_running_roster_sync_per_account_idx` independently permits one running `roster_sync` per fantasy account. Task 007B.2 implements 15-minute stale-run recovery, frozen private scope, and a staging heartbeat for these multi-resource runs.
+
+`sync_runs_one_running_draft_sync_per_account_idx` independently permits one running `draft_sync` per fantasy account. Task 008A.2 adds only the constraint and index. Task 008B must provide the explicit heartbeat, bounded stale-run recovery, frozen collection scope, and terminal cleanup before any draft run is started.
 
 ## Stale-run recovery
 
@@ -113,6 +115,8 @@ Task 007A's 24-hour successful-run lookup is a domain freshness rule, not a gene
 
 Task 007A player catalog refresh also does not set it because the catalog is shared prerequisite data and proves no account portfolio completeness.
 
+Task 008A.2 draft architecture and future Task 008B draft import do not independently prove complete portfolio reconciliation. Neither may update `fantasy_accounts.last_synced_at`; Task 009 remains the first milestone allowed to define and publish that state.
+
 ## Authorization and writes
 
 Authenticated browser sessions may read only sync runs whose `fantasy_account_id` is linked to `auth.uid()` through `user_fantasy_accounts`. They receive an explicit safe-column projection; `triggered_by_user_id` is excluded so another user tracking the same shared account cannot read an Auth UUID. Browser roles receive no insert, update, or delete grants.
@@ -140,3 +144,13 @@ Roster-sync removals are limited to the exact fantasy account, provider, sport, 
 Current-season dashboard reads first resolve shared provider state, then filter active associations and successful discovery runs to the resolved league season. Shared current roster-domain reads likewise require at least one active league-discovery association through a tracked account. Current owned-roster and holdings reads additionally require the matching account/league resolution status to be `owned`. Historical ownership associations and terminal run history remain account-readable, but a preserved unresolved ownership row is not presented as current, and removed discovery associations do not authorize shared current league-user, roster, or membership rows.
 
 Exact source arrays drive UI certainty: null renders `Not reported`, while explicit empty renders confirmed zero. Every normalized membership carries validated `known` or `unknown` source state independently for starter, reserve, taxi, and keeper annotations plus bounded safe warning tokens, allowing `Yes`, `No`, and `Not reported` to remain distinct.
+
+## Draft-sync architecture and Task 008B contract
+
+Task 008A.2 adds three independent complete-collection boundaries: league draft-list state, account user-drafts state by sport and season, and each draft's board state. One provider draft remains shared across tracked accounts, while `fantasy_account_drafts` records explicit `confirmed`, `not_participant`, or `unresolved` participation. Exact participant maps and evidence remain server-only.
+
+No Task 008A.2 code may start a `draft_sync` run. Task 008B must freeze one canonical account, provider, sport, resolved season, and exact active current-season league set. It must fetch and validate every league's complete draft list, the account's complete season user-drafts collection once, and exact detail plus complete picks for every included draft before public publication. Work and locks follow exact league ID, exact draft ID, slot, then pick number.
+
+League, account, draft detail, and board observations must be monotonic. Older inclusion or absence cannot resurrect state superseded by a newer complete collection. Shared draft creation and overlapping-account imports are conflict-safe and converge on one canonical board. More than one resolved account slot fails closed. Only a source-complete board may finalize; an identical finalized fingerprint is idempotent and a changed fingerprint requires a future reviewed correction workflow.
+
+Task 008B must implement bounded response validation, explicit run heartbeat and stale recovery, deterministic private staging and cleanup, simultaneous overlapping-account integration tests, and a current 30-league load test. A source failure is never an empty collection, and no draft-only outcome updates the complete portfolio timestamp.

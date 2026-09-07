@@ -2841,8 +2841,7 @@ select is(
     from information_schema.tables
     where table_schema = 'public'
       and (
-        table_name like '%draft%'
-        or table_name like '%adp%'
+        table_name like '%adp%'
         or table_name like '%statistics%'
         or table_name like '%ranking%'
         or table_name like '%performance%'
@@ -2857,7 +2856,7 @@ select is(
       )
   ),
   0,
-  'Task 008A.1 introduces no draft, ADP, statistics, ranking, or performance tables'
+  'ADP, statistics, ranking, and performance tables remain deferred'
 );
 select is(
   (

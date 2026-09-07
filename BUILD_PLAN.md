@@ -12,14 +12,14 @@ Every milestone is implemented and audited separately.
 8. 007B.1 Roster domain architecture
 9. 007B.2 Current-season Sleeper roster import
 10. 008A.1 Scoring, format, and performance context architecture
-11. 008A.2 Draft domain architecture
+11. 008A.2 Draft domain and draft-environment architecture
 12. 008B Current-season drafts and complete boards
 13. 009 First real portfolio reconciliation
 14. 010 Context-aware player exposure
 15. 011 Context-aware NFL-team exposure
 16. 012 Draft-capital analytics
-17. 013A Player-statistics source and scoring-engine architecture
-18. 013B Weekly statistics, context-specific fantasy scoring, and season rankings
+17. 013A Statistics source and scoring-engine architecture
+18. 013B Weekly statistics and context-specific season rankings
 19. 014 Draft-capital versus season-performance analytics
 20. 015 Stack and co-holding analytics
 21. 016 Core Overview
@@ -46,4 +46,6 @@ Task 007B.1 establishes the empty relational roster domain, exact source-array p
 
 Task 007B.2 is deployed and production-verified. It adds complete current-season Sleeper league-user and roster import, ownership and membership reconciliation, and the first roster product surface.
 
-Task 008A.1 is the current focused, undeployed draft-branch work. Its in-scope correction hardens the same unmerged migration with material-rule-preserving semantic scoring compatibility, exact league-settings identity, count-sensitive lineup compatibility, independent quarterback and IDP dimensions, fully recomputed immutable inserts, and one accepted format context per league observation time. It also defines future context-aware ADP and performance-versus-draft-capital contracts. It implements no draft import, statistics source, scoring engine, ranking, performance metric, or product UI. It is not complete until correction review, merge, and hosted verification pass. Task 008A.2 and Task 008B have not begun.
+Task 008A.1 is deployed and hosted-verified. It establishes immutable scoring and league-format contexts, material-rule-preserving semantic compatibility, exact league-settings identity, count-sensitive lineup compatibility, independent quarterback and IDP dimensions, fully recomputed immutable inserts, and one accepted format context per league observation time.
+
+Task 008A.2 is the current architecture-only work. It establishes complete draft-domain grains, league and account collection watermarks, conservative draft-environment identity, explicit participation, finalized-board protection, indexed RLS, safe projections, and the future Task 008B synchronization contract. It makes no draft source request, imports no board, adds no lifecycle RPC or product UI, and does not update complete-portfolio synchronization state. Task 008B has not begun.

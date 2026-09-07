@@ -132,3 +132,20 @@ This log is append-only. New decisions are added as new rows; prior entries are 
 | 2026-09-04 | One league time accepts one format context           | A contradictory same-time observation must fail and roll back instead of creating ambiguous history      | Accepted |
 | 2026-09-04 | Immutable context inserts fully recompute            | Every exact identity and derived routing field must agree with the authoritative source before insertion | Accepted |
 | 2026-09-04 | Unknown context keys narrow compatibility            | Conservative exact fallback prevents unreviewed scoring or league settings from creating false matches   | Accepted |
+| 2026-09-05 | One league may have several drafts                   | A current draft reference cannot represent the provider's complete league draft collection               | Accepted |
+| 2026-09-05 | Separate league and account draft watermarks         | Newer complete absence must be protected independently at league and tracked-account scope               | Accepted |
+| 2026-09-05 | Complete draft boards contain every selection        | Portfolio attribution must not discard the shared comparator board                                       | Accepted |
+| 2026-09-05 | Draft slots are first-class                          | Exact board seats, multi-user assignments, and roster resolution need a normalized relational grain      | Accepted |
+| 2026-09-05 | Draft participant IDs remain server-only             | Exact resolution evidence is not ordinary browser-readable product data                                  | Accepted |
+| 2026-09-05 | Draft participation is explicit and tri-state        | Confirmed, negative, and unresolved evidence must not be inferred from league or roster presence         | Accepted |
+| 2026-09-05 | Real format observations anchor historical drafts    | A current pointer cannot prove what format applied before it was observed                                | Accepted |
+| 2026-09-05 | Later-observed draft context is partial              | Historical uncertainty must remain visible rather than being relabeled exact                             | Accepted |
+| 2026-09-05 | Exact and compatible draft environments differ       | Exact source identity and conservative cohort routing serve different purposes                           | Accepted |
+| 2026-09-05 | Draft pool and capital type are explicit             | Rookie, startup, supplemental, auction, and overall-pick cohorts cannot be inferred or mixed silently    | Accepted |
+| 2026-09-05 | Finalized board fingerprints are immutable           | A changed completed board requires an explicit reviewed correction workflow                              | Accepted |
+| 2026-09-05 | Draft picks retain historical player context         | Current team and position must not rewrite NFL-team-at-draft or position eligibility                     | Accepted |
+| 2026-09-05 | Nullable keeper truth is not false                   | Unreported source state is different from confirmed non-keeper                                           | Accepted |
+| 2026-09-05 | Auction amount is separate from overall pick         | Auction value and pick number are different capital domains                                              | Accepted |
+| 2026-09-05 | Roster keeper state differs from draft history       | Mutable roster annotation cannot replace immutable completed-pick truth                                  | Accepted |
+| 2026-09-05 | Traded-pick ownership is separate from draft board   | Selection history and later ownership movement require different facts                                   | Accepted |
+| 2026-09-05 | One canonical draft is one network observation       | Multiple tracked accounts or app users must not multiply-count the same provider board                   | Accepted |

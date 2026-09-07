@@ -16,7 +16,7 @@ The layers remain distinct:
 
 - **Scoring context:** exact scoring rules under a provider-specific fingerprint, plus a versioned provider-neutral semantic compatibility key that never replaces exact identity.
 - **League format context:** scoring context plus exact ordered roster positions, an exact league-settings fingerprint, team count, roster size, best-ball state, roster-management type, independent quarterback format and IDP state, with exact league settings preserved as part of that immutable identity.
-- **Draft environment:** a future Task 008A.2 concept that adds draft type, player pool, rounds, draft-specific settings, and context-resolution quality to a league format context.
+- **Draft environment:** Task 008A.2 identity carried by each shared draft, adding exact or null league-format context, historical resolution status, exact draft type and settings, player pool, capital type, team and round counts, and context quality.
 
 Scoring and league format contexts are immutable and versioned. A change to exact scoring settings or another format-fingerprint dimension creates or reuses a different context. The normalization or classification version is part of context identity, so a classification change never updates an existing context in place.
 
@@ -38,9 +38,9 @@ One shared version-one format classifier drives context creation and immutable-r
 
 Each league and source observation timestamp accepts at most one format context. An identical context-and-version replay is idempotent; a conflicting same-time context fails closed and rolls back the league source mutation, pointer, and observation together. A later accepted representation may append history, while an older stale representation changes neither pointer nor history.
 
-## Semantic-integrity correction contract
+## Semantic-integrity contract
 
-The undeployed Task 008A.1 correction requires all twelve invariants together:
+The deployed Task 008A.1 model preserves all twelve invariants together:
 
 1. Exact scoring identity preserves every exact source rule.
 2. Semantic scoring compatibility preserves every material scoring difference.
@@ -71,7 +71,7 @@ Every future ADP or average-pick result is keyed by:
 
 - `player_id`
 - `sample_universe`
-- one of `scoring_context_id`, `league_format_context_id`, or the future `draft_environment_id`
+- one of `scoring_context_id`, `league_format_context_id`, or an exact `draft_environment_fingerprint` and version
 - `season`
 - `draft_type`
 - `draft_pool_type`
@@ -106,9 +106,18 @@ Default pick-ADP eligibility requires:
 - a valid exact pick number
 - a non-keeper pick by default
 - a known player pool
+- exact draft-environment quality for an exact cohort
 - one canonical provider draft counted once
 
 Auction drafts route to average auction value, not pick ADP. Rookie drafts, dynasty startups, redraft drafts, supplemental drafts, unknown pools, and keeper-influenced boards remain separate cohorts. Keeper picks are separately filterable and excluded from standard market-style ADP by default.
+
+## Draft-domain source contract
+
+Task 008A.2 stores one canonical provider draft, first-class normalized slots, explicit tracked-account participation, and every selection on the complete board. Account participation is `confirmed`, `not_participant`, or `unresolved`; only a confirmed slot contributes to portfolio ownership. Network samples deduplicate the shared provider draft before aggregation.
+
+Exact source creators and participant maps remain server-only and separate from normalized slots. Draft-time player team and position context lives on each pick. Keeper truth is nullable, and auction amount is a separate capital domain. Finalized boards and finalized confirmed participation are database-protected against silent correction. Traded-pick rights remain a separate future transaction fact.
+
+The draft-environment fingerprint preserves exact format identity or explicit null, historical context status, exact draft type and settings, player pool, capital type, team count, round count, and timer. Its provider-neutral compatibility key remains conservative and does not normalize away exact draft-setting differences in version one. `exact`, `partial`, and `unknown` environments remain distinct; a league format first observed after a historical draft cannot be labeled exact.
 
 ## Raw and derived ADP metrics
 
@@ -193,4 +202,4 @@ Raw pick number remains exact. A future normalized draft-capital methodology is 
 
 ## Current implementation boundary
 
-Task 007B.2 is deployed and Production-verified. The current undeployed Task 008A.1 draft branch introduces scoring contexts, corrected exact and semantic format identity, append-only one-context-per-time observations, and the contracts in this document. Its semantic-integrity correction amends the same unmerged migration; none of these context rows are Production state. It implements no draft table, pick table, ADP metric, new provider request, route, or product UI. Task 008A.2 has not begun.
+Task 008A.1 is deployed and Production-verified. Task 008A.2 is architecture-only: it adds the empty draft-domain schema, collection watermarks, environment identity, immutable-board protections, indexed RLS, safe projections, and Task 008B contracts. It introduces no Sleeper draft request or import lifecycle, imports no draft row, and adds no ADP metric, new route, navigation item, or product UI. Task 008B has not begun.
