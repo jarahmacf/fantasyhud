@@ -17,6 +17,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: local-ci-placeholder
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
+      FANTASYHUD_TEMPORARY_ACCESS: off
 
     steps:
       - name: Check out repository
@@ -55,6 +56,8 @@ jobs:
   database:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      FANTASYHUD_TEMPORARY_ACCESS: off
 
     steps:
       - name: Check out repository
@@ -86,6 +89,9 @@ jobs:
 
       - name: Run authenticated browser tests
         run: npm run e2e:auth
+
+      - name: Verify temporary access without a login or server secret
+        run: node scripts/run-temporary-access-e2e.mjs
 
       - name: Run league discovery concurrency test
         run: npm run db:test:league-concurrency

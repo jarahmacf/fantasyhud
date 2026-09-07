@@ -7,34 +7,15 @@ import { PlayerCatalogControl } from "@/components/players/player-catalog-contro
 import { PlayerCatalogError } from "@/components/players/player-catalog-error"
 import { PlayerCatalogSummary } from "@/components/players/player-catalog-summary"
 import { PlayerCatalogTable } from "@/components/players/player-catalog-table"
-import { getCurrentAuthIdentity } from "@/lib/auth/current-user"
+import { getWorkspaceAccess } from "@/lib/access/workspace.server"
 import { loadPlayerCatalogDashboard } from "@/lib/players/dashboard.server"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 export default async function PlayersPage() {
   await connection()
-  const identity = await getCurrentAuthIdentity()
-  if (!identity) redirect("/auth/sign-in")
-
-  const supabase = await createServerSupabaseClient()
-  const accountResult = await supabase
-    .from("user_fantasy_accounts")
-    .select("fantasy_accounts!inner(provider, username)")
-    .eq("user_id", identity.id)
-    .eq("fantasy_accounts.provider", "sleeper")
-    .order("is_primary", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (accountResult.error) {
-    throw new Error("Unable to load the connected fantasy account.")
-  }
-  if (!accountResult.data) redirect("/onboarding")
-
-  const identityLabel = {
-    email: identity.email,
-    accountLabel: `@${accountResult.data.fantasy_accounts.username}`,
-  }
+  const access = await getWorkspaceAccess()
+  if (!access) redirect("/auth/sign-in")
+  const { supabase, account, identity: identityLabel, readOnly } = access
+  if (!account) redirect("/onboarding")
 
   let dashboard
   try {
@@ -56,7 +37,7 @@ export default async function PlayersPage() {
           title="Player catalog"
           description="Shared Sleeper NFL player identities and current profiles"
         />
-        <PlayerCatalogControl hasSucceeded={hasImported} />
+        {!readOnly ? <PlayerCatalogControl hasSucceeded={hasImported} /> : null}
       </div>
 
       <div className="@container/main space-y-6 px-4 lg:px-6">

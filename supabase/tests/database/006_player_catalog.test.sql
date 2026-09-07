@@ -900,11 +900,10 @@ select throws_ok(
 reset role;
 
 set local role anon;
-select throws_ok(
-  $$ select status from public.provider_catalog_runs $$,
-  '42501',
-  null,
-  'anon cannot read provider catalog runs'
+select is(
+  (select count(status)::integer from public.provider_catalog_runs),
+  0,
+  'anon cannot read catalog runs when temporary workspace access is disabled'
 );
 reset role;
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
+import { getTemporaryWorkspace } from "@/lib/access/temporary-workspace.server"
 import { getCurrentAuthIdentity } from "@/lib/auth/current-user"
 import { getSafeInternalNextPath } from "@/lib/auth/redirects"
 import type { AuthActionState } from "@/lib/auth/types"
@@ -15,10 +16,15 @@ import {
 import { buildAuthRedirectUrl } from "@/lib/site-url"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
+async function requireAuthenticationMode() {
+  if (await getTemporaryWorkspace()) redirect("/")
+}
+
 export async function signInAction(
   _previousState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  await requireAuthenticationMode()
   const validation = validateSignIn(formData)
   if (!validation.success) {
     return validation.state
@@ -45,6 +51,7 @@ export async function signUpAction(
   _previousState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  await requireAuthenticationMode()
   const validation = validateSignUp(formData)
   if (!validation.success) {
     return validation.state
@@ -79,6 +86,7 @@ export async function forgotPasswordAction(
   _previousState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  await requireAuthenticationMode()
   const validation = validateEmailRequest(formData)
   if (!validation.success) {
     return validation.state
@@ -112,6 +120,7 @@ export async function updatePasswordAction(
   _previousState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
+  await requireAuthenticationMode()
   const validation = validatePasswordUpdate(formData)
   if (!validation.success) {
     return validation.state
@@ -143,6 +152,7 @@ export async function updatePasswordAction(
 }
 
 export async function signOutAction() {
+  await requireAuthenticationMode()
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase.auth.getClaims()
 

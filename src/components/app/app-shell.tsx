@@ -20,6 +20,7 @@ const shellStyle: ShellStyle = {
 export type AppShellIdentity = {
   email: string | null
   accountLabel: string
+  accessMode?: "temporary"
 }
 
 export function AppShell({

@@ -1,7 +1,10 @@
 import "@testing-library/jest-dom/vitest"
 
 import { cleanup } from "@testing-library/react"
-import { afterEach } from "vitest"
+import { afterEach, vi } from "vitest"
+
+vi.stubEnv("FANTASYHUD_TEMPORARY_ACCESS", "off")
+vi.mock("server-only", () => ({}))
 
 function createMediaQueryList(query: string): MediaQueryList {
   return {
