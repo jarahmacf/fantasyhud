@@ -36,7 +36,11 @@ if (!fixture) throw new Error("The tested workspace fixture is missing.")
 const directory = mkdtempSync(join(tmpdir(), "fantasyhud-access-"))
 const file = join(directory, "fixture.sql")
 try {
-  writeFileSync(file, fixture)
+  // The CLI prepares one statement; the block applies the fixture atomically.
+  writeFileSync(
+    file,
+    `do $temporary_fixture$ begin\n${fixture}\nend $temporary_fixture$;`
+  )
   localCommand(["db", "query", "--local", "--file", file])
   const child = spawn(
     join(root, "node_modules", ".bin", "playwright"),
