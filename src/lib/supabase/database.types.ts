@@ -9,6 +9,483 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      draft_picks: {
+        Row: {
+          auction_amount: number | null
+          created_at: string
+          draft_id: string
+          draft_slot: number
+          external_roster_id: number | null
+          first_seen_at: string
+          id: string
+          injury_status_at_draft: string | null
+          is_keeper: boolean | null
+          last_seen_at: string
+          nfl_team_at_draft: string | null
+          pick_no: number
+          picked_at: string | null
+          picked_by_external_user_id: string | null
+          player_display_name_at_draft: string | null
+          player_entity_type_at_draft: string
+          player_fantasy_positions_at_draft: string[] | null
+          player_id: string
+          player_primary_position_at_draft: string | null
+          player_status_at_draft: string | null
+          removed_at: string | null
+          roster_id: string | null
+          round: number
+          source_fetched_at: string
+          source_metadata: Json
+          source_player_external_id_id: string
+          source_player_metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          auction_amount?: number | null
+          created_at?: string
+          draft_id: string
+          draft_slot: number
+          external_roster_id?: number | null
+          first_seen_at: string
+          id?: string
+          injury_status_at_draft?: string | null
+          is_keeper?: boolean | null
+          last_seen_at: string
+          nfl_team_at_draft?: string | null
+          pick_no: number
+          picked_at?: string | null
+          picked_by_external_user_id?: string | null
+          player_display_name_at_draft?: string | null
+          player_entity_type_at_draft: string
+          player_fantasy_positions_at_draft?: string[] | null
+          player_id: string
+          player_primary_position_at_draft?: string | null
+          player_status_at_draft?: string | null
+          removed_at?: string | null
+          roster_id?: string | null
+          round: number
+          source_fetched_at: string
+          source_metadata?: Json
+          source_player_external_id_id: string
+          source_player_metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          auction_amount?: number | null
+          created_at?: string
+          draft_id?: string
+          draft_slot?: number
+          external_roster_id?: number | null
+          first_seen_at?: string
+          id?: string
+          injury_status_at_draft?: string | null
+          is_keeper?: boolean | null
+          last_seen_at?: string
+          nfl_team_at_draft?: string | null
+          pick_no?: number
+          picked_at?: string | null
+          picked_by_external_user_id?: string | null
+          player_display_name_at_draft?: string | null
+          player_entity_type_at_draft?: string
+          player_fantasy_positions_at_draft?: string[] | null
+          player_id?: string
+          player_primary_position_at_draft?: string | null
+          player_status_at_draft?: string | null
+          removed_at?: string | null
+          roster_id?: string | null
+          round?: number
+          source_fetched_at?: string
+          source_metadata?: Json
+          source_player_external_id_id?: string
+          source_player_metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_picks_mapping_player_fkey"
+            columns: ["source_player_external_id_id", "player_id"]
+            isOneToOne: false
+            referencedRelation: "player_external_ids"
+            referencedColumns: ["id", "player_id"]
+          },
+          {
+            foreignKeyName: "draft_picks_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draft_picks_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draft_picks_slot_fkey"
+            columns: ["draft_id", "draft_slot"]
+            isOneToOne: false
+            referencedRelation: "draft_slots"
+            referencedColumns: ["draft_id", "draft_slot"]
+          },
+        ]
+      }
+      draft_slots: {
+        Row: {
+          created_at: string
+          draft_id: string
+          draft_slot: number
+          external_roster_id: number | null
+          fetched_at: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          removed_at: string | null
+          roster_id: string | null
+          source_metadata: Json
+          source_user_ids: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          draft_id: string
+          draft_slot: number
+          external_roster_id?: number | null
+          fetched_at: string
+          first_seen_at: string
+          id?: string
+          last_seen_at: string
+          removed_at?: string | null
+          roster_id?: string | null
+          source_metadata?: Json
+          source_user_ids?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          draft_id?: string
+          draft_slot?: number
+          external_roster_id?: number | null
+          fetched_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          removed_at?: string | null
+          roster_id?: string | null
+          source_metadata?: Json
+          source_user_ids?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_slots_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draft_slots_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drafts: {
+        Row: {
+          board_fetched_at: string | null
+          board_finalized_at: string | null
+          board_fingerprint: string | null
+          board_fingerprint_version: number | null
+          board_pick_count: number | null
+          board_slot_count: number | null
+          board_state: string
+          capital_type: string
+          contains_keeper_picks: boolean | null
+          context_metadata: Json
+          context_observed_at: string | null
+          context_resolution_status: string
+          context_type: string
+          created_at: string
+          description: string | null
+          draft_environment_compatibility_key: string
+          draft_environment_fingerprint: string
+          draft_environment_quality: string
+          draft_environment_version: number
+          draft_fetched_at: string
+          draft_pool_type: string
+          draft_settings_fingerprint: string
+          draft_type: string
+          draft_type_family: string
+          external_draft_id: string
+          first_seen_at: string
+          id: string
+          last_message_at: string | null
+          last_message_id: string | null
+          last_picked_at: string | null
+          last_seen_at: string
+          league_format_context_id: string | null
+          league_id: string | null
+          metadata: Json
+          name: string | null
+          pick_timer_seconds: number | null
+          provider: string
+          provider_created_at: string | null
+          removed_at: string | null
+          round_count: number | null
+          season: number
+          season_type: string
+          settings: Json
+          source_creators: string[] | null
+          source_draft_order: Json | null
+          source_slot_to_roster_id: Json | null
+          sport: string
+          start_time: string | null
+          status: string
+          team_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          board_fetched_at?: string | null
+          board_finalized_at?: string | null
+          board_fingerprint?: string | null
+          board_fingerprint_version?: number | null
+          board_pick_count?: number | null
+          board_slot_count?: number | null
+          board_state?: string
+          capital_type: string
+          contains_keeper_picks?: boolean | null
+          context_metadata?: Json
+          context_observed_at?: string | null
+          context_resolution_status: string
+          context_type: string
+          created_at?: string
+          description?: string | null
+          draft_environment_compatibility_key: string
+          draft_environment_fingerprint: string
+          draft_environment_quality: string
+          draft_environment_version: number
+          draft_fetched_at: string
+          draft_pool_type: string
+          draft_settings_fingerprint: string
+          draft_type: string
+          draft_type_family: string
+          external_draft_id: string
+          first_seen_at: string
+          id?: string
+          last_message_at?: string | null
+          last_message_id?: string | null
+          last_picked_at?: string | null
+          last_seen_at: string
+          league_format_context_id?: string | null
+          league_id?: string | null
+          metadata?: Json
+          name?: string | null
+          pick_timer_seconds?: number | null
+          provider: string
+          provider_created_at?: string | null
+          removed_at?: string | null
+          round_count?: number | null
+          season: number
+          season_type: string
+          settings?: Json
+          source_creators?: string[] | null
+          source_draft_order?: Json | null
+          source_slot_to_roster_id?: Json | null
+          sport: string
+          start_time?: string | null
+          status: string
+          team_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          board_fetched_at?: string | null
+          board_finalized_at?: string | null
+          board_fingerprint?: string | null
+          board_fingerprint_version?: number | null
+          board_pick_count?: number | null
+          board_slot_count?: number | null
+          board_state?: string
+          capital_type?: string
+          contains_keeper_picks?: boolean | null
+          context_metadata?: Json
+          context_observed_at?: string | null
+          context_resolution_status?: string
+          context_type?: string
+          created_at?: string
+          description?: string | null
+          draft_environment_compatibility_key?: string
+          draft_environment_fingerprint?: string
+          draft_environment_quality?: string
+          draft_environment_version?: number
+          draft_fetched_at?: string
+          draft_pool_type?: string
+          draft_settings_fingerprint?: string
+          draft_type?: string
+          draft_type_family?: string
+          external_draft_id?: string
+          first_seen_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_id?: string | null
+          last_picked_at?: string | null
+          last_seen_at?: string
+          league_format_context_id?: string | null
+          league_id?: string | null
+          metadata?: Json
+          name?: string | null
+          pick_timer_seconds?: number | null
+          provider?: string
+          provider_created_at?: string | null
+          removed_at?: string | null
+          round_count?: number | null
+          season?: number
+          season_type?: string
+          settings?: Json
+          source_creators?: string[] | null
+          source_draft_order?: Json | null
+          source_slot_to_roster_id?: Json | null
+          sport?: string
+          start_time?: string | null
+          status?: string
+          team_count?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drafts_context_observation_fkey"
+            columns: [
+              "league_id",
+              "league_format_context_id",
+              "context_observed_at",
+            ]
+            isOneToOne: false
+            referencedRelation: "league_format_observations"
+            referencedColumns: ["league_id", "format_context_id", "observed_at"]
+          },
+          {
+            foreignKeyName: "drafts_league_namespace_fkey"
+            columns: ["league_id", "provider", "sport", "season"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id", "provider", "sport", "season"]
+          },
+        ]
+      }
+      fantasy_account_draft_collections: {
+        Row: {
+          collection_fingerprint: string
+          created_at: string
+          fantasy_account_id: string
+          season: number
+          source_draft_count: number
+          source_fetched_at: string
+          source_metadata: Json
+          sport: string
+          updated_at: string
+        }
+        Insert: {
+          collection_fingerprint: string
+          created_at?: string
+          fantasy_account_id: string
+          season: number
+          source_draft_count: number
+          source_fetched_at: string
+          source_metadata?: Json
+          sport: string
+          updated_at?: string
+        }
+        Update: {
+          collection_fingerprint?: string
+          created_at?: string
+          fantasy_account_id?: string
+          season?: number
+          source_draft_count?: number
+          source_fetched_at?: string
+          source_metadata?: Json
+          sport?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_account_draft_collections_fantasy_account_id_fkey"
+            columns: ["fantasy_account_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_account_drafts: {
+        Row: {
+          created_at: string
+          draft_id: string
+          draft_slot: number | null
+          fantasy_account_id: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          observed_at: string
+          participation_status: string
+          removed_at: string | null
+          source_metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          draft_id: string
+          draft_slot?: number | null
+          fantasy_account_id: string
+          first_seen_at: string
+          id?: string
+          last_seen_at: string
+          observed_at: string
+          participation_status: string
+          removed_at?: string | null
+          source_metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          draft_id?: string
+          draft_slot?: number | null
+          fantasy_account_id?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          observed_at?: string
+          participation_status?: string
+          removed_at?: string | null
+          source_metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_account_drafts_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_account_drafts_fantasy_account_id_fkey"
+            columns: ["fantasy_account_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_account_drafts_slot_fkey"
+            columns: ["draft_id", "draft_slot"]
+            isOneToOne: false
+            referencedRelation: "draft_slots"
+            referencedColumns: ["draft_id", "draft_slot"]
+          },
+        ]
+      }
       fantasy_account_leagues: {
         Row: {
           created_at: string
@@ -367,6 +844,9 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           current_format_context_id: string | null
+          draft_collection_count: number | null
+          draft_collection_fetched_at: string | null
+          draft_collection_fingerprint: string | null
           external_league_id: string
           fetched_at: string
           has_idp: boolean
@@ -397,6 +877,9 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           current_format_context_id?: string | null
+          draft_collection_count?: number | null
+          draft_collection_fetched_at?: string | null
+          draft_collection_fingerprint?: string | null
           external_league_id: string
           fetched_at: string
           has_idp: boolean
@@ -427,6 +910,9 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           current_format_context_id?: string | null
+          draft_collection_count?: number | null
+          draft_collection_fetched_at?: string | null
+          draft_collection_fingerprint?: string | null
           external_league_id?: string
           fetched_at?: string
           has_idp?: boolean

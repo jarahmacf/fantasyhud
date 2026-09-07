@@ -195,9 +195,6 @@ select is(
     from information_schema.tables
     where table_schema = 'public'
       and table_name in (
-        'drafts',
-        'fantasy_account_drafts',
-        'draft_picks',
         'matchup_entries',
         'matchup_player_points',
         'transactions',
@@ -215,7 +212,7 @@ select is(
       )
   ),
   0,
-  'remaining future cache, queue, ranking, and fact tables are deferred'
+  'remaining future matchup, transaction, cache, queue, ranking, and fact tables are deferred'
 );
 
 select has_index(

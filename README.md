@@ -1,10 +1,10 @@
 # FANTASY HUD
 
-FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, canonical Sleeper account identity, shared fantasy-data parent schema, current-season Sleeper league discovery, canonical Sleeper NFL player catalog, and current-season relational roster import.
+FANTASY HUD is a portfolio-management and command-center interface for serious fantasy-football players. This repository contains the canonical application shell, backend foundation, authentication, canonical Sleeper account identity, shared fantasy-data schema, current-season Sleeper league and roster import, the canonical Sleeper NFL player catalog, immutable scoring and league-format contexts, and the architecture for shared complete draft boards.
 
 ## Repository status
 
-Tasks through 007B.2 are deployed and production-verified, including complete current-season Sleeper league-user and roster import, exact owner/co-owner associations, canonical current holdings, and the first `/rosters` product surface. Task 008A.1 is the current undeployed draft-branch work. Its correction hardens the same unmerged context migration with material-rule-preserving semantic scoring compatibility, exact league-settings identity, full count-sensitive lineup compatibility, independent QB and IDP dimensions, fully validated immutable rows, and one accepted format context per league observation time. Task 008A.2 and Task 008B have not begun.
+Tasks through 008A.1 are deployed and production-verified. The current Task 008A.2 branch is architecture-only: it defines league and account draft-collection watermarks, one canonical shared provider draft, first-class draft slots, explicit tri-state account participation, complete board picks, historical player context, conservative draft-environment identity, finalized-board protection, indexed RLS, and safe browser projections. It imports no draft data and adds no provider call, lifecycle RPC, route, navigation item, metric, or product UI. Task 008B has not begun.
 
 ## Future analytics boundary
 
@@ -14,7 +14,7 @@ Exact provider scoring and league settings remain immutable provider-specific id
 
 Sleeper's documented public API is not assumed to provide an authorized player-statistics, season-ranking, projection, or platform-wide ADP feed. A separate source-feasibility and licensing task must pass before raw-stat import or a scoring engine begins; Sleeper `search_rank`, consumer ranking surfaces, and undocumented endpoints are not substitutes for that gate.
 
-Task 008A.1 adds no draft or pick import, ADP calculation, raw-stat source, scoring engine, ranking or performance table, market feed, route, or product UI.
+Task 008A.2 keeps exact source maps separate from normalized slots, preserves nullable keeper truth and independent auction capital, and links exact historical context only to a real accepted same-league format observation. A later observation is partial, never exact. Finalized boards and confirmed participation fail closed on conflicting rewrites. The existing product continues to report `Rosters imported. Drafts not imported.`
 
 ## Local setup
 
@@ -62,7 +62,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 For a first local browser-test run, install Chromium with `npx playwright install chromium`. The browser-test command builds and serves the production application automatically.
 
-See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the identity boundary, `LEAGUE_DISCOVERY.md` for league discovery, `PLAYER_CATALOG.md` for the canonical player source, `ROSTER_DOMAIN.md` for roster grains, `ROSTER_IMPORT.md` for the complete-collection import contract, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, `ADP_CONTEXT_ARCHITECTURE.md` for future context-aware draft metrics, `PERFORMANCE_VS_DRAFT_CAPITAL_ARCHITECTURE.md` for future outcome analytics, `SYNC_ARCHITECTURE.md` for run lifecycle, and `HOSTING.md` for the Git-connected deployment model.
+See `BACKEND.md` for the database workflow, `SLEEPER_CONNECTION.md` for the identity boundary, `LEAGUE_DISCOVERY.md` for league discovery, `PLAYER_CATALOG.md` for the canonical player source, `ROSTER_DOMAIN.md` for roster grains, `ROSTER_IMPORT.md` for roster synchronization, `DRAFT_DOMAIN.md` for draft and Task 008B contracts, `FANTASY_DATA_ARCHITECTURE.md` for grains and history rules, `ADP_CONTEXT_ARCHITECTURE.md` for future context-aware draft metrics, `PERFORMANCE_VS_DRAFT_CAPITAL_ARCHITECTURE.md` for future outcome analytics, `SYNC_ARCHITECTURE.md` for run lifecycle, and `HOSTING.md` for the Git-connected deployment model.
 
 ## Visual reference
 

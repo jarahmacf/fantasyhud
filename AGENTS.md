@@ -135,3 +135,19 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Never accept two format contexts for one league and observation timestamp.
 - Every immutable context insert must recompute every identity and derived routing field from source.
 - Unknown context keys must narrow matching, never broaden it.
+- Never use a league's current draft ID as proof it has only one draft.
+- Never import only the connected account's picks; a complete board contains every selection.
+- Never place app-user ownership on shared drafts, slots, or picks.
+- Never expose source draft participant IDs through browser-readable columns.
+- Never infer draft participation from league discovery or current roster ownership alone.
+- Never label a later-observed league context as exact historical draft context.
+- Never use draft metadata `scoring_type` as a replacement for exact scoring settings.
+- Never infer rookie, startup, supplemental, or all-player pools from a draft name.
+- Never use current player team or position as historical draft context.
+- Never silently rewrite a finalized complete board.
+- Never treat nullable `is_keeper` as false.
+- Never compare auction amount directly with overall pick.
+- Never use completed draft picks as current roster membership.
+- Never mix traded-pick ownership with the immutable completed selection board.
+- Never allow an older league or account draft collection to resurrect newer absence.
+- Never count one canonical draft more than once in network ADP.

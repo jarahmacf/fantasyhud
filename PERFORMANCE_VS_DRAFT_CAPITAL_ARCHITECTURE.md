@@ -15,6 +15,8 @@ FANTASY HUD will compare draft investment with in-season and final outcomes at t
 
 The comparison always preserves the immutable draft pick, its exact draft environment, the eligible ADP sample available at the comparison time, the outcome's exact scoring context, and the versions of every ranking, capital, and expected-outcome methodology. Permanent source-table flags such as `outperformed_adp`, `was_a_hit`, `was_a_bust`, and `season_alpha` are prohibited.
 
+Task 008A.2 supplies that future source boundary without calculating performance: one canonical shared draft, explicit tracked-account participation, first-class slots, every pick on the complete board, historical player team and position, nullable keeper truth, separate auction capital, and a versioned exact or conservatively compatible environment. Only a source-complete finalized board with one confirmed account slot can contribute portfolio-owned picks. Network samples count one canonical draft once.
+
 ## Context integrity prerequisite
 
 Exact provider context identity and semantic compatibility are different contracts. Exact scoring identity preserves the complete provider source object. Semantic scoring compatibility preserves every material rule, normalizes only reviewed no-ops, and retains unknown or malformed values through bounded conservative fallback. Exact league-format identity includes exact league-settings identity and ordered lineup identity; compatible format routing uses every slot token and count, reviewed draft-relevant settings, independent quarterback format and IDP state, and conservative unknown-settings fallback.
@@ -37,7 +39,7 @@ A raw stat line is not duplicated for every league. A scoring result is computed
 
 ## Future source and result grains
 
-These grains are planned contracts. Task 008A.1 creates no performance or statistics table.
+These grains are planned contracts. Tasks 008A.1 and 008A.2 create no performance or statistics table.
 
 ### `player_stat_snapshots`
 
@@ -186,7 +188,7 @@ Raw pick number remains exact. Cross-format capital normalization accounts for b
 
 ## Aggregation rules
 
-Every aggregation discloses context, time, eligibility, sample size, and methodology versions. One canonical provider draft counts once in network samples, while portfolio ownership follows explicit future `fantasy_account_drafts` associations.
+Every aggregation discloses context, time, eligibility, sample size, and methodology versions. One canonical provider draft counts once in network samples, while portfolio ownership follows explicit `fantasy_account_drafts` associations.
 
 ### Pick
 
@@ -250,4 +252,4 @@ Materialize or snapshot only when historical reproducibility requires it, source
 
 ## Current implementation boundary
 
-Task 007B.2 is deployed and Production-verified. Task 008A.1 documents this future performance-versus-capital model while its corrected context migration remains undeployed. It implements no raw-stat import, scoring engine, scoring snapshot, ranking snapshot, performance metric, or product UI. Task 008A.2 has not begun.
+Task 008A.1 is deployed and Production-verified. Task 008A.2 establishes only the empty draft facts and environment integrity needed by this future model. It implements no draft import, raw-stat source, scoring engine, scoring snapshot, ranking snapshot, performance metric, ADP calculation, or product UI. Task 008B has not begun.
