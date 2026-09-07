@@ -22,19 +22,26 @@ export function NavUser({ identity }: { identity?: AppShellIdentity }) {
                 {identity.accountLabel}
               </span>
               <span className="truncate text-xs text-muted-foreground">
-                {identity.email ?? "Signed in"}
+                {identity.accessMode === "temporary"
+                  ? "Temporary read-only access"
+                  : (identity.email ?? "Signed in")}
               </span>
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>
-        <SidebarMenuItem>
-          <form action={signOutAction}>
-            <SidebarMenuButton type="submit" className="w-full cursor-pointer">
-              <LogOut aria-hidden="true" />
-              <span>Sign out</span>
-            </SidebarMenuButton>
-          </form>
-        </SidebarMenuItem>
+        {identity.accessMode !== "temporary" ? (
+          <SidebarMenuItem>
+            <form action={signOutAction}>
+              <SidebarMenuButton
+                type="submit"
+                className="w-full cursor-pointer"
+              >
+                <LogOut aria-hidden="true" />
+                <span>Sign out</span>
+              </SidebarMenuButton>
+            </form>
+          </SidebarMenuItem>
+        ) : null}
       </SidebarMenu>
     )
   }

@@ -1529,25 +1529,25 @@ select is(
 
 reset role;
 set local role anon;
-select throws_ok(
-  $$ select id from public.league_users $$,
-  '42501', null,
-  'anon cannot read league users'
+select is(
+  (select count(id)::integer from public.league_users),
+  0,
+  'anon cannot read league users when temporary workspace access is disabled'
 );
-select throws_ok(
-  $$ select id from public.rosters $$,
-  '42501', null,
-  'anon cannot read rosters'
+select is(
+  (select count(id)::integer from public.rosters),
+  0,
+  'anon cannot read rosters when temporary workspace access is disabled'
 );
-select throws_ok(
-  $$ select id from public.fantasy_account_rosters $$,
-  '42501', null,
-  'anon cannot read tracked-account ownership'
+select is(
+  (select count(id)::integer from public.fantasy_account_rosters),
+  0,
+  'anon cannot read tracked-account ownership when temporary workspace access is disabled'
 );
-select throws_ok(
-  $$ select id from public.roster_players $$,
-  '42501', null,
-  'anon cannot read roster membership'
+select is(
+  (select count(id)::integer from public.roster_players),
+  0,
+  'anon cannot read roster membership when temporary workspace access is disabled'
 );
 reset role;
 

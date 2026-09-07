@@ -1,5 +1,7 @@
 # Authentication
 
+> Temporary access: the owner requested login removal on September 7, 2026. The live selected workspace now supports reversible read-only access without a session. See [TEMPORARY_ACCESS.md](TEMPORARY_ACCESS.md) for scope and restoration. The authentication model below is retained for restoration.
+
 FANTASY HUD uses Supabase email/password authentication with cookie-based SSR sessions. Google OAuth and other identity providers are intentionally deferred.
 
 ## Application flow

@@ -1720,6 +1720,15 @@ export type Database = {
           sync_run_id: string
         }[]
       }
+      get_temporary_workspace: {
+        Args: never
+        Returns: {
+          display_name: string
+          id: string
+          provider: string
+          username: string
+        }[]
+      }
       stage_sleeper_player_catalog_batch: {
         Args: {
           p_batch_index: number

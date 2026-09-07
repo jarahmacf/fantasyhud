@@ -1,5 +1,7 @@
 # Backend foundation
 
+> Temporary access: the owner requested login removal on September 7, 2026. The live selected workspace now supports reversible read-only access without a session. See [TEMPORARY_ACCESS.md](TEMPORARY_ACCESS.md) for scope and restoration. The authentication model below is retained for restoration.
+
 Supabase is the backend platform for FANTASY HUD. The hosted development project is owned directly in the project's Supabase account; it was not provisioned through the Vercel Marketplace. There is no production Supabase project.
 
 ## Source of truth

@@ -47,7 +47,7 @@ describe("RosterImportControl", () => {
         screen.getByRole("button", { name: "Importing rosters…" })
       ).toBeDisabled()
     )
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(await screen.findByRole("status")).toHaveTextContent(
       "Roster import is already running."
     )
   })

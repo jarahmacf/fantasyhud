@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 
+import { getTemporaryWorkspace } from "@/lib/access/temporary-workspace.server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
 import { getSafeInternalNextPath } from "./redirects"
@@ -22,6 +23,9 @@ export async function getCurrentAuthIdentity(): Promise<AuthIdentity | null> {
 export async function requireAuthIdentity(
   nextPath = "/onboarding"
 ): Promise<AuthIdentity> {
+  if (await getTemporaryWorkspace()) {
+    throw new Error("Changes are disabled during temporary read-only access.")
+  }
   const identity = await getCurrentAuthIdentity()
   if (!identity) {
     const safeNext = getSafeInternalNextPath(nextPath)
