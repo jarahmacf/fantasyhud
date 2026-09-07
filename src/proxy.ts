@@ -10,7 +10,9 @@ export async function proxy(request: NextRequest) {
       pathname === "/auth" ||
       pathname.startsWith("/auth/") ||
       pathname === "/onboarding"
-        ? NextResponse.redirect(new URL("/#", request.url), 303)
+        ? // A nonempty fragment survives Next.js URL normalization and prevents
+          // browsers from inheriting credentials from an old email-link fragment.
+          NextResponse.redirect(new URL("/#workspace", request.url), 303)
         : NextResponse.next()
     response.headers.set("Cache-Control", "private, no-store, max-age=0")
     response.headers.set("Referrer-Policy", "no-referrer")

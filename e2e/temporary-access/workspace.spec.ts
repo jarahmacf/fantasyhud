@@ -66,7 +66,7 @@ test("old login, invitation and password-reset destinations open the workspace",
       page.getByRole("heading", { name: "Sleeper leagues" })
     ).toBeVisible()
     expect(new URL(page.url()).pathname).toBe("/")
-    expect(new URL(page.url()).hash).toBe("")
+    expect(new URL(page.url()).hash).toBe("#workspace")
     expect(page.url()).not.toContain("discarded-test-fragment")
     await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0)
   }
