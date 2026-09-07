@@ -12,11 +12,11 @@ insert into public.provider_season_states (provider,sport,season,league_season,s
 values ('sleeper','nfl',2026,2026,'regular',now())
 on conflict (provider,sport) do update set league_season=2026;
 
-insert into public.leagues (id,provider,external_league_id,sport,season,name,status,season_type,team_count,roster_size,roster_management_type,is_best_ball,has_superflex,has_idp,scoring_format,settings,scoring_settings,roster_positions,provider_updated_at)
+insert into public.leagues (id,provider,external_league_id,sport,season,name,status,season_type,team_count,roster_size,roster_management_type,is_best_ball,has_superflex,has_idp,scoring_format,settings,scoring_settings,roster_positions,provider_updated_at,fetched_at)
 select ('12100000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid,
  'sleeper','temporary-league-' || n,'nfl',2026,
  case n when 1 then 'Temporary Access League' when 2 then 'Unresolved Access League' else 'Private Account League' end,
- 'pre_draft','regular',2,1,'redraft',false,false,false,'standard','{}','{}','["WR"]',now()
+ 'pre_draft','regular',2,1,'redraft',false,false,false,'standard','{}','{}','["WR"]',now(),now()
 from generate_series(1,3) n;
 
 insert into public.fantasy_account_leagues (fantasy_account_id,league_id,first_seen_at,last_seen_at,roster_ownership_status,roster_ownership_observed_at)
