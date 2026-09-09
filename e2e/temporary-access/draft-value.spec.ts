@@ -93,7 +93,9 @@ test("auction values use budget shares and PPG outcomes require qualification", 
   await page.getByLabel("Minimum games for PPG rank").fill("4")
   await page.getByLabel("Player’s games played").fill("3")
   await page.getByRole("button", { name: "Add or update week" }).click()
-  await expect(page.getByRole("alert")).toContainText("does not qualify")
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "does not qualify"
+  )
   await page.getByLabel("Player’s games played").fill("4")
   await page.getByRole("button", { name: "Add or update week" }).click()
   await expect(
