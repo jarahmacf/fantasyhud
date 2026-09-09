@@ -62,6 +62,11 @@ test("calculates, freezes and restores draft value without a login", async ({
       () => document.documentElement.scrollWidth <= window.innerWidth
     )
   ).toBe(true)
+  await page.getByRole("button", { name: "Start a new calculation" }).click()
+  await expect(page.getByLabel("Round.selection paid")).toBeEnabled()
+  await expect(page.getByLabel("Frozen price benchmark")).toHaveCount(0)
+  await page.getByRole("button", { name: "Restore saved calculation" }).click()
+  await expect(benchmark.getByText("RB11", { exact: true })).toBeVisible()
 })
 
 test("auction values use budget shares and PPG outcomes require qualification", async ({

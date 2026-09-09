@@ -324,7 +324,10 @@ export function DraftValueCalculator({ accountId }: { accountId: string }) {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() =>
+                    onClick={(event) => {
+                      // This position becomes the submit button after reset.
+                      // Cancel the click's default action before React reuses it.
+                      event.preventDefault()
                       perform(() => {
                         setBenchmark(null)
                         setHistory([])
@@ -333,7 +336,7 @@ export function DraftValueCalculator({ accountId }: { accountId: string }) {
                           "You can now change the inputs. The saved calculation stays on this device until you save again."
                         )
                       })
-                    }
+                    }}
                   >
                     Start a new calculation
                   </Button>
