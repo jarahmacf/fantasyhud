@@ -123,6 +123,12 @@ jobs:
       - name: Run 30-league roster load test
         run: npm run db:test:roster-load
 
+      - name: Reset database before draft integration checks
+        run: npm run db:reset
+
+      - name: Run draft concurrency and 30-league load checks
+        run: npm run db:test:draft-sync
+
       - name: Upload authenticated browser failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4

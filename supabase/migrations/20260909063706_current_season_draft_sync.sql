@@ -86,6 +86,10 @@ begin
   select payload into v_old from app_private.sleeper_draft_sync_stage where run_id=p_sync_run_id and source_key=p_source_key;
   if found and v_old is distinct from p_payload then raise exception using errcode='22023',message='Draft source replay changed.'; end if;
   if not found then
+    if (select count(*) from app_private.sleeper_draft_sync_stage where run_id=p_sync_run_id)>=1001
+      or (select coalesce(sum(octet_length(payload::text)),0) from app_private.sleeper_draft_sync_stage where run_id=p_sync_run_id)+octet_length(p_payload::text)>64000000 then
+      raise exception using errcode='22023',message='Draft staging exceeds the bounded collection limit.';
+    end if;
     insert into app_private.sleeper_draft_sync_stage values(p_sync_run_id,p_source_key,p_payload);
     update public.sync_runs set progress_current=progress_current+1,updated_at=clock_timestamp() where id=p_sync_run_id;
   end if;
@@ -104,6 +108,28 @@ $$;
 
 revoke all on function public.start_sleeper_draft_sync(uuid,uuid), public.heartbeat_sleeper_draft_sync(uuid,uuid,uuid), public.stage_sleeper_draft_source(uuid,uuid,uuid,text,jsonb), public.fail_sleeper_draft_sync(uuid,uuid,uuid) from public, anon, authenticated;
 grant execute on function public.start_sleeper_draft_sync(uuid,uuid), public.heartbeat_sleeper_draft_sync(uuid,uuid,uuid), public.stage_sleeper_draft_source(uuid,uuid,uuid,text,jsonb), public.fail_sleeper_draft_sync(uuid,uuid,uuid) to service_role;
+
+-- Structural corroboration is separate from exact draft-setting identity.
+create function app_private.sleeper_draft_lineup_matches_v1(p_settings jsonb,p_positions text[],p_teams integer)
+returns boolean language plpgsql immutable set search_path=pg_catalog as $$
+declare
+  v_map jsonb:='{"QB":"slots_qb","RB":"slots_rb","WR":"slots_wr","TE":"slots_te","K":"slots_k","DEF":"slots_def","FLEX":"slots_flex","SUPER_FLEX":"slots_super_flex","BN":"slots_bn"}'::jsonb;
+  v_entry record; v_count integer;
+begin
+  if p_settings->'teams' is distinct from to_jsonb(p_teams) or p_positions is null then return false; end if;
+  if exists(select 1 from unnest(p_positions) p where not v_map ? p)
+    or exists(select 1 from jsonb_each(p_settings) s where s.key like 'slots_%' and not exists(select 1 from jsonb_each_text(v_map) m where m.value=s.key)) then return false; end if;
+  for v_entry in select * from jsonb_each_text(v_map) loop
+    select count(*)::integer into v_count from unnest(p_positions) p where p=v_entry.key;
+    if p_settings ? v_entry.value then
+      if p_settings->v_entry.value is distinct from to_jsonb(v_count) then return false; end if;
+    elsif v_count>0 then return false;
+    end if;
+  end loop;
+  return true;
+end;
+$$;
+revoke all on function app_private.sleeper_draft_lineup_matches_v1(jsonb,text[],integer) from public,anon,authenticated,service_role;
 
 -- This helper receives a bounded staged board, never browser-supplied identities.
 create function app_private.publish_sleeper_draft_board(p_payload jsonb, p_season integer)
@@ -159,18 +185,22 @@ begin
       raise exception using errcode='55000',message='The draft source is older than the accepted board.';
     end if;
   end if;
-  -- Later evidence remains partial. Exact historical promotion requires the separate
-  -- audited structural resolver; no source draft scoring label substitutes for rules.
-  select null::uuid as format_context_id,null::timestamptz as observed_at,null::text as format_fingerprint,null::text as compatibility_key into v_format;
+  -- Use the latest accepted pre-anchor observation; never skip a conflicting newer
+  -- observation to find a more convenient old format. Later evidence remains partial.
+  select null::uuid as format_context_id,null::timestamptz as observed_at,null::text as format_fingerprint,null::text as compatibility_key,false as structurally_matches into v_format;
   if v_league is not null then
-    select o.format_context_id,o.observed_at,f.format_fingerprint,f.compatibility_key into v_format
+    select o.format_context_id,o.observed_at,f.format_fingerprint,f.compatibility_key,
+      app_private.sleeper_draft_lineup_matches_v1(v_detail->'settings',f.exact_roster_positions,f.team_count) as structurally_matches into v_format
     from public.league_format_observations o join public.league_format_contexts f on f.id=o.format_context_id
-    where o.league_id=v_league order by o.observed_at desc limit 1;
-    if found then v_context:='partial'; v_context_id:=v_format.format_context_id; v_context_time:=v_format.observed_at; end if;
+    where o.league_id=v_league order by case when o.observed_at<=coalesce((v_detail->>'startTime')::timestamptz,(v_detail->>'createdAt')::timestamptz) then 0 else 1 end,o.observed_at desc limit 1;
+    if found then
+      v_context:=case when v_format.structurally_matches and v_format.observed_at<=coalesce((v_detail->>'startTime')::timestamptz,(v_detail->>'createdAt')::timestamptz) then 'exact' else 'partial' end;
+      v_context_id:=v_format.format_context_id; v_context_time:=v_format.observed_at;
+    end if;
   end if;
   select * into v_class from app_private.classify_sleeper_draft_environment_v1('sleeper','nfl',
-    case when v_context='partial' then v_format.format_fingerprint end,
-    case when v_context='partial' then v_format.compatibility_key end,v_context,v_detail->>'draftType','unknown',v_detail->'settings',v_teams,v_rounds,(v_detail->>'pickTimerSeconds')::integer);
+    case when v_context in ('partial','exact') then v_format.format_fingerprint end,
+    case when v_context in ('partial','exact') then v_format.compatibility_key end,v_context,v_detail->>'draftType','unknown',v_detail->'settings',v_teams,v_rounds,(v_detail->>'pickTimerSeconds')::integer);
   insert into public.drafts(provider,external_draft_id,context_type,league_id,sport,season,season_type,draft_type,draft_type_family,status,
     settings,metadata,context_resolution_status,league_format_context_id,context_observed_at,draft_environment_version,
     draft_settings_fingerprint,draft_environment_fingerprint,draft_environment_compatibility_key,draft_environment_quality,draft_pool_type,capital_type,
@@ -197,8 +227,8 @@ begin
     board_pick_count=jsonb_array_length(p_payload->'picks'),board_fingerprint_version=1,board_fingerprint=v_fingerprint,contains_keeper_picks=v_keepers where id=v_id;
   -- Keep child identities stable; only a mutable complete collection reconciles absence.
   for v_slot in select value from jsonb_array_elements(p_payload->'slots') order by (value->>'draftSlot')::integer loop
-    if v_slot->'sourceUserIds' is distinct from case when v_detail->'draftOrder'='null'::jsonb then 'null'::jsonb else
-        (select coalesce(jsonb_agg(key order by key collate "C"),'[]'::jsonb) from jsonb_each(v_detail->'draftOrder') where (value::text)::integer=(v_slot->>'draftSlot')::integer) end
+    if v_slot->'sourceUserIds' is distinct from (case when v_detail->'draftOrder'='null'::jsonb then 'null'::jsonb else
+        (select coalesce(jsonb_agg(key order by key collate "C"),'[]'::jsonb) from jsonb_each(v_detail->'draftOrder') where (value::text)::integer=(v_slot->>'draftSlot')::integer) end)
       or v_slot->'externalRosterId' is distinct from coalesce(v_detail->'slotToRoster'->(v_slot->>'draftSlot'),'null'::jsonb) then
       raise exception using errcode='22023',message='Normalized draft slots disagree with exact source maps.';
     end if;

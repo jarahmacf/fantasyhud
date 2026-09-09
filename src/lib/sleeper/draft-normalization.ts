@@ -233,6 +233,23 @@ export function normalizeDraftBoard(
         sourceMetadata: {
           picked_by_source: source.picked_by ?? null,
           roster_id_source: source.roster_id ?? null,
+          unreviewed_fields: Object.fromEntries(
+            Object.entries(source).filter(
+              ([key]) =>
+                ![
+                  "draft_id",
+                  "player_id",
+                  "pick_no",
+                  "round",
+                  "draft_slot",
+                  "picked_by",
+                  "roster_id",
+                  "is_keeper",
+                  "metadata",
+                  "reactions",
+                ].includes(key)
+            )
+          ),
         },
       }
     })
