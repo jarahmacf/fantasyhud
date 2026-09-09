@@ -27,6 +27,13 @@ export default defineConfig({
   projects: [
     {
       name: "auth-chromium",
+      testIgnore: "draft-import.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "draft-auth-chromium",
+      testMatch: "draft-import.spec.ts",
+      dependencies: ["auth-chromium"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],
