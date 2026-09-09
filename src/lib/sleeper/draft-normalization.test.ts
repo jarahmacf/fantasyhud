@@ -50,7 +50,7 @@ describe("Sleeper complete draft normalization", () => {
     expect(result.complete).toBe(true)
     expect(result.picks).toHaveLength(2)
     expect(result.containsKeeperPicks).toBeNull()
-    expect(result.picks[0].isKeeper).toBeNull()
+    expect(result.picks[0]!.isKeeper).toBeNull()
     expect(result.detail.name).toBe("Test")
     expect(result.detail.draftPoolType).toBe("unknown")
   })
@@ -82,7 +82,7 @@ describe("Sleeper complete draft normalization", () => {
     { roster_id: "01" },
   ])("rejects invalid pick %j", (patch) => {
     const picks = picksFixture()
-    Object.assign(picks[0], patch)
+    Object.assign(picks[0]!, patch)
     expect(() =>
       normalizeDraftBoard(normalizeDraftDetail(draftFixture(), 2026), picks)
     ).toThrow()
@@ -142,7 +142,7 @@ describe("Sleeper complete draft normalization", () => {
       ),
       picksFixture().map((p) => ({ ...p, amount: 25 }))
     )
-    expect(result.picks[0].auctionAmount).toBeNull()
+    expect(result.picks[0]!.auctionAmount).toBeNull()
     expect(result.detail.settings.budget).toBe(200)
   })
   it("confirms one consistent seat and preserves unknown evidence", () => {
@@ -170,7 +170,7 @@ describe("Sleeper complete draft normalization", () => {
       2026
     )
     expect(
-      normalizeDraftBoard(detail, picksFixture()).slots[0].sourceUserIds
+      normalizeDraftBoard(detail, picksFixture()).slots[0]!.sourceUserIds
     ).toEqual(["user_a", "z"])
   })
 })

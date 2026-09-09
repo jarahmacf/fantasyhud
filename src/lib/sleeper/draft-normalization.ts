@@ -132,7 +132,7 @@ export function normalizeDraftDetail(
     status: exactDraftToken(source.status),
     teamCount,
     roundCount,
-    pickTimerSeconds: optionalInteger(settings.pick_timer, 604_800, 0),
+    pickTimerSeconds: optionalInteger(settings.pick_timer, 86_400, 0),
     startTime: timestamp(source.start_time),
     createdAt: timestamp(source.created),
     lastPickedAt: timestamp(source.last_picked),
@@ -227,8 +227,8 @@ export function normalizeDraftBoard(
         team,
         entityType:
           position === "DEF" ? "team_defense" : position ? "player" : "unknown",
-        status: display(metadata.status),
-        injuryStatus: display(metadata.injury_status),
+        status: display(metadata.status, 64),
+        injuryStatus: display(metadata.injury_status, 64),
         metadata,
         sourceMetadata: {
           picked_by_source: source.picked_by ?? null,
