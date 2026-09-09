@@ -1,6 +1,6 @@
 # ADP context architecture
 
-This document is the engineering and product contract for future average-pick, ranking, and draft-capital analytics. It does not implement a metric, table, view, provider request, or product surface. Reviewed migrations remain the SQL source of truth.
+This document is the engineering and product contract for contextual average-pick, ranking, and draft-capital analytics. `PRICE_IMPLIED_RANK.md` describes the implemented pure pricing engines and manual `/draft-value` calculator. No ADP/AAV feed, market table, automatic portfolio metric or provider request has been added. Reviewed migrations remain the SQL source of truth.
 
 ## Core rule
 

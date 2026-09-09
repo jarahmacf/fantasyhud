@@ -50,3 +50,8 @@ test("sign-in mobile visual", async () => {
     fullPage: true,
   })
 })
+
+test("draft-value workspace requires access when temporary access is disabled", async () => {
+  await page.goto("/draft-value")
+  await expect(page).toHaveURL(/\/auth\/sign-in$/)
+})

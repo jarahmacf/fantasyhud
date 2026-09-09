@@ -4,7 +4,13 @@ FANTASY HUD is a portfolio-management and command-center interface for serious f
 
 ## Repository status
 
-Tasks through 008A.1 are deployed and production-verified. The current Task 008A.2 branch is architecture-only: it defines league and account draft-collection watermarks, one canonical shared provider draft, first-class draft slots, explicit tri-state account participation, complete board picks, historical player context, conservative draft-environment identity, finalized-board protection, indexed RLS, and safe browser projections. It imports no draft data and adds no provider call, lifecycle RPC, route, navigation item, metric, or product UI. Task 008B has not begun.
+Tasks through 008A.2 are merged. The draft architecture defines league and account draft-collection watermarks, one canonical shared provider draft, first-class draft slots, explicit tri-state account participation, complete board picks, historical player context, conservative draft-environment identity, finalized-board protection, indexed RLS, and safe browser projections. It imports no draft data. Task 008B has not begun. Temporary read-only workspace access is documented in `TEMPORARY_ACCESS.md`.
+
+## Draft value
+
+`/draft-value` converts a pick price or auction amount into a fixed price-implied positional rank, then compares that benchmark with manually entered weekly total-points or PPG ranks. The player's own market rank remains separate. Calculations can be explicitly saved and restored on the same device; they are not server-synced draft records.
+
+The screen starts empty and labels its optional example and manual inputs. Automatic portfolio tracking still needs draft imports, an authorized contextual ADP/AAV source, exact-custom-scoring weekly outcomes and server snapshot persistence. See `PRICE_IMPLIED_RANK.md` for the calculation, context, provenance, auction and outcome contracts.
 
 ## Future analytics boundary
 

@@ -1,6 +1,6 @@
 # Performance versus draft capital architecture
 
-This document is the engineering and product contract for future comparisons between draft investment and player outcomes. It does not implement a statistics source, scoring engine, rank, performance table, metric, provider request, or product surface. Reviewed migrations remain the SQL source of truth.
+This document is the engineering and product contract for comparisons between draft investment and player outcomes. The pure price-curve, acquisition-benchmark and already-scored outcome-ranking engines, plus a manual `/draft-value` calculator, are implemented as described in `PRICE_IMPLIED_RANK.md`. Automated portfolio tracking, statistics ingestion, a custom-scoring engine and persisted performance tables remain future work. Reviewed migrations remain the SQL source of truth.
 
 ## Purpose and analytical levels
 
@@ -160,14 +160,16 @@ The first player display contract includes:
 - actual fantasy points per game
 - expected fantasy points per game
 
-Position-rank delta is:
+The acquisition-price comparison is:
 
 ```text
-position_rank_delta
-= adp_position_rank - outcome_position_rank
+price_rank_surplus
+= price_implied_position_rank - outcome_position_rank
 ```
 
-A positive value means the player finished better than drafted. This player-level explanation is useful, but raw positional-rank differences are not additive across positions or contexts. An outcome may be compared only with ADP from the same disclosed context or an explicitly requested and displayed broader match level. A league observation conflict cannot be resolved by choosing either same-time context: Task 008A.1 permits one accepted format context per league and observation time and fails the enclosing mutation closed.
+A positive value means the player's outcome rank is better than the positional rank implied by the price paid. The fixed benchmark comes from the eligible positional price curve at acquisition, with interpolation and explicit tie behavior; it is not the player's own market ADP rank. The latter may be displayed separately or compared in a separately named market-rank delta. For example, pick 3.10 in a 12-team draft costs pick 34: if the market prices RB11 at 34, the purchase benchmark is RB11 even when that player's own ADP rank is RB14. Actual RB7 yields +4 against price; actual RB18 yields -7.
+
+This player-level explanation is useful, but raw positional-rank differences are not additive across positions or contexts and are not a calibrated finishing-rank forecast. The implemented acquisition engine requires exact context and prior-only, subject-excluded market data; unsupported context is unavailable. Future broader matching must be explicitly requested, versioned and displayed. A league observation conflict cannot be resolved by choosing either same-time context: Task 008A.1 permits one accepted format context per league and observation time and fails the enclosing mutation closed. `PRICE_IMPLIED_RANK.md` defines the frozen benchmark, auction units, outcome ties, minimum-games rules and current manual product boundary.
 
 ## Expected-outcome curve
 

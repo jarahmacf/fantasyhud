@@ -11,8 +11,10 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 
 export function SiteHeader({
   showFoundationSearch,
+  section,
 }: {
   showFoundationSearch: boolean
+  section?: { title: string; description: string; badge: string }
 }) {
   const { searchText, setSearchText } = useFoundationSearch()
   const searchRef = React.useRef<HTMLInputElement>(null)
@@ -78,15 +80,21 @@ export function SiteHeader({
               aria-hidden="true"
               className="size-4 text-muted-foreground"
             />
-            <span className="truncate">Sleeper league discovery</span>
+            <span className="truncate">
+              {section?.title ?? "Sleeper league discovery"}
+            </span>
           </div>
         )}
         <div className="ml-auto hidden items-center gap-2 sm:flex">
           <Button variant="ghost" size="sm" className="pointer-events-none">
-            {showFoundationSearch ? "Backend foundation" : "Current season"}
+            {showFoundationSearch
+              ? "Backend foundation"
+              : (section?.description ?? "Current season")}
           </Button>
           <Badge variant="outline">
-            {showFoundationSearch ? "Foundation" : "Leagues"}
+            {showFoundationSearch
+              ? "Foundation"
+              : (section?.badge ?? "Leagues")}
           </Badge>
         </div>
       </div>

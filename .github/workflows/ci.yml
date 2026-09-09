@@ -93,6 +93,15 @@ jobs:
       - name: Verify temporary access without a login or server secret
         run: node scripts/run-temporary-access-e2e.mjs
 
+      - name: Upload draft-value visual baselines
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-value-visual-baselines
+          path: e2e/temporary-access/draft-value.spec.ts-snapshots
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Run league discovery concurrency test
         run: npm run db:test:league-concurrency
 
