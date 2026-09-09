@@ -18,6 +18,8 @@ The [maintained player-statistics dictionary](https://nflreadr.nflverse.com/arti
 
 The [update schedule](https://nflreadr.nflverse.com/articles/nflverse_data_schedule.html) describes updates after game days and subsequent corrections, with Thursday recommended for the cleanest corrected data. These are revisable observations, not immutable final results. A future importer must record retrieval time, source asset identity, content fingerprint, and calculation version. It must not fabricate a provider revision timestamp from request time.
 
+The documented nflreadr `load_players` source points to the nflverse `players/players.csv` release. A bounded read on 2026-09-09 returned 24,826 unique GSIS IDs and 16,558 nonempty, unique ESPN IDs (7,288,330 bytes; SHA-256 `a61c2e436918655b0e2df9644a5fe93ea06b3b99371352275c84d0c9230c738a`). This establishes an exact-ID crosswalk source, not portfolio or full-universe mapping coverage.
+
 Canonical mapping is feasible but not yet verified end to end: the existing catalog has 6,718 active ESPN and 11,546 Sportradar mappings, but no GSIS namespace. A reviewed GSIS crosswalk must resolve through exact source IDs with collision and missing-identity reports. Player names cannot be a fallback join. The complete positional universe must be mapped, including unowned players; ranking only the portfolio would be invalid.
 
 ## Exact scoring coverage

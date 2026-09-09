@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/card"
 import { getWorkspaceAccess } from "@/lib/access/workspace.server"
 
+export const maxDuration = 300
+
 export default async function DraftValuePage() {
   await connection()
   const access = await getWorkspaceAccess()

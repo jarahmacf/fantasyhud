@@ -220,12 +220,12 @@ begin
   insert into public.drafts(provider,external_draft_id,context_type,league_id,sport,season,season_type,draft_type,draft_type_family,status,
     settings,metadata,context_resolution_status,league_format_context_id,context_observed_at,draft_environment_version,
     draft_settings_fingerprint,draft_environment_fingerprint,draft_environment_compatibility_key,draft_environment_quality,draft_pool_type,capital_type,
-    team_count,round_count,pick_timer_seconds,draft_fetched_at,first_seen_at,last_seen_at)
+    team_count,round_count,pick_timer_seconds,start_time,provider_created_at,draft_fetched_at,first_seen_at,last_seen_at)
   values('sleeper',v_detail->>'externalDraftId',case when v_league is not null then 'league' when v_detail->>'externalLeagueId' is null then 'standalone' else 'unknown' end,
     v_league,'nfl',p_season,v_detail->>'seasonType',v_detail->>'draftType',v_class.draft_type_family,v_detail->>'status',
     v_detail->'settings',v_detail->'metadata',v_context,v_context_id,v_context_time,1,v_class.draft_settings_fingerprint,
     v_class.draft_environment_fingerprint,v_class.draft_environment_compatibility_key,v_class.environment_quality,'unknown',v_class.capital_type,
-    v_teams,v_rounds,(v_detail->>'pickTimerSeconds')::integer,v_detail_time,v_detail_time,v_board_time)
+    v_teams,v_rounds,(v_detail->>'pickTimerSeconds')::integer,(v_detail->>'startTime')::timestamptz,(v_detail->>'createdAt')::timestamptz,v_detail_time,v_detail_time,v_board_time)
   on conflict on constraint drafts_provider_external_draft_id_key do nothing returning id into v_id;
   if v_id is null then select id into v_id from public.drafts where provider='sleeper' and external_draft_id=v_detail->>'externalDraftId' for update; end if;
   update public.drafts set name=v_detail->>'name',description=v_detail->>'description',status=v_detail->>'status',
