@@ -46,7 +46,7 @@ For example, a $200 budget with AAV values RB10=$40, RB11=$30 and RB12=$20 value
 
 ## Outcome ranking contract
 
-`rankPositionPerformance` accepts a complete, already-scored eligible universe. It does not turn raw football statistics into custom-scoring points. Every snapshot preserves source/revision/as-of, exact scoring context, scoring-engine version, position-group version, season/type, through-week and finality. An incomplete universe or any unscored rule blocks ranking. Player identity is unique, points are finite (negative points are valid), and games played must be consistent with the period.
+`rankPerformanceUniverse` accepts a complete, already-scored eligible universe. It does not turn raw football statistics into custom-scoring points. Every snapshot preserves source/revision/as-of, exact scoring context, scoring-engine version, position-group version, season/type, through-week and finality. An incomplete universe or any unscored rule blocks ranking. Player identity is unique, points are finite (negative points are valid), and games played must be consistent with the period.
 
 Total points and points per game are distinct ranking types. PPG requires an explicit minimum-games rule and excludes players who do not qualify. Outcome ties use competition ranking (`1, 1, 3`), separate from price-curve tie midpoints. A universe with no games played produces no outcome rank.
 

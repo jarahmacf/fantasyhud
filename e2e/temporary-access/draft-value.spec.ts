@@ -48,19 +48,15 @@ test("calculates, freezes and restores draft value without a login", async ({
     document.documentElement.classList.add("dark")
     await document.fonts.ready
   })
-  await expect
-    .soft(page)
-    .toHaveScreenshot("draft-value-desktop.png", {
-      animations: "disabled",
-      fullPage: true,
-    })
+  await expect.soft(page).toHaveScreenshot("draft-value-desktop.png", {
+    animations: "disabled",
+    fullPage: true,
+  })
   await page.setViewportSize({ width: 390, height: 844 })
-  await expect
-    .soft(page)
-    .toHaveScreenshot("draft-value-mobile.png", {
-      animations: "disabled",
-      fullPage: true,
-    })
+  await expect.soft(page).toHaveScreenshot("draft-value-mobile.png", {
+    animations: "disabled",
+    fullPage: true,
+  })
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth
