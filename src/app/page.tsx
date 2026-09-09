@@ -76,13 +76,17 @@ export default async function Home() {
           hasSuccessfulDiscovery={dashboard.hasSuccessfulDiscovery}
         />
         <p className="text-sm text-muted-foreground">
-          {draftSummary.status === "imported" && draftSummary.drafts > 0
-            ? dashboard.hasCurrentSeasonRosterImport
-              ? "Rosters and drafts imported."
-              : "Drafts imported. Rosters not imported."
-            : dashboard.hasCurrentSeasonRosterImport
-              ? "Rosters imported. Drafts not imported."
-              : "Rosters and drafts not imported."}
+          {draftSummary.status === "unavailable"
+            ? "Draft import status is unavailable."
+            : draftSummary.status === "imported" && draftSummary.partial
+              ? "Draft import is partial. Some boards or participation remain unresolved."
+              : draftSummary.status === "imported" && draftSummary.drafts > 0
+                ? dashboard.hasCurrentSeasonRosterImport
+                  ? "Rosters and drafts imported."
+                  : "Drafts imported. Rosters not imported."
+                : dashboard.hasCurrentSeasonRosterImport
+                  ? "Rosters imported. Drafts not imported."
+                  : "Rosters and drafts not imported."}
         </p>
       </div>
     </AppShell>

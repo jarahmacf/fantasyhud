@@ -193,7 +193,8 @@ begin
       if v_old.board_fingerprint is distinct from v_fingerprint or not v_complete then
         raise exception using errcode='55000',message='The finalized draft source changed; correction review is required.';
       end if;
-      update public.drafts set last_seen_at=greatest(last_seen_at,v_board_time),removed_at=null where id=v_old.id;
+      update public.drafts set last_seen_at=greatest(last_seen_at,v_board_time),
+        removed_at=case when removed_at is null then null else greatest(removed_at,v_board_time) end where id=v_old.id;
       return v_old.id;
     end if;
     if v_detail_time < v_old.draft_fetched_at or v_board_time < v_old.board_fetched_at then
@@ -238,7 +239,8 @@ begin
     settings=v_detail->'settings',metadata=v_detail->'metadata',league_format_context_id=v_context_id,context_resolution_status=v_context,context_observed_at=v_context_time,
     draft_settings_fingerprint=v_class.draft_settings_fingerprint,draft_environment_fingerprint=v_class.draft_environment_fingerprint,
     draft_environment_compatibility_key=v_class.draft_environment_compatibility_key,draft_environment_quality=v_class.environment_quality,
-    draft_fetched_at=v_detail_time,last_seen_at=greatest(last_seen_at,v_board_time),removed_at=null
+    draft_fetched_at=v_detail_time,last_seen_at=greatest(last_seen_at,v_board_time),
+    removed_at=case when removed_at is null then null else greatest(removed_at,v_board_time) end
   where id=v_id;
   update public.drafts set board_state='mutable',board_fetched_at=v_board_time,board_slot_count=jsonb_array_length(p_payload->'slots'),
     board_pick_count=jsonb_array_length(p_payload->'picks'),board_fingerprint_version=1,board_fingerprint=v_fingerprint,contains_keeper_picks=v_keepers where id=v_id;
@@ -431,6 +433,9 @@ begin
     v_fingerprint:=app_private.draft_source_sha256_v1('league_draft_collection',jsonb_build_object('draft_ids',v_ids));
     update public.leagues set draft_collection_fetched_at=v_time,draft_collection_count=cardinality(v_ids),draft_collection_fingerprint=v_fingerprint
       where provider='sleeper' and external_league_id=v_collection->>'externalLeagueId' returning id into v_league.id;
+    -- Only an accepted league collection may assert current league inclusion.
+    -- A user-history draft alone cannot clear a newer league absence marker.
+    update public.drafts set removed_at=null,last_seen_at=greatest(last_seen_at,v_time) where league_id=v_league.id and external_draft_id=any(v_ids);
     update public.drafts set removed_at=greatest(last_seen_at,v_time) where league_id=v_league.id and removed_at is null and not external_draft_id=any(v_ids);
   end loop;
   insert into public.fantasy_account_draft_collections(fantasy_account_id,sport,season,source_fetched_at,source_draft_count,collection_fingerprint,source_metadata)

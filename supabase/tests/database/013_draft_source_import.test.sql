@@ -1,5 +1,5 @@
 begin;
-select plan(32);
+select plan(36);
 select ok(has_function_privilege('service_role','public.start_sleeper_draft_sync(uuid,uuid)','execute'),'trusted service can start draft imports');
 select ok(not has_function_privilege('anon','public.start_sleeper_draft_sync(uuid,uuid)','execute'),'anonymous callers cannot start imports');
 select ok(not has_function_privilege('authenticated','public.complete_sleeper_draft_sync(uuid,uuid,uuid)','execute'),'browser roles cannot publish sources');
@@ -66,5 +66,17 @@ select throws_ok($$select public.heartbeat_sleeper_draft_sync(a.user_id,a.accoun
 create temporary table failed_run as select public.start_sleeper_draft_sync(user_id,account_id) as result from import_actor;
 select public.fail_sleeper_draft_sync(a.user_id,a.account_id,(r.result->>'runId')::uuid) from import_actor a,failed_run r;
 select is((select status from public.sync_runs where id=(select (result->>'runId')::uuid from failed_run)),'failed','failed attempts retain terminal history');
+
+
+select ok(app_private.sleeper_draft_lineup_matches_v1('{"teams":2,"slots_rb":1}'::jsonb,array['RB'],2),'exact documented lineup counts corroborate the historical context');
+select ok(not app_private.sleeper_draft_lineup_matches_v1('{"teams":2,"slots_rb":1,"slots_unknown":0}'::jsonb,array['RB'],2),'unknown lineup keys never broaden historical matching');
+select ok(not app_private.sleeper_draft_lineup_matches_v1('{"teams":2,"slots_wr":1}'::jsonb,array['RB'],2),'equal roster size does not substitute for exact lineup composition');
+create temporary table historical_format as select app_private.ensure_sleeper_league_format_context('sleeper','nfl','{"rec":1}'::jsonb,'["RB"]'::jsonb,'{"type":0,"best_ball":0}'::jsonb,2,1,'redraft',false,false,false) as id;
+insert into public.league_format_observations(league_id,format_context_id,observed_at,source,normalization_version)
+select a.league_id,f.id,clock_timestamp()-interval '2 hours','migration_backfill',1 from import_actor a,historical_format f
+union all select a.league_id,f.id,clock_timestamp(),'migration_backfill',1 from import_actor a,historical_format f;
+select app_private.publish_sleeper_draft_board(
+  jsonb_set(jsonb_set(jsonb_set(jsonb_set(payload,'{detail,externalDraftId}','"historical-import-board"'),'{detail,externalLeagueId}','"import-test-league"'),'{detail,settings,slots_rb}','1'),'{detail,startTime}',to_jsonb(clock_timestamp()-interval '1 hour')),2026) from source_fixture;
+select is((select context_resolution_status from public.drafts where external_draft_id='historical-import-board'),'exact','the latest accepted pre-anchor matching observation takes precedence over later evidence');
 select * from finish();
 rollback;

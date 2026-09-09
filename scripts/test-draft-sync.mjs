@@ -205,6 +205,28 @@ try {
   await sql(`select public.fail_sleeper_draft_sync(${actorArgs(c, cr)});`)
   console.log("An older inclusion cannot resurrect newer collection absence.")
 
+  const outsideActor = await seed("draft_fixture_outside", [
+    "draft-outside-league",
+  ])
+  const outsideRun = await start(outsideActor)
+  const outsideTime = await sql("select to_jsonb(clock_timestamp());")
+  await stage(
+    outsideActor,
+    outsideRun,
+    [{ ...shared, detailFetchedAt: outsideTime, boardFetchedAt: outsideTime }],
+    outsideTime
+  )
+  await complete(outsideActor, outsideRun)
+  assert.equal(
+    await sql(
+      "select to_jsonb(removed_at is not null) from public.drafts where external_draft_id='draft-race-board';"
+    ),
+    true
+  )
+  console.log(
+    "User draft history outside the frozen league set cannot clear league absence."
+  )
+
   const leagueIds = Array.from(
     { length: 30 },
     (_, i) => `draft-load-${String(i + 1).padStart(2, "0")}`
