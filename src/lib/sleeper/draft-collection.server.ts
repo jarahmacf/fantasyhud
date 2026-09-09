@@ -41,12 +41,15 @@ export async function fetchNormalizedSleeperDraftCollection(
   )
     invalidDraft()
   const { heartbeat = async () => {}, ...httpOptions } = options
+  let collectionBytes = 0
   const read = async (segments: string[]) => {
     const result = await sleeperGetJsonWithMetadata(segments, {
       ...httpOptions,
       timeoutMs: 10_000,
       maxResponseBytes: 10_000_000,
     })
+    collectionBytes += result.responseBytes
+    if (collectionBytes > 40_000_000) invalidDraft()
     await heartbeat()
     return result
   }

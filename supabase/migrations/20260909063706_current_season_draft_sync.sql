@@ -193,8 +193,15 @@ begin
     draft_environment_compatibility_key=v_class.draft_environment_compatibility_key,draft_environment_quality=v_class.environment_quality,
     draft_fetched_at=v_detail_time,last_seen_at=greatest(last_seen_at,v_board_time),removed_at=null
   where id=v_id;
+  update public.drafts set board_state='mutable',board_fetched_at=v_board_time,board_slot_count=jsonb_array_length(p_payload->'slots'),
+    board_pick_count=jsonb_array_length(p_payload->'picks'),board_fingerprint_version=1,board_fingerprint=v_fingerprint,contains_keeper_picks=v_keepers where id=v_id;
   -- Keep child identities stable; only a mutable complete collection reconciles absence.
   for v_slot in select value from jsonb_array_elements(p_payload->'slots') order by (value->>'draftSlot')::integer loop
+    if v_slot->'sourceUserIds' is distinct from case when v_detail->'draftOrder'='null'::jsonb then 'null'::jsonb else
+        (select coalesce(jsonb_agg(key order by key collate "C"),'[]'::jsonb) from jsonb_each(v_detail->'draftOrder') where (value::text)::integer=(v_slot->>'draftSlot')::integer) end
+      or v_slot->'externalRosterId' is distinct from coalesce(v_detail->'slotToRoster'->(v_slot->>'draftSlot'),'null'::jsonb) then
+      raise exception using errcode='22023',message='Normalized draft slots disagree with exact source maps.';
+    end if;
     v_roster:=null;
     select id into v_roster from public.rosters where league_id=v_league and external_roster_id=(v_slot->>'externalRosterId')::integer;
     insert into public.draft_slots(draft_id,draft_slot,source_user_ids,external_roster_id,roster_id,fetched_at,first_seen_at,last_seen_at)
@@ -318,10 +325,13 @@ begin
     select * into strict v_league from public.leagues where provider='sleeper' and sport='nfl' and season=v_scope.league_season and external_league_id=v_collection->>'externalLeagueId';
     v_time:=(v_collection->>'sourceFetchedAt')::timestamptz;
     if v_time is null or not isfinite(v_time) or v_time<v_run.started_at or v_time>v_now+interval '1 minute'
-      or (v_league.draft_collection_fetched_at is not null and v_time<=v_league.draft_collection_fetched_at) then
+      or (v_league.draft_collection_fetched_at is not null and v_time<v_league.draft_collection_fetched_at) then
       raise exception using errcode='55000',message='The league draft collection is invalid or stale.';
     end if;
     v_ids:=app_private.draft_collection_ids(v_collection->'externalDraftIds');
+    if v_time=v_league.draft_collection_fetched_at and v_league.draft_collection_fingerprint is distinct from app_private.context_sha256('fantasyhud:sleeper:league_draft_collection',1,to_jsonb(v_ids)) then
+      raise exception using errcode='55000',message='Equal-time draft collections disagree.';
+    end if;
     if exists(select 1 from app_private.sleeper_draft_sync_stage s where s.run_id=p_sync_run_id and substring(s.source_key from 7)=any(v_ids)
       and s.payload#>>'{detail,externalLeagueId}' is distinct from v_league.external_league_id) then
       raise exception using errcode='22023',message='A source draft belongs to another league.';
@@ -336,6 +346,12 @@ begin
     -- Resolve exact provider evidence from the accepted board, never current holdings.
     select array_agg(distinct slot order by slot) into v_candidates from (
       select s.draft_slot as slot from public.draft_slots s where s.draft_id=v_draft and s.removed_at is null and v_scope.external_user_id=any(s.source_user_ids)
+      union
+      select s.draft_slot from public.draft_slots s
+      join public.drafts d on d.id=s.draft_id
+      join public.fantasy_account_rosters ar on ar.roster_id=s.roster_id and ar.fantasy_account_id=p_fantasy_account_id and ar.removed_at is null
+      join public.fantasy_account_leagues al on al.league_id=d.league_id and al.fantasy_account_id=p_fantasy_account_id and al.removed_at is null and al.roster_ownership_status='owned'
+      where s.draft_id=v_draft and s.removed_at is null
       union
       select p.draft_slot from public.draft_picks p where p.draft_id=v_draft and p.removed_at is null and p.picked_by_external_user_id=v_scope.external_user_id
     ) evidence;
