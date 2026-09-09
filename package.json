@@ -30,7 +30,8 @@
     "db:types": "node scripts/generate-database-types.mjs",
     "db:types:check": "node scripts/check-database-types.mjs",
     "db:check": "npm run db:reset && npm run db:test && npm run db:types:check",
-    "db:remote:migrations": "supabase migration list"
+    "db:remote:migrations": "supabase migration list",
+    "db:test:draft-sync": "node scripts/test-draft-sync.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.5",

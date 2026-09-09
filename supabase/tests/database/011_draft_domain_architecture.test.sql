@@ -1,6 +1,6 @@
 begin;
 
-select plan(255);
+select plan(253);
 
 -- Helper and object contract -------------------------------------------------
 
@@ -3336,27 +3336,6 @@ select is(
   ),
   0,
   'no global player ADP, ranking, value, or draft-capital field is introduced'
-);
-select ok(
-  not exists (
-    select 1 from pg_proc
-    where pronamespace = 'public'::regnamespace
-      and proname in (
-        'start_sleeper_draft_sync', 'stage_sleeper_draft',
-        'complete_sleeper_draft_sync', 'fail_sleeper_draft_sync'
-      )
-  ),
-  'Task 008A.2 adds no public draft-import lifecycle RPC'
-);
-select ok(
-  not exists (
-    select 1
-    from pg_class as relation
-    join pg_namespace as namespace on namespace.oid = relation.relnamespace
-    where namespace.nspname = 'app_private'
-      and relation.relname like '%draft%stage%'
-  ),
-  'Task 008A.2 adds no private draft staging relation'
 );
 select ok(
   not exists (

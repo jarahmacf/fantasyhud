@@ -1,3 +1,4 @@
+import { getDraftImportSummary } from "@/lib/drafts/summary.server"
 import { redirect } from "next/navigation"
 import { connection } from "next/server"
 
@@ -31,8 +32,12 @@ export default async function Home() {
   if (!account) redirect("/onboarding")
 
   let dashboard
+  let draftSummary
   try {
-    dashboard = await loadLeagueDashboardData(supabase, account.id)
+    ;[dashboard, draftSummary] = await Promise.all([
+      loadLeagueDashboardData(supabase, account.id),
+      getDraftImportSummary(supabase, account.id),
+    ])
   } catch {
     return (
       <AppShell identity={identity}>
@@ -71,9 +76,17 @@ export default async function Home() {
           hasSuccessfulDiscovery={dashboard.hasSuccessfulDiscovery}
         />
         <p className="text-sm text-muted-foreground">
-          {dashboard.hasCurrentSeasonRosterImport
-            ? "Rosters imported. Drafts not imported."
-            : "Rosters and drafts not imported."}
+          {draftSummary.status === "unavailable"
+            ? "Draft import status is unavailable."
+            : draftSummary.status === "imported" && draftSummary.partial
+              ? "Draft import is partial. Some boards or participation remain unresolved."
+              : draftSummary.status === "imported" && draftSummary.drafts > 0
+                ? dashboard.hasCurrentSeasonRosterImport
+                  ? "Rosters and drafts imported."
+                  : "Drafts imported. Rosters not imported."
+                : dashboard.hasCurrentSeasonRosterImport
+                  ? "Rosters imported. Drafts not imported."
+                  : "Rosters and drafts not imported."}
         </p>
       </div>
     </AppShell>

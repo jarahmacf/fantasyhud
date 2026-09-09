@@ -154,3 +154,11 @@ No Task 008A.2 code may start a `draft_sync` run. Task 008B must freeze one cano
 League, account, draft detail, and board observations must be monotonic. Older inclusion or absence cannot resurrect state superseded by a newer complete collection. Shared draft creation and overlapping-account imports are conflict-safe and converge on one canonical board. More than one resolved account slot fails closed. Only a source-complete board may finalize; an identical finalized fingerprint is idempotent and a changed fingerprint requires a future reviewed correction workflow.
 
 Task 008B must implement bounded response validation, explicit run heartbeat and stale recovery, deterministic private staging and cleanup, simultaneous overlapping-account integration tests, and a current 30-league load test. A source failure is never an empty collection, and no draft-only outcome updates the complete portfolio timestamp.
+
+## PR 17 implementation status
+
+The draft lifecycle is implemented by service-only start, heartbeat, stage, complete, and fail RPCs. The server validates the app user before creating an admin client, derives the tracked account internally, and accepts no canonical provider identity from the browser. Private run scope and staging are cleaned on terminal completion, failure, or bounded stale-run replacement. A reused fresh run does not refetch source data.
+
+Publication locks league advisory keys in the same namespace as roster imports, the player-catalog key, league rows, and sorted draft keys. Every source collection must validate before publication. Accepted league lists alone control shared league-draft absence; user history cannot resurrect a removed shared league draft. Complete boards finalize atomically, while unresolved participation or mutable boards yield a partial run. Full synchronization remains reserved for the portfolio milestone.
+
+PR 17 remains under isolated CI verification. Temporary public workspace access can read saved status but cannot invoke provider imports. No weekly scheduler or performance ingestion is deployed; the bounded scoring adapter rejects unsupported nonzero custom rules instead of publishing approximate ranks.

@@ -1574,6 +1574,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_sleeper_draft_sync: {
+        Args: {
+          p_fantasy_account_id: string
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       complete_sleeper_league_discovery: {
         Args: {
           p_fantasy_account_id: string
@@ -1676,6 +1684,14 @@ export type Database = {
           user_fantasy_account_id: string
         }[]
       }
+      fail_sleeper_draft_sync: {
+        Args: {
+          p_fantasy_account_id: string
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       fail_sleeper_league_discovery: {
         Args: {
           p_error_code: string
@@ -1729,6 +1745,24 @@ export type Database = {
           username: string
         }[]
       }
+      heartbeat_sleeper_draft_sync: {
+        Args: {
+          p_fantasy_account_id: string
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      stage_sleeper_draft_source: {
+        Args: {
+          p_fantasy_account_id: string
+          p_payload: Json
+          p_source_key: string
+          p_sync_run_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       stage_sleeper_player_catalog_batch: {
         Args: {
           p_batch_index: number
@@ -1761,6 +1795,10 @@ export type Database = {
           staged_leagues: number
           sync_run_id: string
         }[]
+      }
+      start_sleeper_draft_sync: {
+        Args: { p_fantasy_account_id: string; p_user_id: string }
+        Returns: Json
       }
       start_sleeper_league_discovery: {
         Args: { p_fantasy_account_id: string; p_user_id: string }
