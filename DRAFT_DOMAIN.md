@@ -1,6 +1,6 @@
 # Draft domain and environment architecture
 
-Task 008A.2 establishes the relational contract for shared drafts, normalized draft slots, explicit tracked-account participation, complete selection boards, and conservative draft-environment identity. It is architecture-only: it adds no Sleeper request, import lifecycle, Server Action, route, navigation item, metric, or product UI. Task 008B is the first draft-import task and has not begun.
+Task 008A.2 establishes the relational contract for shared drafts, normalized draft slots, explicit tracked-account participation, complete selection boards, and conservative draft-environment identity. It is architecture-only: it adds no Sleeper request, import lifecycle, Server Action, route, navigation item, metric, or product UI. PR 17 implements the subsequent draft-import lifecycle described below; it remains under verification and is not deployed.
 
 ## Official future source boundary
 
@@ -174,4 +174,12 @@ Ordinary pick-ADP requires a finalized board, exact environment quality, snake o
 
 Task 008A.2 added the architecture schema, validation, protection, indexed RLS, safe projections, database contracts, generated types, and this documentation. That task imported zero drafts and made no provider call, private draft stage, lifecycle RPC, Server Action, draft route, navigation item, card, table, portfolio count, ADP, rank, scoring result, or performance result.
 
-The subsequent price-implied-rank feature adds pure calculation engines and an explicitly manual `/draft-value` screen, documented in `PRICE_IMPLIED_RANK.md`. It adds no SQL migration or automatic draft ingestion. Existing product copy remains `Rosters imported. Drafts not imported.` Task 008B remains unstarted.
+The subsequent price-implied-rank feature adds pure calculation engines and an explicitly manual `/draft-value` screen, documented in `PRICE_IMPLIED_RANK.md`. It adds no SQL migration or automatic draft ingestion. PR 17 adds authenticated draft import and persisted current-season status. No-login workspace access remains read-only. Copy distinguishes an unimported, partial, successful, or unavailable draft import.
+
+## Draft import implementation (PR 17)
+
+The documented four-endpoint collector freezes canonical account identity, provider season, and active league IDs. It validates the entire union before private staging and atomic publication. Explicit heartbeats and a 15-minute stale-run recovery bound running attempts. Responses are bounded to 10 MB each and 40 MB per collection; publication accepts at most 1,000 boards, with bounded per-board and aggregate staging sizes.
+
+Only accepted league collections restore league inclusion. User history outside the frozen league set cannot clear a league absence marker. Finalized identical boards replay without replacing children; changed finalized content fails pending a reviewed correction workflow. Unknown pick keeper flags stay null, auction amounts remain unknown pending source evidence, and unresolved participation or mutable boards produce a partial run. Import never updates the full-portfolio synchronization timestamp.
+
+Verification includes isolated pgTAP contracts, mocked authenticated browser import and refresh, overlapping-account publication, stale collection rejection, and 30-league / 7,200-pick load checks. These are required gates, not an assertion that all currently pass. See `docs/verification/draft-weekly-source.md` for source coverage and weekly automation limitations.

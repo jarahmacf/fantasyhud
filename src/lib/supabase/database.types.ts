@@ -1797,10 +1797,7 @@ export type Database = {
         }[]
       }
       start_sleeper_draft_sync: {
-        Args: {
-          p_fantasy_account_id: string
-          p_user_id: string
-        }
+        Args: { p_fantasy_account_id: string; p_user_id: string }
         Returns: Json
       }
       start_sleeper_league_discovery: {
