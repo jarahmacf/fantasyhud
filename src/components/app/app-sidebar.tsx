@@ -1,6 +1,12 @@
 "use client"
 
-import { LibraryBig, PanelsTopLeft, Trophy, Users } from "lucide-react"
+import {
+  ChartNoAxesCombined,
+  LibraryBig,
+  PanelsTopLeft,
+  Trophy,
+  Users,
+} from "lucide-react"
 import Link from "next/link"
 
 import type { AppShellIdentity } from "@/components/app/app-shell"
@@ -45,6 +51,15 @@ export function AppSidebar({
           ? [{ title: "Players", url: "/players", icon: Users }]
           : []),
         { title: "Foundation", url: "/foundation", icon: PanelsTopLeft },
+        ...(identity
+          ? [
+              {
+                title: "Draft value",
+                url: "/draft-value",
+                icon: ChartNoAxesCombined,
+              },
+            ]
+          : []),
       ],
     },
   ]

@@ -66,6 +66,12 @@ Toolbars contain only controls that perform a real action. Foundation search is 
 
 Below the sidebar breakpoint, the sidebar renders in the existing shadcn Sheet and opens through the header trigger. The header search remains usable in the available width. Tables retain horizontal scrolling rather than collapsing or hiding columns. Mobile visual coverage uses a 390 × 844 viewport and includes both closed and open sidebar states.
 
+## Draft value
+
+Connected workspaces include a `Draft value` navigation item after `Foundation`. The manual calculator uses the existing page heading, card, input, summary-grid and TanStack table patterns. Its section header names the price/performance screen; other pages keep their existing section labels. Actions wrap on narrow screens and weekly results scroll inside the table container.
+
+Draft-value visual baselines cover a fixed benchmark and two weekly comparisons at desktop 1536 × 1024 and mobile 390 × 844. Authenticated workspace baselines include the added navigation item and current roster/import labels. Baseline updates require visual review; the normal screenshot comparison gates and tolerances remain unchanged.
+
 ## Reference file mapping
 
 | Production concern                  | Canonical reference file                                                    |

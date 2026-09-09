@@ -172,4 +172,6 @@ Ordinary pick-ADP requires a finalized board, exact environment quality, snake o
 
 ## Current boundary
 
-Task 008A.2 adds the architecture schema, validation, protection, indexed RLS, safe projections, database contracts, generated types, and this documentation. It imports zero drafts. It makes no provider call, adds no private draft stage, lifecycle RPC, Server Action, draft route, navigation item, card, table, portfolio count, ADP, rank, scoring result, or performance result. Existing product copy remains `Rosters imported. Drafts not imported.` Task 008B remains explicitly unstarted until Task 008A.2 is reviewed, merged, deployed, and hosted-verified.
+Task 008A.2 added the architecture schema, validation, protection, indexed RLS, safe projections, database contracts, generated types, and this documentation. That task imported zero drafts and made no provider call, private draft stage, lifecycle RPC, Server Action, draft route, navigation item, card, table, portfolio count, ADP, rank, scoring result, or performance result.
+
+The subsequent price-implied-rank feature adds pure calculation engines and an explicitly manual `/draft-value` screen, documented in `PRICE_IMPLIED_RANK.md`. It adds no SQL migration or automatic draft ingestion. Existing product copy remains `Rosters imported. Drafts not imported.` Task 008B remains unstarted.

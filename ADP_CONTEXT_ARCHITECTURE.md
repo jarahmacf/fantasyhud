@@ -1,6 +1,6 @@
 # ADP context architecture
 
-This document is the engineering and product contract for future average-pick, ranking, and draft-capital analytics. It does not implement a metric, table, view, provider request, or product surface. Reviewed migrations remain the SQL source of truth.
+This document is the engineering and product contract for contextual average-pick, ranking, and draft-capital analytics. `PRICE_IMPLIED_RANK.md` describes the implemented pure pricing engines and manual `/draft-value` calculator. No ADP/AAV feed, market table, automatic portfolio metric or provider request has been added. Reviewed migrations remain the SQL source of truth.
 
 ## Core rule
 
@@ -202,4 +202,4 @@ Raw pick number remains exact. A future normalized draft-capital methodology is 
 
 ## Current implementation boundary
 
-Task 008A.1 is deployed and Production-verified. Task 008A.2 is architecture-only: it adds the empty draft-domain schema, collection watermarks, environment identity, immutable-board protections, indexed RLS, safe projections, and Task 008B contracts. It introduces no Sleeper draft request or import lifecycle, imports no draft row, and adds no ADP metric, new route, navigation item, or product UI. Task 008B has not begun.
+Task 008A.2 added the empty draft-domain schema, collection watermarks, environment identity, immutable-board protections, indexed RLS, safe projections, and Task 008B contracts. The subsequent price-implied-rank feature adds pure contextual calculation engines and the manual `/draft-value` screen. It does not add an ADP/AAV feed, draft request or import lifecycle, automatic portfolio metric, or market table. Task 008B has not begun. See `PRICE_IMPLIED_RANK.md` for the implemented calculation and remaining source adapters.
