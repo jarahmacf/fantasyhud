@@ -44,7 +44,12 @@ try {
   localCommand(["db", "query", "--local", "--file", file])
   const child = spawn(
     join(root, "node_modules", ".bin", "playwright"),
-    ["test", "--config", "playwright.temporary-access.config.ts"],
+    [
+      "test",
+      "--config",
+      "playwright.temporary-access.config.ts",
+      ...process.argv.slice(2),
+    ],
     {
       cwd: root,
       env: {
