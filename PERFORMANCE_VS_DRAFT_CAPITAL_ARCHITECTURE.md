@@ -254,4 +254,4 @@ Materialize or snapshot only when historical reproducibility requires it, source
 
 ## Current implementation boundary
 
-Task 008A.1 is deployed and Production-verified. Task 008A.2 establishes only the empty draft facts and environment integrity needed by this future model. It implements no draft import, raw-stat source, scoring engine, scoring snapshot, ranking snapshot, performance metric, ADP calculation, or product UI. Task 008B has not begun.
+Task 008A.2 established the empty draft facts and environment integrity needed by this model. The subsequent price-implied-rank feature implements pure price curves, frozen acquisition benchmarks, ranking of an already-scored eligible universe, and a manual comparison screen. It implements no draft import, raw-stat source, custom-scoring engine, server scoring/ranking snapshot, or automatic portfolio tracking. Task 008B has not begun. See `PRICE_IMPLIED_RANK.md` for the implemented boundaries and the required source adapters.

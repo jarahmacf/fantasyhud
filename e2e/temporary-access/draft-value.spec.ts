@@ -18,7 +18,7 @@ test("calculates, freezes and restores draft value without a login", async ({
   await expect(benchmark.getByText("RB11", { exact: true })).toBeVisible()
   await expect(benchmark.getByText("RB14", { exact: true })).toBeVisible()
   await expect(page.getByLabel("Round.selection paid")).toBeDisabled()
-  await page.getByLabel("Through week").fill("6")
+  await page.getByLabel("Through week", { exact: true }).fill("6")
   await page.getByLabel("Actual positional rank", { exact: true }).fill("7")
   await page.getByRole("button", { name: "Add or update week" }).click()
   await expect(
@@ -35,7 +35,7 @@ test("calculates, freezes and restores draft value without a login", async ({
       .getByRole("table", { name: "Manual weekly rank comparisons" })
       .getByText("+4", { exact: true })
   ).toBeVisible()
-  await page.getByLabel("Through week").fill("7")
+  await page.getByLabel("Through week", { exact: true }).fill("7")
   await page.getByLabel("Actual positional rank", { exact: true }).fill("18")
   await page.getByRole("button", { name: "Add or update week" }).click()
   await expect(benchmark.getByText("RB11", { exact: true })).toBeVisible()
@@ -80,7 +80,7 @@ test("auction values use budget shares and PPG outcomes require qualification", 
       .getByLabel("Frozen price benchmark")
       .getByText("RB11.5", { exact: true })
   ).toBeVisible()
-  await page.getByLabel("Through week").fill("6")
+  await page.getByLabel("Through week", { exact: true }).fill("6")
   await page
     .getByLabel("Rank measure", { exact: true })
     .selectOption("season_points_per_game_rank")

@@ -88,31 +88,10 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run authenticated browser tests
-        id: auth_browser
         run: npm run e2e:auth
 
       - name: Verify temporary access without a login or server secret
         run: node scripts/run-temporary-access-e2e.mjs
-
-      # PR-only diagnostic capture. The required comparison above still fails.
-      # Remove this capture step after reviewing and committing the images.
-      - name: Capture current browser baselines for visual review
-        if: failure() && steps.auth_browser.outcome == 'failure' && github.head_ref == 'feat/price-implied-position-rank'
-        run: |
-          npm run db:reset
-          npm run e2e:auth -- --update-snapshots
-          node scripts/run-temporary-access-e2e.mjs --update-snapshots
-
-      - name: Upload current browser baselines for review
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: current-browser-visual-baselines
-          path: |
-            e2e/auth/*-snapshots
-            e2e/temporary-access/*-snapshots
-          if-no-files-found: ignore
-          retention-days: 7
 
       - name: Upload draft-value visual baselines
         if: always()
