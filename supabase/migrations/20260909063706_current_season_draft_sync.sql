@@ -109,6 +109,21 @@ $$;
 revoke all on function public.start_sleeper_draft_sync(uuid,uuid), public.heartbeat_sleeper_draft_sync(uuid,uuid,uuid), public.stage_sleeper_draft_source(uuid,uuid,uuid,text,jsonb), public.fail_sleeper_draft_sync(uuid,uuid,uuid) from public, anon, authenticated;
 grant execute on function public.start_sleeper_draft_sync(uuid,uuid), public.heartbeat_sleeper_draft_sync(uuid,uuid,uuid), public.stage_sleeper_draft_source(uuid,uuid,uuid,text,jsonb), public.fail_sleeper_draft_sync(uuid,uuid,uuid) to service_role;
 
+-- Full boards exceed the 128 KiB context-object hash limit. Preserve the same
+-- versioned envelope with a separately bounded source payload.
+create function app_private.draft_source_sha256_v1(p_kind text,p_value jsonb)
+returns text language plpgsql immutable set search_path=pg_catalog as $$
+begin
+  if p_kind is null or p_kind not in ('draft_board','league_draft_collection','account_draft_collection')
+    or p_value is null or jsonb_typeof(p_value)<>'object'
+    or octet_length(p_value::text)>(case when p_kind='draft_board' then 12000000 else 1000000 end) then
+    raise exception using errcode='22023',message='Invalid bounded draft fingerprint source.';
+  end if;
+  return encode(extensions.digest(convert_to(jsonb_build_object('namespace','fantasyhud:sleeper:'||p_kind,'version',1,'value',p_value)::text,'UTF8'),'sha256'),'hex');
+end;
+$$;
+revoke all on function app_private.draft_source_sha256_v1(text,jsonb) from public,anon,authenticated,service_role;
+
 -- Structural corroboration is separate from exact draft-setting identity.
 create function app_private.sleeper_draft_lineup_matches_v1(p_settings jsonb,p_positions text[],p_teams integer)
 returns boolean language plpgsql immutable set search_path=pg_catalog as $$
@@ -166,7 +181,7 @@ begin
     and jsonb_array_length(p_payload->'picks')=v_teams*v_rounds and jsonb_array_length(p_payload->'slots')=v_teams,false);
   select coalesce(bool_or((p->>'isKeeper')::boolean is true),false) into v_keepers from jsonb_array_elements(p_payload->'picks') p;
   -- Observation times and chat activity do not define a completed selection board.
-  v_fingerprint := app_private.context_sha256('fantasyhud:sleeper:draft_board',1,
+  v_fingerprint := app_private.draft_source_sha256_v1('draft_board',
     jsonb_build_object('detail',v_detail-array['lastMessageAt','lastMessageId']::text[], 'slots',p_payload->'slots','picks',p_payload->'picks'));
   select id into v_league from public.leagues where provider='sleeper' and sport='nfl' and season=p_season and external_league_id=v_detail->>'externalLeagueId';
   select * into v_old from public.drafts where provider='sleeper' and external_draft_id=v_detail->>'externalDraftId' for update;
@@ -213,6 +228,8 @@ begin
   on conflict on constraint drafts_provider_external_draft_id_key do nothing returning id into v_id;
   if v_id is null then select id into v_id from public.drafts where provider='sleeper' and external_draft_id=v_detail->>'externalDraftId' for update; end if;
   update public.drafts set name=v_detail->>'name',description=v_detail->>'description',status=v_detail->>'status',
+    draft_type=v_detail->>'draftType',draft_type_family=v_class.draft_type_family,capital_type=v_class.capital_type,season_type=v_detail->>'seasonType',
+    context_metadata=jsonb_build_object('source_external_league_id',v_detail->'externalLeagueId','resolution_method','observed-lineup/v1'),
     team_count=v_teams,round_count=v_rounds,pick_timer_seconds=(v_detail->>'pickTimerSeconds')::integer,
     start_time=(v_detail->>'startTime')::timestamptz,provider_created_at=(v_detail->>'createdAt')::timestamptz,
     last_picked_at=(v_detail->>'lastPickedAt')::timestamptz,last_message_at=(v_detail->>'lastMessageAt')::timestamptz,last_message_id=v_detail->>'lastMessageId',
@@ -359,7 +376,7 @@ begin
       raise exception using errcode='55000',message='The league draft collection is invalid or stale.';
     end if;
     v_ids:=app_private.draft_collection_ids(v_collection->'externalDraftIds');
-    if v_time=v_league.draft_collection_fetched_at and v_league.draft_collection_fingerprint is distinct from app_private.context_sha256('fantasyhud:sleeper:league_draft_collection',1,to_jsonb(v_ids)) then
+    if v_time=v_league.draft_collection_fetched_at and v_league.draft_collection_fingerprint is distinct from app_private.draft_source_sha256_v1('league_draft_collection',jsonb_build_object('draft_ids',v_ids)) then
       raise exception using errcode='55000',message='Equal-time draft collections disagree.';
     end if;
     if exists(select 1 from app_private.sleeper_draft_sync_stage s where s.run_id=p_sync_run_id and substring(s.source_key from 7)=any(v_ids)
@@ -411,22 +428,22 @@ begin
   end loop;
   for v_collection in select value from jsonb_array_elements(v_header->'leagueCollections') order by value->>'externalLeagueId' collate "C" loop
     v_ids:=app_private.draft_collection_ids(v_collection->'externalDraftIds'); v_time:=(v_collection->>'sourceFetchedAt')::timestamptz;
-    v_fingerprint:=app_private.context_sha256('fantasyhud:sleeper:league_draft_collection',1,to_jsonb(v_ids));
+    v_fingerprint:=app_private.draft_source_sha256_v1('league_draft_collection',jsonb_build_object('draft_ids',v_ids));
     update public.leagues set draft_collection_fetched_at=v_time,draft_collection_count=cardinality(v_ids),draft_collection_fingerprint=v_fingerprint
       where provider='sleeper' and external_league_id=v_collection->>'externalLeagueId' returning id into v_league.id;
     update public.drafts set removed_at=greatest(last_seen_at,v_time) where league_id=v_league.id and removed_at is null and not external_draft_id=any(v_ids);
   end loop;
   insert into public.fantasy_account_draft_collections(fantasy_account_id,sport,season,source_fetched_at,source_draft_count,collection_fingerprint,source_metadata)
-    values(p_fantasy_account_id,'nfl',v_scope.league_season,v_user_time,cardinality(v_user_ids),app_private.context_sha256('fantasyhud:sleeper:account_draft_collection',1,to_jsonb(v_user_ids)),jsonb_build_object('version',1))
+    values(p_fantasy_account_id,'nfl',v_scope.league_season,v_user_time,cardinality(v_user_ids),app_private.draft_source_sha256_v1('account_draft_collection',jsonb_build_object('draft_ids',v_user_ids)),jsonb_build_object('version',1))
     on conflict on constraint fantasy_account_draft_collections_pkey do update set source_fetched_at=excluded.source_fetched_at,source_draft_count=excluded.source_draft_count,collection_fingerprint=excluded.collection_fingerprint,source_metadata=excluded.source_metadata;
   update public.fantasy_account_drafts a set removed_at=greatest(a.last_seen_at,v_user_time)
     from public.drafts d where a.fantasy_account_id=p_fantasy_account_id and a.draft_id=d.id and d.season=v_scope.league_season and a.removed_at is null
     and not d.external_draft_id=any(v_expected) and not(d.board_state='finalized' and a.participation_status='confirmed');
-  update public.sync_runs set status=case when v_unresolved>0 then 'partial' else 'succeeded' end,finished_at=clock_timestamp(),
-    result_counts=jsonb_build_object('drafts',cardinality(v_expected),'finalized_boards',v_finalized,'confirmed_participations',v_confirmed,'unresolved_participations',v_unresolved),
+  update public.sync_runs set status=case when v_unresolved>0 or v_finalized<cardinality(v_expected) then 'partial' else 'succeeded' end,finished_at=clock_timestamp(),
+    result_counts=jsonb_build_object('drafts',cardinality(v_expected),'finalized_boards',v_finalized,'mutable_boards',cardinality(v_expected)-v_finalized,'confirmed_participations',v_confirmed,'unresolved_participations',v_unresolved),
     progress_current=cardinality(v_expected)+1,progress_total=cardinality(v_expected)+1 where id=p_sync_run_id;
   delete from app_private.sleeper_draft_sync_scopes where run_id=p_sync_run_id;
-  return jsonb_build_object('drafts',cardinality(v_expected),'finalizedBoards',v_finalized,'confirmedParticipations',v_confirmed,'unresolvedParticipations',v_unresolved);
+  return jsonb_build_object('drafts',cardinality(v_expected),'finalizedBoards',v_finalized,'mutableBoards',cardinality(v_expected)-v_finalized,'confirmedParticipations',v_confirmed,'unresolvedParticipations',v_unresolved);
 end;
 $$;
 revoke all on function public.complete_sleeper_draft_sync(uuid,uuid,uuid) from public,anon,authenticated;

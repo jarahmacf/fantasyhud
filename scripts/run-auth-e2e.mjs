@@ -44,10 +44,41 @@ const readFixture = (name) =>
   JSON.parse(readFileSync(join(fixturesDirectory, name), "utf8"))
 const nflState = readFixture("nfl-state.json")
 const normalLeagues = readFixture("league-collection-normal.json")
+const draftTestLeagues = normalLeagues.map((league) => ({
+  ...league,
+  league_id: `draft-e2e-${league.league_id}`,
+  draft_id: `draft-e2e-${league.league_id}-board`,
+}))
+function draftTestDetail(league) {
+  return {
+    draft_id: league.draft_id,
+    league_id: league.league_id,
+    sport: "nfl",
+    season: "2026",
+    season_type: "regular",
+    type: "snake",
+    status: "complete",
+    settings: { teams: 2, rounds: 1, pick_timer: 120 },
+    metadata: { name: "Draft import fixture" },
+    start_time: 1786000000000,
+    draft_order: { "fixture-canonical-draft": 1, "draft-peer": 2 },
+    slot_to_roster_id: null,
+    creators: ["fixture-canonical-draft"],
+  }
+}
 const emptyLeagues = readFixture("league-collection-empty.json")
 const malformedLeagues = readFixture("league-collection-malformed.json")
 
 const userFixtures = new Map([
+  [
+    "draft-fixture",
+    {
+      user_id: "fixture-canonical-draft",
+      username: "DraftFixture",
+      display_name: "Draft fixture",
+      avatar: null,
+    },
+  ],
   [
     "fixture-user",
     {
@@ -529,6 +560,65 @@ const mockSleeperServer = createServer((request, response) => {
   }
 
   response.setHeader("content-type", "application/json")
+
+  if (
+    segments[1] === "user" &&
+    segments[2] === "fixture-canonical-draft" &&
+    segments.length === 6 &&
+    segments[4] === "nfl" &&
+    segments[5] === "2026"
+  ) {
+    if (segments[3] === "leagues") {
+      response.end(JSON.stringify(draftTestLeagues))
+      return
+    }
+    if (segments[3] === "drafts") {
+      response.end(JSON.stringify(draftTestLeagues.map(draftTestDetail)))
+      return
+    }
+  }
+  if (
+    segments[1] === "league" &&
+    segments[3] === "drafts" &&
+    segments.length === 4
+  ) {
+    const league = draftTestLeagues.find((l) => l.league_id === segments[2])
+    if (league) {
+      response.end(JSON.stringify([draftTestDetail(league)]))
+      return
+    }
+  }
+  if (segments[1] === "draft") {
+    const league = draftTestLeagues.find((l) => l.draft_id === segments[2])
+    if (league && segments.length === 3) {
+      response.end(JSON.stringify(draftTestDetail(league)))
+      return
+    }
+    if (league && segments.length === 4 && segments[3] === "picks") {
+      response.end(
+        JSON.stringify(
+          [1, 2].map((n) => ({
+            draft_id: league.draft_id,
+            player_id: `draft-e2e-player-${n}`,
+            pick_no: n,
+            round: 1,
+            draft_slot: n,
+            picked_by: n === 1 ? "fixture-canonical-draft" : "draft-peer",
+            roster_id: null,
+            is_keeper: null,
+            metadata: {
+              player_id: `draft-e2e-player-${n}`,
+              first_name: "Draft",
+              last_name: `Player ${n}`,
+              position: "RB",
+              team: "BUF",
+            },
+          }))
+        )
+      )
+      return
+    }
+  }
 
   if (
     segments.length === 3 &&

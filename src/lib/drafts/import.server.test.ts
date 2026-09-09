@@ -52,6 +52,7 @@ beforeEach(() => {
               drafts: 0,
               confirmedParticipations: 0,
               unresolvedParticipations: 0,
+              mutableBoards: 0,
             }
           : null,
   }))

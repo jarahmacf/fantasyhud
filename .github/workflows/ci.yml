@@ -90,6 +90,15 @@ jobs:
       - name: Run authenticated browser tests
         run: npm run e2e:auth
 
+      - name: Upload draft import verification screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-import-verification
+          path: test-results/**/draft-import-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Verify temporary access without a login or server secret
         run: node scripts/run-temporary-access-e2e.mjs
 

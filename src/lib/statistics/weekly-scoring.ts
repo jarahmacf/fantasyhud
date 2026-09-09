@@ -89,7 +89,7 @@ export function scoreWeeklyBoxScore(
     }
   return {
     status: "available",
-    points: Math.round(points * 1_000_000) / 1_000_000,
+    points,
     version: WEEKLY_SCORING_VERSION,
   }
 }

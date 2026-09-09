@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest"
 import { scoreWeeklyBoxScore } from "./weekly-scoring"
 
 describe("exact weekly scoring coverage", () => {
+  it("preserves small nonzero custom weights", () => {
+    expect(
+      scoreWeeklyBoxScore({ rec: 0.00000001 }, "RB", { receptions: 1 })
+    ).toMatchObject({ status: "available", points: 0.00000001 })
+  })
   it("applies the exact reception and positional premium values", () => {
     const rules = { rec: 1, bonus_rec_te: 0.75, bonus_rec_rb: 0.5, rec_yd: 0.1 }
     const stats = {

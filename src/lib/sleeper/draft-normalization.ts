@@ -230,27 +230,30 @@ export function normalizeDraftBoard(
         status: display(metadata.status, 64),
         injuryStatus: display(metadata.injury_status, 64),
         metadata,
-        sourceMetadata: {
-          picked_by_source: source.picked_by ?? null,
-          roster_id_source: source.roster_id ?? null,
-          unreviewed_fields: Object.fromEntries(
-            Object.entries(source).filter(
-              ([key]) =>
-                ![
-                  "draft_id",
-                  "player_id",
-                  "pick_no",
-                  "round",
-                  "draft_slot",
-                  "picked_by",
-                  "roster_id",
-                  "is_keeper",
-                  "metadata",
-                  "reactions",
-                ].includes(key)
-            )
-          ),
-        },
+        sourceMetadata: object(
+          {
+            picked_by_source: source.picked_by ?? null,
+            roster_id_source: source.roster_id ?? null,
+            unreviewed_fields: Object.fromEntries(
+              Object.entries(source).filter(
+                ([key]) =>
+                  ![
+                    "draft_id",
+                    "player_id",
+                    "pick_no",
+                    "round",
+                    "draft_slot",
+                    "picked_by",
+                    "roster_id",
+                    "is_keeper",
+                    "metadata",
+                    "reactions",
+                  ].includes(key)
+              )
+            ),
+          },
+          32_768
+        ),
       }
     })
     .sort((a, b) => a.pickNo - b.pickNo)

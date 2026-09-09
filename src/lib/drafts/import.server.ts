@@ -92,6 +92,7 @@ export async function importPrimaryAccountDrafts(): Promise<DraftImportResult> {
       "drafts",
       "confirmedParticipations",
       "unresolvedParticipations",
+      "mutableBoards",
     ])
       if (
         typeof counts[key] !== "number" ||
@@ -99,11 +100,13 @@ export async function importPrimaryAccountDrafts(): Promise<DraftImportResult> {
         counts[key] < 0
       )
         throw new Error("Invalid draft result counts.")
-    const partial = (counts.unresolvedParticipations as number) > 0
+    const partial =
+      (counts.unresolvedParticipations as number) > 0 ||
+      (counts.mutableBoards as number) > 0
     return {
       status: partial ? "partial" : "success",
       message: partial
-        ? "Drafts imported; some participation could not be confirmed."
+        ? "Drafts imported; some boards or participation remain unresolved."
         : "Draft import complete.",
       drafts: counts.drafts as number,
       confirmedParticipations: counts.confirmedParticipations as number,

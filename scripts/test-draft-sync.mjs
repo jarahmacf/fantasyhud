@@ -123,7 +123,7 @@ function board(id, league, users, time, rounds = 1) {
       auctionAmount: null,
       entityType: "player",
       position: "RB",
-      metadata: {},
+      metadata: { audit_padding: "x".repeat(1024) },
       sourceMetadata: {},
     })),
   }
