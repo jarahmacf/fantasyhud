@@ -102,6 +102,15 @@ jobs:
       - name: Verify temporary access without a login or server secret
         run: node scripts/run-temporary-access-e2e.mjs
 
+      - name: Upload live tracker verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-tracker-verification
+          path: test-results/**/tracker-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Upload draft-value visual baselines
         if: always()
         uses: actions/upload-artifact@v4
