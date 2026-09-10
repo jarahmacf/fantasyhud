@@ -284,6 +284,9 @@ export function LiveTracker() {
                 .filter((p) => p.own)
                 .map((p) => ({
                   ...p,
+                  actualRank: null,
+                  rankDelta: null,
+                  pointsAbovePrice: null,
                   key: `${detail.league.token}:${draft.id}:${p.id}`,
                   league: detail.league.name,
                   type: draft.type,
@@ -490,8 +493,8 @@ export function LiveTracker() {
           {bulk.running
             ? `Loading ${bulk.done}/${bulk.total}…`
             : Object.keys(portfolio).length
-              ? "Refresh all draft boards"
-              : "Load all draft boards"}
+              ? "Refresh board history"
+              : "Load full board history"}
         </Button>
         <Input
           className="sm:ml-auto sm:w-72"
@@ -523,7 +526,7 @@ export function LiveTracker() {
           <ResearchWorkbench />
           <details>
             <summary className="cursor-pointer text-sm">
-              Legacy board diagnostics and exports
+              Full board history and exports
             </summary>
             <DataTable
               ariaLabel="Whole draft portfolio"
@@ -584,11 +587,10 @@ export function LiveTracker() {
             </Link>
           </Button>
           <p className="mt-3 text-sm text-muted-foreground">
-            The league overview refreshes every two minutes while this page is
-            visible. Use Refresh all draft boards to update portfolio values.
-            Sleeper retains matchup history; export a snapshot for a dated copy.
-            This view reads live source data and does not overwrite your saved
-            imports.
+            League scores and automatic draft research refresh every two minutes
+            while visible. Full board history is available separately for
+            inspecting all selections and exporting source observations. Your
+            saved imports are preserved.
           </p>
         </CardContent>
       </Card>
