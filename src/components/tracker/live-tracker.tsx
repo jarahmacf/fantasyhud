@@ -492,13 +492,13 @@ export function LiveTracker() {
       {tab === "drafts" ? (
         <DataTable
           ariaLabel="Whole draft portfolio"
-          title="All your draft selections"
+          title="Confirmed draft selections"
           columns={draftColumns}
           data={draftRows}
           getRowId={(p) => p.key}
           searchText={search}
           countNoun="selections"
-          description="Costs and rank comparisons stay within each league, draft and position. No rank deltas are averaged across positions. Load all boards to populate this view."
+          description="Only source-confirmed draft participation is assigned to you. Open a league and clear My selections to inspect its full board. Costs and rank comparisons stay within each league, draft and position."
         />
       ) : tab === "leagues" ? (
         <DataTable
@@ -568,15 +568,14 @@ export function LiveTracker() {
             </SheetDescription>
           </SheetHeader>
           <div className="space-y-6 p-4">
-            {detailError ? (
-              <p role="alert">{detailError}</p>
-            ) : detail ? (
+            {detailError ? <p role="alert">{detailError}</p> : null}
+            {detail ? (
               <LeagueDetail detail={detail} players={data?.players ?? []} />
-            ) : (
+            ) : !detailError ? (
               <p className="text-sm text-muted-foreground">
                 Fetching full boards and weekly matchups…
               </p>
-            )}
+            ) : null}
           </div>
         </SheetContent>
       </Sheet>
