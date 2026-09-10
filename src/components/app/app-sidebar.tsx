@@ -44,6 +44,15 @@ export function AppSidebar({
       label: "Workspace",
       items: [
         ...(identity ? [{ title: "Leagues", url: "/", icon: Trophy }] : []),
+        ...(identity?.accountLabel === "@jarahmacf"
+          ? [
+              {
+                title: "Live tracker",
+                url: "/tracker",
+                icon: ChartNoAxesCombined,
+              },
+            ]
+          : []),
         ...(identity
           ? [{ title: "Rosters", url: "/rosters", icon: LibraryBig }]
           : []),
