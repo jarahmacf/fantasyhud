@@ -23,9 +23,11 @@ import {
 function Trajectory({
   profile,
   baseline,
+  baselineLabel,
 }: {
   profile: Profile
   baseline: number | null
+  baselineLabel: string
 }) {
   const rows = profile.weekly,
     known = rows.filter((r) => r.rank !== null),
@@ -38,9 +40,8 @@ function Trajectory({
       <CardHeader>
         <CardTitle>Price and rank trajectory</CardTitle>
         <CardDescription>
-          Lower rank is better. The dashed line is the selected purchase’s
-          price-implied rank, or the player’s market rank when no purchase
-          exists. Open circles mark unfinished weeks.
+          Lower rank is better. The dashed line shows the labelled purchase
+          benchmark or market reference. Open circles mark unfinished weeks.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -95,7 +96,7 @@ function Trajectory({
                   fill="currentColor"
                   fontSize="12"
                 >
-                  Price {n(baseline)}
+                  {baselineLabel} {n(baseline)}
                 </text>
               </g>
             ) : null}
@@ -350,7 +351,7 @@ export function PlayerProfile({
             <Metric
               label="Points including live week"
               value={n(data.livePoints)}
-              detail={`${data.games} recorded games · ${n(data.ppg)} points per game`}
+              detail={`${data.games} recorded ${data.games === 1 ? "game" : "games"} · ${n(data.ppg)} points per game`}
             />
             <Metric
               label="Completed-week position rank"
@@ -419,7 +420,20 @@ export function PlayerProfile({
             <>
               <Trajectory
                 profile={data}
-                baseline={acquisition?.impliedRank ?? data.marketRank}
+                baseline={
+                  acquisition
+                    ? (acquisition.impliedRank ??
+                      acquisition.rankBound?.value ??
+                      null)
+                    : data.marketRank
+                }
+                baselineLabel={
+                  acquisition
+                    ? acquisition.rankBound
+                      ? `Price bound ${acquisition.rankBound.direction === "at_most" ? "≤" : "≥"}`
+                      : "Price"
+                    : "Market"
+                }
               />
               <DataTable
                 ariaLabel="Player weekly results"

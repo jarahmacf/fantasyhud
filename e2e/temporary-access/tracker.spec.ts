@@ -107,7 +107,9 @@ test("tracks league matchups, whole draft portfolio and price comparisons withou
   await page
     .getByRole("button", { name: "Draft portfolio", exact: true })
     .click()
-  await page.getByLabel("Draft type", { exact: true }).selectOption("auction")
+  await page
+    .getByRole("combobox", { name: "Draft type", exact: true })
+    .selectOption("auction")
   await expect(
     page.getByRole("cell", { name: "$30", exact: true })
   ).toBeVisible()

@@ -17,7 +17,14 @@ export default async function PlayerPage({
   if (!access?.account) redirect("/auth/sign-in")
   if (!/^[a-f0-9]{24}$/.test(token)) notFound()
   return (
-    <AppShell identity={access.identity}>
+    <AppShell
+      identity={access.identity}
+      section={{
+        title: "Player research",
+        description: "Price and performance",
+        badge: "Player profile",
+      }}
+    >
       <div className="space-y-6 px-4 lg:px-6">
         <PlayerProfile token={token} initialContext={context ?? null} />
       </div>

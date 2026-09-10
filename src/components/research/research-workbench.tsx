@@ -216,6 +216,7 @@ export function AcquisitionTable({
   return (
     <DataTable
       ariaLabel="Automatic draft valuation"
+      pageSize={50}
       title={title}
       description="Positive ADP value means acquired later/cheaper than the current market reference. Rank gain compares price-implied positional rank with completed-week performance. Open any player for the full calculation, weekly history and source details."
       columns={columns}
