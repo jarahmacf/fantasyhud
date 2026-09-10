@@ -92,7 +92,7 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
-async function readBoundedResponseBody(
+export async function readBoundedResponseBody(
   response: Response,
   controller: AbortController,
   maxResponseBytes?: number

@@ -1,5 +1,7 @@
 # ADP context architecture
 
+> Implementation update: the single-user prototype now includes automatic source-backed ADP/auction matching and player profiles. See [source contracts, methodology, coverage and verification](docs/verification/source-backed-player-research.md). Current-reference observations are explicitly separate from the historical, frozen-at-draft architecture described below.
+
 This document is the engineering and product contract for contextual average-pick, ranking, and draft-capital analytics. `PRICE_IMPLIED_RANK.md` describes the implemented pure pricing engines and manual `/draft-value` calculator. No ADP/AAV feed, market table, automatic portfolio metric or provider request has been added. Reviewed migrations remain the SQL source of truth.
 
 ## Core rule

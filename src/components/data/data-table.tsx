@@ -8,6 +8,7 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
@@ -41,6 +42,7 @@ type DataTableProps<Row> = {
   headingId?: string
   searchText: string
   title: string
+  pageSize?: number
 }
 
 const alignmentClassNames = {
@@ -70,10 +72,13 @@ export function DataTable<Row>({
   description,
   emptyMessage = "No results.",
   getRowId,
-  headingId = "data-table-heading",
+  headingId,
+  pageSize,
   searchText,
   title,
 }: DataTableProps<Row>) {
+  const generatedHeadingId = React.useId()
+  const resolvedHeadingId = headingId ?? generatedHeadingId
   const [sorting, setSorting] = React.useState<SortingState>([])
   // TanStack Table returns stable stateful helpers that React Compiler intentionally skips.
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -84,6 +89,10 @@ export function DataTable<Row>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: pageSize ? getPaginationRowModel() : undefined,
+    initialState: pageSize
+      ? { pagination: { pageIndex: 0, pageSize } }
+      : undefined,
     globalFilterFn: "includesString",
     onSortingChange: setSorting,
     state: {
@@ -98,10 +107,10 @@ export function DataTable<Row>({
     : `${data.length} ${countNoun}`
 
   return (
-    <section aria-labelledby={headingId} className="min-w-0">
+    <section aria-labelledby={resolvedHeadingId} className="min-w-0">
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <h2 id={headingId} className="text-sm font-semibold">
+          <h2 id={resolvedHeadingId} className="text-sm font-semibold">
             {title}
           </h2>
           {description ? (
@@ -218,6 +227,28 @@ export function DataTable<Row>({
           </TableBody>
         </Table>
       </div>
+      {pageSize && filteredCount > pageSize ? (
+        <div className="mt-3 flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+          >
+            Previous
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </p>
+          <Button
+            variant="outline"
+            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      ) : null}
     </section>
   )
 }

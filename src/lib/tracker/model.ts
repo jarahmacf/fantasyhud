@@ -1,6 +1,7 @@
 import { exactDraftToken } from "@/lib/sleeper/draft-normalization"
 
 export type TrackerPlayer = {
+  token?: string
   id: string
   name: string
   position: string
@@ -48,6 +49,8 @@ export type TrackerDraft = {
   teams: number | null
   picks: TrackerPick[]
   error: string | null
+  budget?: number | null
+  leagueToken?: string
 }
 export type TrackerLeague = {
   token: string
@@ -71,6 +74,14 @@ export type TrackerOverview = {
   fetchedAt: string
   leagues: TrackerLeague[]
   players: TrackerPlayer[]
+  membershipCount?: number
+  otherLeagues?: TrackerLeague[]
+  draftSummary?: {
+    completed: number
+    snake: number
+    auction: number
+    unresolved: number
+  }
 }
 export type TrackerDetail = {
   league: TrackerLeague

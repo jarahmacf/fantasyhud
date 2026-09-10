@@ -1,3 +1,4 @@
+import { ResearchWorkbench } from "@/components/research/research-workbench"
 import { redirect } from "next/navigation"
 import { connection } from "next/server"
 
@@ -28,24 +29,40 @@ export default async function PlayersPage() {
     )
   }
 
+  const prototype = account.username === "jarahmacf"
+  const CatalogSection = prototype ? "details" : "div"
   const hasImported = dashboard.lastRefreshedAt !== null
 
   return (
     <AppShell identity={identityLabel}>
       <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-start sm:justify-between lg:px-6">
         <PageHeading
-          title="Player catalog"
-          description="Shared Sleeper NFL player identities and current profiles"
+          title={prototype ? "Players" : "Player catalog"}
+          description={
+            prototype
+              ? "Player profiles, draft prices, weekly performance and portfolio exposure"
+              : "Shared Sleeper NFL player identities and current profiles"
+          }
         />
         {!readOnly ? <PlayerCatalogControl hasSucceeded={hasImported} /> : null}
       </div>
 
       <div className="@container/main space-y-6 px-4 lg:px-6">
-        <PlayerCatalogSummary dashboard={dashboard} />
-        <PlayerCatalogTable
-          players={dashboard.preview}
-          hasImported={hasImported}
-        />
+        {account.username === "jarahmacf" ? (
+          <ResearchWorkbench mode="players" />
+        ) : null}
+        <CatalogSection className="space-y-6">
+          {prototype ? (
+            <summary className="cursor-pointer text-sm font-medium">
+              Imported identity catalog
+            </summary>
+          ) : null}
+          <PlayerCatalogSummary dashboard={dashboard} />
+          <PlayerCatalogTable
+            players={dashboard.preview}
+            hasImported={hasImported}
+          />
+        </CatalogSection>
       </div>
     </AppShell>
   )

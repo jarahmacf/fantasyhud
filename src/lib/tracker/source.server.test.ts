@@ -108,7 +108,7 @@ it("derives canonical identity and season on the server", async () => {
     2026,
     expect.anything()
   )
-  expect(result.leagues[0]).toMatchObject({
+  expect(result.otherLeagues![0]).toMatchObject({
     error: null,
     rosters: [
       expect.objectContaining({ owned: true }),
@@ -116,6 +116,9 @@ it("derives canonical identity and season on the server", async () => {
     ],
   })
   expect(JSON.stringify(result)).not.toContain(owner)
+  expect(result.leagues).toHaveLength(0)
+  expect(result.draftSummary?.completed).toBe(0)
+  expect(result.membershipCount).toBe(1)
 })
 it("does not accept a provider league ID or an unrelated token", async () => {
   await expect(loadTrackerDetail("fixture-league")).rejects.toThrow("Invalid")
@@ -133,12 +136,12 @@ it("preserves a failed league as an explicit error", async () => {
     return { data: [], responseBytes: 2, fetchedAt: "2026-09-09T23:00:00Z" }
   })
   const result = await loadTrackerOverview()
-  expect(result.leagues).toHaveLength(1)
-  expect(result.leagues[0]!.error).toBeTruthy()
+  expect(result.otherLeagues).toHaveLength(1)
+  expect(result.otherLeagues![0]!.error).toBeTruthy()
 })
 it("loads matchup history only for a server-discovered league", async () => {
   const overview = await loadTrackerOverview()
-  const detail = await loadTrackerDetail(overview.leagues[0]!.token)
+  const detail = await loadTrackerDetail(overview.otherLeagues![0]!.token)
   expect(detail.weeks).toHaveLength(1)
   expect(detail.weeks[0]!.matchups![0]!.playerPoints).toEqual({ p1: 10 })
   expect(detail.drafts).toEqual([])

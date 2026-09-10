@@ -1,3 +1,4 @@
+import { ResearchWorkbench } from "@/components/research/research-workbench"
 import { redirect } from "next/navigation"
 import { connection } from "next/server"
 import { AppShell } from "@/components/app/app-shell"
@@ -21,6 +22,8 @@ export default async function DraftValuePage() {
   const access = await getWorkspaceAccess()
   if (!access) redirect("/auth/sign-in")
   if (!access.account) redirect("/onboarding")
+  const prototype = access.account.username === "jarahmacf"
+  const AdvancedSection = prototype ? "details" : "div"
   const draftSummary = await getDraftImportSummary(
     access.supabase,
     access.account.id
@@ -30,7 +33,9 @@ export default async function DraftValuePage() {
       identity={access.identity}
       section={{
         title: "Draft value",
-        description: "Manual calculation",
+        description: prototype
+          ? "Automatic price and performance tracking"
+          : "Manual calculation",
         badge: "Price and performance",
       }}
     >
@@ -41,30 +46,38 @@ export default async function DraftValuePage() {
         />
       </div>
       <div className="@container/main space-y-6 px-4 lg:px-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {draftSummary.status === "imported"
-                ? `${draftSummary.drafts} drafts imported`
-                : draftSummary.status === "unavailable"
-                  ? "Draft import status is unavailable"
-                  : "Portfolio tracking is not connected yet"}
-            </CardTitle>
-            <CardDescription>
-              {draftSummary.status === "imported"
-                ? `${draftSummary.finalized} boards finalized${draftSummary.partial ? "; some boards or participation remain unresolved" : ""}. Automatic price comparisons still need dated ADP or auction samples and weekly results under your exact scoring rules. The calculator below uses your own inputs.`
-                : "Your roster imports do not include draft purchases. Automatic comparisons still need complete draft imports, dated ADP or auction market samples, and weekly results calculated under your exact scoring rules. You can use your own inputs in the calculator below."}
-            </CardDescription>
-          </CardHeader>
-          {!access.readOnly ? (
-            <CardFooter>
-              <DraftImportControl
-                hasImported={draftSummary.status === "imported"}
-              />
-            </CardFooter>
+        {access.account.username === "jarahmacf" ? <ResearchWorkbench /> : null}
+        <AdvancedSection className="space-y-6">
+          {prototype ? (
+            <summary className="cursor-pointer text-sm font-medium">
+              Saved imports and advanced manual calculator
+            </summary>
           ) : null}
-        </Card>
-        <DraftValueCalculator accountId={access.account.id} />
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {draftSummary.status === "imported"
+                  ? `${draftSummary.drafts} drafts imported`
+                  : draftSummary.status === "unavailable"
+                    ? "Draft import status is unavailable"
+                    : "Portfolio tracking is not connected yet"}
+              </CardTitle>
+              <CardDescription>
+                {draftSummary.status === "imported"
+                  ? `${draftSummary.finalized} boards finalized${draftSummary.partial ? "; some boards or participation remain unresolved" : ""}. Automatic research above pairs source ADP and weekly results. The optional calculator below also accepts your own scenario inputs.`
+                  : "Your roster imports do not include draft purchases. Automatic comparisons still need complete draft imports, dated ADP or auction market samples, and weekly results calculated under your exact scoring rules. You can use your own inputs in the calculator below."}
+              </CardDescription>
+            </CardHeader>
+            {!access.readOnly ? (
+              <CardFooter>
+                <DraftImportControl
+                  hasImported={draftSummary.status === "imported"}
+                />
+              </CardFooter>
+            ) : null}
+          </Card>
+          <DraftValueCalculator accountId={access.account.id} />
+        </AdvancedSection>
       </div>
     </AppShell>
   )
