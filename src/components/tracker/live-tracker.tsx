@@ -1,4 +1,5 @@
 "use client"
+import { ResearchWorkbench } from "@/components/research/research-workbench"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -173,7 +174,10 @@ export function LiveTracker() {
     setDetailError(null)
     setSelection(league.token)
   }, [])
-  const leagues = data?.leagues ?? []
+  const [showMemberships, setShowMemberships] = useState(false)
+  const leagues = showMemberships
+    ? [...(data?.leagues ?? []), ...(data?.otherLeagues ?? [])]
+    : (data?.leagues ?? [])
   const columns = useMemo<ColumnDef<TrackerLeague>[]>(
     () => [
       {
@@ -345,7 +349,21 @@ export function LiveTracker() {
   )
   const playerColumns = useMemo<ColumnDef<(typeof holdings)[number]>[]>(
     () => [
-      { accessorKey: "name", header: "Player" },
+      {
+        accessorKey: "name",
+        header: "Player",
+        cell: ({ row }) =>
+          row.original.token ? (
+            <Link
+              href={`/players/${row.original.token}`}
+              className="font-medium hover:underline"
+            >
+              {row.original.name}
+            </Link>
+          ) : (
+            row.original.name
+          ),
+      },
       { accessorKey: "position", header: "Position" },
       { accessorKey: "team", header: "Catalog team" },
       { accessorKey: "leagues", header: "Leagues held" },
@@ -407,9 +425,11 @@ export function LiveTracker() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
-            label: "Current leagues",
-            value: data ? leagues.length : null,
-            detail: "Complete current-season discovery",
+            label: "Completed drafts",
+            value: data ? (data.draftSummary?.completed ?? null) : null,
+            detail: data?.draftSummary
+              ? `${data.draftSummary.snake} snake / linear · ${data.draftSummary.auction} auction`
+              : "Verifying full boards and your picks",
           },
           {
             label: "Confirmed rosters",
@@ -481,6 +501,15 @@ export function LiveTracker() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+      <label className="flex items-center gap-2 text-sm text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={showMemberships}
+          onChange={(e) => setShowMemberships(e.target.checked)}
+        />
+        Include all {data?.membershipCount ?? ""} memberships (including
+        unstarted and non-participated drafts)
+      </label>
       {bulk.total > 0 ? (
         <p role="status" className="text-sm text-muted-foreground">
           Draft boards checked: {bulk.done}/{bulk.total}.{" "}
@@ -490,20 +519,30 @@ export function LiveTracker() {
         </p>
       ) : null}
       {tab === "drafts" ? (
-        <DataTable
-          ariaLabel="Whole draft portfolio"
-          title="Confirmed draft selections"
-          columns={draftColumns}
-          data={draftRows}
-          getRowId={(p) => p.key}
-          searchText={search}
-          countNoun="selections"
-          description="Only source-confirmed draft participation is assigned to you. Open a league and clear My selections to inspect its full board. Costs and rank comparisons stay within each league, draft and position."
-        />
+        <>
+          <ResearchWorkbench />
+          <details>
+            <summary className="cursor-pointer text-sm">
+              Legacy board diagnostics and exports
+            </summary>
+            <DataTable
+              ariaLabel="Whole draft portfolio"
+              title="Confirmed draft selections"
+              columns={draftColumns}
+              data={draftRows}
+              getRowId={(p) => p.key}
+              searchText={search}
+              countNoun="selections"
+              description="Only source-confirmed draft participation is assigned to you. Open a league and clear My selections to inspect its full board. Costs and rank comparisons stay within each league, draft and position."
+            />
+          </details>
+        </>
       ) : tab === "leagues" ? (
         <DataTable
           ariaLabel="Live league matchups"
-          title="All your leagues"
+          title={
+            showMemberships ? "All league memberships" : "Your drafted leagues"
+          }
           columns={columns}
           data={leagues}
           getRowId={(l) => l.token}
@@ -532,16 +571,15 @@ export function LiveTracker() {
         <CardHeader>
           <CardTitle>Draft price and performance</CardTitle>
           <CardDescription>
-            Open a league to compare its draft-cost position rank with
-            Sleeper-scored results. These are league draft-pool ranks, not
-            full-NFL ranks or market ADP. Current-week scores are provisional;
-            missing player-weeks suppress rank comparisons.
+            Open Draft portfolio for automatic Sleeper ADP matching, auction
+            pick equivalents and full-NFL positional performance. Open a player
+            profile to inspect every acquisition and weekly result.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" asChild>
             <Link href="/draft-value">
-              Open market ADP / auction price calculator
+              Open automatic ADP and auction valuation
               <ArrowRight />
             </Link>
           </Button>
@@ -596,7 +634,14 @@ function LeagueDetail({
   const rows = useMemo(() => {
     if (!draft) return []
     try {
-      return evaluateTrackerDraft(draft, detail.weeks, detail.weeks.length)
+      return evaluateTrackerDraft(draft, detail.weeks, detail.weeks.length).map(
+        (row) => ({
+          ...row,
+          actualRank: null,
+          rankDelta: null,
+          pointsAbovePrice: null,
+        })
+      )
     } catch {
       return []
     }
@@ -769,7 +814,7 @@ function LeagueDetail({
         getRowId={(r) => r.id}
         searchText={search}
         countNoun="selections"
-        description={`${draft?.complete ? "Complete board" : "Unfinished board"}. Draft-cost rank ${draft?.type === "auction" ? "uses dollars paid" : "follows selection order"} within each position. Scored rank uses this draft pool only. Missing player-weeks leave rank/gain/loss blank; a zero before any scoring activity is not a finish.`}
+        description={`${draft?.complete ? "Complete board" : "Unfinished board"}. Draft-cost rank here is a legacy board-order diagnostic. Use the automatic Draft portfolio for market ADP, auction equivalence and verified performance comparisons.`}
       />
       <Card>
         <CardHeader>

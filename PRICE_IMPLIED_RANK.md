@@ -1,5 +1,7 @@
 # Price-implied positional rank
 
+> Implementation update: the single-user prototype now includes automatic source-backed ADP/auction matching and player profiles. See [source contracts, methodology, coverage and verification](docs/verification/source-backed-player-research.md). Current-reference observations are explicitly separate from the historical, frozen-at-draft architecture described below.
+
 The domain engine in `src/lib/draft-value` converts draft price into a positional market benchmark and compares that fixed benchmark with an outcome rank. `/draft-value` provides an explicitly manual calculator with optional device-local saving. This release creates no database tables, draft import, ADP/AAV feed, raw-stat import, scoring engine, scheduled tracking, or server-persisted benchmarks. Task 008B remains unstarted.
 
 ## What the benchmark means

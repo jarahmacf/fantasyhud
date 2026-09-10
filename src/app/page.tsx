@@ -1,3 +1,4 @@
+import { LiveTracker } from "@/components/tracker/live-tracker"
 import { getDraftImportSummary } from "@/lib/drafts/summary.server"
 import { redirect } from "next/navigation"
 import { connection } from "next/server"
@@ -46,13 +47,15 @@ export default async function Home() {
     )
   }
 
+  const prototype = account.username === "jarahmacf"
+  const SavedSection = prototype ? "details" : "div"
   const latestStatus = getLatestStatus(dashboard.latestAttempt?.status)
 
   return (
     <AppShell identity={identity}>
       <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-start sm:justify-between lg:px-6">
         <PageHeading
-          title="Sleeper leagues"
+          title={prototype ? "Your league portfolio" : "Sleeper leagues"}
           description={`Current-season league discovery for @${account.username}`}
         />
         {!readOnly ? (
@@ -63,31 +66,39 @@ export default async function Home() {
       </div>
 
       <div className="@container/main space-y-6 px-4 lg:px-6">
-        <LeagueSummaryCards
-          username={account.username}
-          displayName={account.display_name}
-          leagueSeason={dashboard.currentLeagueSeason}
-          activeLeagueCount={dashboard.leagues.length}
-          latestStatus={latestStatus}
-          latestSeason={dashboard.latestAttempt?.season ?? null}
-        />
-        <LeagueTable
-          leagues={dashboard.leagues}
-          hasSuccessfulDiscovery={dashboard.hasSuccessfulDiscovery}
-        />
-        <p className="text-sm text-muted-foreground">
-          {draftSummary.status === "unavailable"
-            ? "Draft import status is unavailable."
-            : draftSummary.status === "imported" && draftSummary.partial
-              ? "Draft import is partial. Some boards or participation remain unresolved."
-              : draftSummary.status === "imported" && draftSummary.drafts > 0
-                ? dashboard.hasCurrentSeasonRosterImport
-                  ? "Rosters and drafts imported."
-                  : "Drafts imported. Rosters not imported."
-                : dashboard.hasCurrentSeasonRosterImport
-                  ? "Rosters imported. Drafts not imported."
-                  : "Rosters and drafts not imported."}
-        </p>
+        {account.username === "jarahmacf" ? <LiveTracker /> : null}
+        <SavedSection className="space-y-6">
+          {prototype ? (
+            <summary className="cursor-pointer text-sm font-medium">
+              All saved league memberships and import status
+            </summary>
+          ) : null}
+          <LeagueSummaryCards
+            username={account.username}
+            displayName={account.display_name}
+            leagueSeason={dashboard.currentLeagueSeason}
+            activeLeagueCount={dashboard.leagues.length}
+            latestStatus={latestStatus}
+            latestSeason={dashboard.latestAttempt?.season ?? null}
+          />
+          <LeagueTable
+            leagues={dashboard.leagues}
+            hasSuccessfulDiscovery={dashboard.hasSuccessfulDiscovery}
+          />
+          <p className="text-sm text-muted-foreground">
+            {draftSummary.status === "unavailable"
+              ? "Draft import status is unavailable."
+              : draftSummary.status === "imported" && draftSummary.partial
+                ? "Draft import is partial. Some boards or participation remain unresolved."
+                : draftSummary.status === "imported" && draftSummary.drafts > 0
+                  ? dashboard.hasCurrentSeasonRosterImport
+                    ? "Rosters and drafts imported."
+                    : "Drafts imported. Rosters not imported."
+                  : dashboard.hasCurrentSeasonRosterImport
+                    ? "Rosters imported. Drafts not imported."
+                    : "Rosters and drafts not imported."}
+          </p>
+        </SavedSection>
       </div>
     </AppShell>
   )

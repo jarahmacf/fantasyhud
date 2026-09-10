@@ -1,3 +1,4 @@
+import { research, profile } from "./research-fixture"
 import { expect, test } from "@playwright/test"
 const league = {
   token: "a".repeat(24),
@@ -80,6 +81,13 @@ const detail = {
 test("tracks league matchups, whole draft portfolio and price comparisons without login", async ({
   page,
 }, info) => {
+  await page.route("**/api/research**", (route) =>
+    route.fulfill({
+      json: new URL(route.request().url()).searchParams.has("player")
+        ? profile
+        : research,
+    })
+  )
   await page.route("**/api/tracker**", (route) =>
     route.fulfill({
       json: new URL(route.request().url()).searchParams.has("league")
@@ -96,11 +104,63 @@ test("tracks league matchups, whole draft portfolio and price comparisons withou
   ).toBeVisible()
   await page.getByRole("button", { name: "Player exposure" }).click()
   await expect(page.getByText("Fixture Runner", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "Load all draft boards" }).click()
-  await expect(page.getByText("Runner 1", { exact: true })).toBeVisible()
+  await page
+    .getByRole("button", { name: "Draft portfolio", exact: true })
+    .click()
+  await page.getByLabel("Draft type", { exact: true }).selectOption("auction")
   await expect(
-    page.getByRole("cell", { name: "-1", exact: true })
+    page.getByRole("cell", { name: "$30", exact: true })
   ).toBeVisible()
+  await expect(
+    page.getByRole("cell", { name: "≈ 52", exact: true })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("cell", { name: "+12", exact: true })
+  ).toBeVisible()
+  await page.getByRole("link", { name: "Fixture Runner" }).click()
+  await expect(
+    page.getByRole("heading", { name: "Fixture Runner", exact: true })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("img", {
+      name: "Weekly cumulative positional rank compared with price-implied rank",
+    })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("table", { name: "Player weekly results" })
+  ).toBeVisible()
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.screenshot({
+    path: info.outputPath("tracker-player-desktop.png"),
+    animations: "disabled",
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.screenshot({
+    path: info.outputPath("tracker-player-mobile.png"),
+    animations: "disabled",
+  })
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true)
+  await page.getByRole("button", { name: "All acquisitions (1)" }).click()
+  await expect(
+    page.getByRole("cell", { name: "$30", exact: true })
+  ).toBeVisible()
+  await page
+    .getByRole("button", { name: "Research notes", exact: true })
+    .click()
+  await page.getByLabel("Your notes").fill("Watch the weekly workload.")
+  await page.getByRole("button", { name: "Save notes" }).click()
+  await page.reload()
+  await page
+    .getByRole("button", { name: "Research notes", exact: true })
+    .click()
+  await expect(page.getByLabel("Your notes")).toHaveValue(
+    "Watch the weekly workload."
+  )
+  await page.goto("/tracker")
   await page.getByRole("button", { name: "Leagues & matchups" }).click()
   await page.getByRole("button", { name: "Kickoff fixture" }).click()
   await expect(page.getByRole("dialog")).toBeVisible()

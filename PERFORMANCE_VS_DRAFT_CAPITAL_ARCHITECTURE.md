@@ -1,5 +1,7 @@
 # Performance versus draft capital architecture
 
+> Implementation update: the single-user prototype now includes automatic source-backed ADP/auction matching and player profiles. See [source contracts, methodology, coverage and verification](docs/verification/source-backed-player-research.md). Current-reference observations are explicitly separate from the historical, frozen-at-draft architecture described below.
+
 This document is the engineering and product contract for comparisons between draft investment and player outcomes. The pure price-curve, acquisition-benchmark and already-scored outcome-ranking engines, plus a manual `/draft-value` calculator, are implemented as described in `PRICE_IMPLIED_RANK.md`. Automated portfolio tracking, statistics ingestion, a custom-scoring engine and persisted performance tables remain future work. Reviewed migrations remain the SQL source of truth.
 
 ## Purpose and analytical levels

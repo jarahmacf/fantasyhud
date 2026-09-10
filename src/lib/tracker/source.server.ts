@@ -1,4 +1,5 @@
 import "server-only"
+import { hasCompletedParticipation } from "@/lib/research/model"
 import { createHash } from "node:crypto"
 import { unstable_cache } from "next/cache"
 import { getWorkspaceAccess } from "@/lib/access/workspace.server"
@@ -32,6 +33,11 @@ export async function requireTrackerAccess() {
     )
   return access
 }
+export const trackerPlayerToken = (id: string) =>
+  createHash("sha256")
+    .update(`fantasyhud:player:v1:${id}`)
+    .digest("hex")
+    .slice(0, 24)
 const tokenFor = (id: string, season: number) =>
   createHash("sha256")
     .update(`fantasyhud:tracker:v1:${sleeperOwner}:${season}:${id}`)
@@ -69,14 +75,109 @@ const discovery = unstable_cache(
       "nfl",
       String(state.season),
     ])
-    const userDraftIds = normalizeDraftList(userDrafts.data, state.season).map(
-      (d) => d.externalDraftId
-    )
-    return { state, leagues, userDraftIds }
+    const userDraftList = normalizeDraftList(userDrafts.data, state.season)
+    return {
+      state,
+      leagues,
+      userDraftIds: userDraftList.map((d) => d.externalDraftId),
+      userDraftList,
+    }
   },
-  ["jarahmacf-tracker-discovery-v1"],
+  ["jarahmacf-tracker-discovery-v2"],
   { revalidate: 120 }
 )
+
+const readBoard = unstable_cache(
+  async (
+    id: string,
+    season: number,
+    leagueId: string | null
+  ): Promise<TrackerDraft> => {
+    const [d, p] = await Promise.all([
+      read(["draft", id]),
+      read(["draft", id, "picks"]),
+    ])
+    const detail = normalizeDraftDetail(
+      d.data,
+      season,
+      id,
+      leagueId ?? undefined
+    )
+    const board = normalizeDraftBoard(detail, p.data)
+    return {
+      id,
+      type: detail.draftType,
+      complete: board.complete,
+      teams: detail.teamCount,
+      leagueToken: leagueId ? tokenFor(leagueId, season) : undefined,
+      budget:
+        typeof detail.settings.budget === "number" && detail.settings.budget > 0
+          ? detail.settings.budget
+          : null,
+      error: null,
+      picks: board.picks.map((p) => {
+        const raw = p.metadata.amount
+        const amount =
+          typeof raw === "number"
+            ? raw
+            : typeof raw === "string" && /^\d+(?:\.\d{1,4})?$/.test(raw)
+              ? Number(raw)
+              : null
+        return {
+          id: p.externalPlayerId,
+          name: p.displayName ?? p.externalPlayerId,
+          position: p.position,
+          team: p.team,
+          pick: p.pickNo,
+          round: p.round,
+          slot: p.draftSlot,
+          // Direct recipient attribution survives traded picks and roster ownership changes.
+          own: p.pickedBy === sleeperOwner,
+          keeper: p.isKeeper,
+          amount:
+            detail.draftType === "auction" &&
+            amount !== null &&
+            Number.isFinite(amount) &&
+            amount >= 0
+              ? amount
+              : null,
+        }
+      }),
+    }
+  },
+  ["tracker-validated-board-v2"],
+  { revalidate: 3600 }
+)
+async function discoveredBoards(source: Awaited<ReturnType<typeof discovery>>) {
+  return mapWithBoundedConcurrency(source.userDraftList, 4, async (d) => {
+    try {
+      return await readBoard(
+        d.externalDraftId,
+        source.state.season,
+        d.externalLeagueId
+      )
+    } catch {
+      return {
+        id: d.externalDraftId,
+        type: d.draftType,
+        complete: false,
+        teams: d.teamCount,
+        leagueToken: d.externalLeagueId
+          ? tokenFor(d.externalLeagueId, source.state.season)
+          : undefined,
+        error: "Board could not be validated; participation unresolved.",
+        picks: [],
+      } satisfies TrackerDraft
+    }
+  })
+}
+export async function loadTrackerResearchSource() {
+  await requireTrackerAccess()
+  const source = await discovery()
+  const boards = await discoveredBoards(source)
+  const overview = await overviewSource()
+  return { boards, overview, state: source.state }
+}
 
 async function leagueSnapshot(
   league: Awaited<ReturnType<typeof discovery>>["leagues"][number],
@@ -121,7 +222,11 @@ async function leagueSnapshot(
 }
 const overviewSource = unstable_cache(
   async () => {
-    const { state, leagues } = await discovery()
+    const source = await discovery()
+    const { state, leagues } = source
+    const boards = await discoveredBoards(source)
+    const completed = boards.filter(hasCompletedParticipation)
+    const included = new Set(completed.map((d) => d.leagueToken))
     const snapshots = await mapWithBoundedConcurrency(leagues, 4, (l) =>
       leagueSnapshot(l, state.week!)
     )
@@ -130,10 +235,20 @@ const overviewSource = unstable_cache(
       week: state.week!,
       seasonType: state.seasonType,
       fetchedAt: new Date().toISOString(),
-      leagues: snapshots,
+      leagues: snapshots.filter((l) => included.has(l.token)),
+      otherLeagues: snapshots.filter((l) => !included.has(l.token)),
+      membershipCount: leagues.length,
+      draftSummary: {
+        completed: completed.length,
+        snake: completed.filter(
+          (d) => d.type === "snake" || d.type === "linear"
+        ).length,
+        auction: completed.filter((d) => d.type === "auction").length,
+        unresolved: boards.filter((d) => d.error).length,
+      },
     }
   },
-  ["jarahmacf-tracker-overview-v1"],
+  ["jarahmacf-tracker-overview-v2"],
   { revalidate: 120 }
 )
 
@@ -161,6 +276,7 @@ export async function loadTrackerOverview(): Promise<TrackerOverview> {
     if (!result.error)
       players.push(
         ...result.data.map((r) => ({
+          token: trackerPlayerToken(r.external_id),
           id: r.external_id,
           name: r.players.display_name ?? r.external_id,
           position: r.players.primary_position ?? "?",
@@ -187,87 +303,31 @@ const detailSource = unstable_cache(
       state.season,
       source.externalLeagueId
     )
-    const boards = await mapWithBoundedConcurrency(
-      drafts,
-      3,
-      async (draft): Promise<TrackerDraft> => {
-        try {
-          const [d, p] = await Promise.all([
-            read(["draft", draft.externalDraftId]),
-            read(["draft", draft.externalDraftId, "picks"]),
-          ])
-          const detail = normalizeDraftDetail(
-            d.data,
-            state.season,
-            draft.externalDraftId,
-            source.externalLeagueId
-          )
-          const board = normalizeDraftBoard(detail, p.data)
-          const owned = new Set(
-            league.rosters.filter((r) => r.owned).map((r) => r.id)
-          )
-          const ownSlots = new Set(
-            board.slots
-              .filter(
-                (s) =>
-                  s.sourceUserIds?.includes(sleeperOwner) ||
-                  (s.externalRosterId !== null &&
-                    owned.has(String(s.externalRosterId)))
-              )
-              .map((s) => s.draftSlot)
-          )
-          for (const pick of board.picks)
-            if (pick.pickedBy === sleeperOwner) ownSlots.add(pick.draftSlot)
-          if (ownSlots.size > 1) throw new Error("Participation is ambiguous.")
-          return {
-            id: detail.externalDraftId,
-            type: detail.draftType,
-            complete: board.complete,
-            teams: detail.teamCount,
-            error: null,
-            picks: board.picks.map((p) => {
-              const amount =
-                detail.draftType === "auction" ? p.metadata.amount : null
-              // PickWorth's amount field is retained as an explicitly source-reported cost.
-              const parsed =
-                typeof amount === "number"
-                  ? amount
-                  : typeof amount === "string" &&
-                      /^\d+(?:\.\d{1,4})?$/.test(amount)
-                    ? Number(amount)
-                    : null
-              return {
-                id: p.externalPlayerId,
-                name: p.displayName ?? p.externalPlayerId,
-                position: p.position,
-                team: p.team,
-                pick: p.pickNo,
-                round: p.round,
-                slot: p.draftSlot,
-                own:
-                  userDraftIds.includes(detail.externalDraftId) &&
-                  ownSlots.has(p.draftSlot),
-                keeper: p.isKeeper,
-                amount:
-                  parsed !== null && Number.isFinite(parsed) && parsed >= 0
-                    ? parsed
-                    : null,
-              }
-            }),
-          }
-        } catch {
-          return {
-            id: draft.externalDraftId,
-            type: draft.draftType,
-            complete: false,
-            teams: draft.teamCount,
-            picks: [],
-            error:
-              "This board could not be fully validated. Prior saved data is unchanged.",
-          }
+    const boards = await mapWithBoundedConcurrency(drafts, 3, async (d) => {
+      try {
+        const board = await readBoard(
+          d.externalDraftId,
+          state.season,
+          source.externalLeagueId
+        )
+        return {
+          ...board,
+          picks: board.picks.map((p) => ({
+            ...p,
+            own: userDraftIds.includes(d.externalDraftId) && p.own,
+          })),
         }
+      } catch {
+        return {
+          id: d.externalDraftId,
+          type: d.draftType,
+          complete: false,
+          teams: d.teamCount,
+          picks: [],
+          error: "This board could not be fully validated.",
+        } satisfies TrackerDraft
       }
-    )
+    })
     const weeks = await mapWithBoundedConcurrency(
       Array.from({ length: state.week! }, (_, i) => i + 1),
       3,
@@ -309,7 +369,7 @@ const detailSource = unstable_cache(
       fetchedAt: new Date().toISOString(),
     }
   },
-  ["jarahmacf-tracker-detail-v1"],
+  ["jarahmacf-tracker-detail-v2"],
   { revalidate: 120 }
 )
 export async function loadTrackerDetail(token: string) {
