@@ -241,6 +241,7 @@ export function evaluateTrackerDraft(
     const pool = rows.filter((p) => p.position === position)
     const auction = draft.type === "auction"
     const priceAvailable =
+      !draft.error &&
       draft.complete &&
       (auction
         ? pool.every((p) => p.amount !== null)
@@ -254,6 +255,7 @@ export function evaluateTrackerDraft(
       if (priceAvailable) p.priceRank = rank
     })
     const scoresAvailable =
+      !draft.error &&
       draft.complete &&
       activity &&
       periodsComplete &&
@@ -287,5 +289,26 @@ export function mergeTrackerOverview(
     leagues: next.leagues.map((l) =>
       l.error && old.has(l.token) ? { ...old.get(l.token)!, error: l.error } : l
     ),
+  }
+}
+
+export function mergeTrackerDetail(
+  previous: TrackerDetail | null | undefined,
+  next: TrackerDetail
+): TrackerDetail {
+  if (!previous || previous.league.token !== next.league.token) return next
+  return {
+    ...next,
+    league: next.league.error
+      ? { ...previous.league, error: next.league.error }
+      : next.league,
+    drafts: next.drafts.map((d) => {
+      const old = previous.drafts.find((p) => p.id === d.id)
+      return d.error && old ? { ...old, error: d.error } : d
+    }),
+    weeks: next.weeks.map((w) => {
+      const old = previous.weeks.find((p) => p.week === w.week)
+      return w.error && old ? { ...old, error: w.error } : w
+    }),
   }
 }

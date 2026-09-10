@@ -23,6 +23,7 @@ import {
 import {
   evaluateTrackerDraft,
   mergeTrackerOverview,
+  mergeTrackerDetail,
   type TrackerOverview,
   type TrackerDetail,
   type TrackerLeague,
@@ -82,9 +83,29 @@ export function LiveTracker() {
             `/api/tracker?league=${league.token}`,
             controller.signal
           )
-          setPortfolio((p) => ({ ...p, [league.token]: detail }))
+          failed =
+            Boolean(detail.league.error) ||
+            detail.drafts.some((d) => Boolean(d.error)) ||
+            detail.weeks.some((w) => Boolean(w.error))
+          setPortfolio((p) => ({
+            ...p,
+            [league.token]: mergeTrackerDetail(p[league.token], detail),
+          }))
         } catch {
           failed = true
+          setPortfolio((p) => {
+            const old = p[league.token]
+            if (!old) return p
+            const error = "The latest refresh failed. Previous data retained."
+            return {
+              ...p,
+              [league.token]: {
+                ...old,
+                league: { ...old.league, error },
+                weeks: old.weeks.map((w) => ({ ...w, error })),
+              },
+            }
+          })
         }
         if (!controller.signal.aborted)
           setBulk((p) => ({
@@ -139,7 +160,7 @@ export function LiveTracker() {
       controller.signal
     )
       .then((value) => {
-        setDetail(value)
+        setDetail((previous) => mergeTrackerDetail(previous, value))
         setDetailError(null)
       })
       .catch((e) => {
@@ -248,27 +269,34 @@ export function LiveTracker() {
   }, [data])
   const draftRows = useMemo(
     () =>
-      Object.values(portfolio).flatMap((detail) =>
-        detail.drafts.flatMap((draft) => {
-          try {
-            return evaluateTrackerDraft(
-              draft,
-              detail.weeks,
-              detail.weeks.length
-            )
-              .filter((p) => p.own)
-              .map((p) => ({
-                ...p,
-                key: `${detail.league.token}:${draft.id}:${p.id}`,
-                league: detail.league.name,
-                type: draft.type,
-              }))
-          } catch {
-            return []
-          }
-        })
-      ),
-    [portfolio]
+      Object.values(portfolio)
+        .filter((detail) =>
+          data?.leagues.some((l) => l.token === detail.league.token)
+        )
+        .flatMap((detail) =>
+          detail.drafts.flatMap((draft) => {
+            try {
+              return evaluateTrackerDraft(draft, detail.weeks, data!.week)
+                .filter((p) => p.own)
+                .map((p) => ({
+                  ...p,
+                  key: `${detail.league.token}:${draft.id}:${p.id}`,
+                  league: detail.league.name,
+                  type: draft.type,
+                  sourceStatus: detail.league.error
+                    ? "Refresh failed"
+                    : draft.error
+                      ? "Board refresh failed"
+                      : detail.weeks.some((w) => w.error)
+                        ? "Weekly refresh failed"
+                        : "Source recorded",
+                }))
+            } catch {
+              return []
+            }
+          })
+        ),
+    [portfolio, data]
   )
   const draftColumns = useMemo<ColumnDef<(typeof draftRows)[number]>[]>(
     () => [
@@ -276,6 +304,7 @@ export function LiveTracker() {
       { accessorKey: "position", header: "Position" },
       { accessorKey: "league", header: "League" },
       { accessorKey: "type", header: "Draft type" },
+      { accessorKey: "sourceStatus", header: "Source" },
       {
         id: "cost",
         header: "Cost",
@@ -517,9 +546,10 @@ export function LiveTracker() {
             </Link>
           </Button>
           <p className="mt-3 text-sm text-muted-foreground">
-            Refreshes every two minutes while this page is visible. Sleeper
-            retains matchup history; export a snapshot for a dated copy. This
-            view reads live source data and does not overwrite your saved
+            The league overview refreshes every two minutes while this page is
+            visible. Use Refresh all draft boards to update portfolio values.
+            Sleeper retains matchup history; export a snapshot for a dated copy.
+            This view reads live source data and does not overwrite your saved
             imports.
           </p>
         </CardContent>

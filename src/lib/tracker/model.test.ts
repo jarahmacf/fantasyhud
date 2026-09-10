@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   evaluateTrackerDraft,
+  mergeTrackerDetail,
   normalizeTrackerMatchups,
   normalizeTrackerRosters,
   type TrackerDraft,
@@ -185,4 +186,27 @@ describe("PickWorth league-source adaptation", () => {
       ).every((p) => p.actualRank === null)
     ).toBe(true)
   })
+})
+
+it("retains a prior board and week on failed refresh without publishing fresh ranks", () => {
+  const previous = {
+    league: { token: "same" },
+    drafts: [draft],
+    weeks: [week({ p1: 10, p2: 20 })],
+    fetchedAt: "old",
+  } as Parameters<typeof mergeTrackerDetail>[1]
+  const next = {
+    ...previous,
+    drafts: [{ ...draft, picks: [], error: "Failed board" }],
+    weeks: [{ ...previous.weeks[0]!, matchups: null, error: "Failed week" }],
+    fetchedAt: "new",
+  }
+  const merged = mergeTrackerDetail(previous, next)
+  expect(merged.drafts[0]!.picks).toHaveLength(2)
+  expect(merged.weeks[0]!.matchups).toHaveLength(1)
+  expect(
+    evaluateTrackerDraft(merged.drafts[0]!, merged.weeks, 1).every(
+      (p) => p.actualRank === null
+    )
+  ).toBe(true)
 })
